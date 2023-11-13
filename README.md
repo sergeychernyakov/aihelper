@@ -16,6 +16,9 @@ python3 aihelper.py
 ### telegram
 pip3 install python-telegram-bot
 
+### Database
+pip3 install sqlalchemy
+
 
 Done! Congratulations on your new bot. You will find it at t.me/AiHelper_GptBot. You can now add a description, about section and profile picture for your bot, see /help for a list of commands. By the way, when you've finished creating your cool bot, ping our Bot Support if you want a better username for it. Just make sure the bot is fully operational before you do this.
 

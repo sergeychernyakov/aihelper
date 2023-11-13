@@ -63,11 +63,11 @@ def echo(update: Update, context: CallbackContext) -> None:
 #####################  assistant_id: asst_rM8zJIWjSQMgE5JTCKbZY3cd, thread_id: thread_KrI5g5lwXwlr1Cepc1ihVYLh, run_id: run_MPJjQlTd9iroeF7ME4Gxao6n
     thread_id = 'thread_KrI5g5lwXwlr1Cepc1ihVYLh'
     run_id = 'run_MPJjQlTd9iroeF7ME4Gxao6n'
-    assistant_id = 'asst_rM8zJIWjSQMgE5JTCKbZY3cd'
+    assistant_id = 'asst_9ZDWRdmAfABY2iCYEf7Tf5Je' #'asst_rM8zJIWjSQMgE5JTCKbZY3cd'
 
     # assistant = openai.beta.assistants.create(
-    #     name="Math Tutor",
-    #     instructions="You are a personal math tutor. Write and run code to answer math questions.",
+    #     name="Ruby Developer",
+    #     instructions="You are a professional ruby developer with greate expirience. Write and run code to answer ruby questions.",
     #     tools=[{"type": "code_interpreter"}],
     #     model="gpt-4-1106-preview"
     # )
@@ -91,6 +91,10 @@ def echo(update: Update, context: CallbackContext) -> None:
     #     run_id=run.id
     # )
 
+    # save assistant_id and thread_id to database
+    # create new thread if there is no thread with user
+    # assistant_id may be the same?
+
     message = openai.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
@@ -103,6 +107,7 @@ def echo(update: Update, context: CallbackContext) -> None:
     )
 
     while run.status !="completed":
+        time.sleep(3)
         run = openai.beta.threads.runs.retrieve(
           thread_id=thread_id,
           run_id=run.id
