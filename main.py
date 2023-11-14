@@ -20,8 +20,8 @@ MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 # ASSISTANT_ID = 'asst_9ZDWRdmAfABY2iCYEf7Tf5Je' # Ruby developer assistant gpt-4-1106-preview
 # ASSISTANT_ID = 'asst_g9QxbJRApkJyERHaVHBxSiRo' # Python developer assistant gpt-4-1106-preview
-# ASSISTANT_ID = 'asst_vI0acJWUvRz5VGugqsA8qkbO' # ukrainian-russian translator assistant gpt-4-1106-preview
-ASSISTANT_ID = 'asst_X6NsU7jjgYRQzFx4cATu0znZ' # ukrainian-russian translator assistant gpt-3.5-turbo-1106
+ASSISTANT_ID = 'asst_vI0acJWUvRz5VGugqsA8qkbO' # ukrainian-russian translator assistant gpt-4-1106-preview
+# ASSISTANT_ID = 'asst_X6NsU7jjgYRQzFx4cATu0znZ' # ukrainian-russian translator assistant gpt-3.5-turbo-1106
 
 
 @contextmanager
@@ -143,7 +143,7 @@ def text_handler(update, context):
                 openai.beta.threads.messages.create(
                     thread_id=conversation.thread_id,
                     role="user",
-                    content=response.choices[0].message.content
+                    content='Переведи текст на украинский: "' + response.choices[0].message.content + '"'
                 )
 
                 create_run = True
