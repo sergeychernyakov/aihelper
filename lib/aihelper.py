@@ -147,8 +147,8 @@ client = OpenAI(
 ############################## Assistant
 
 assistant = client.beta.assistants.create(
-  name="Math Tutor",
-  instructions="You are a personal math tutor. Write and run code to answer math questions.",
+  name="Ukrainian-Russian Translator",
+  instructions="You are a great ukrainian-russian translator. You can answer only questions about ukrainian-russian translations.",
   tools=[{"type": "code_interpreter"}],
   model="gpt-4-1106-preview"
 )
