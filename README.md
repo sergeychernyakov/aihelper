@@ -19,6 +19,8 @@ pip3 install python-telegram-bot
 ### Database
 pip3 install sqlalchemy
 
+### Testing
+python3 -m unittest tests.main_test
 
 ### Plan
 научить робота переводить звуковое сообщение

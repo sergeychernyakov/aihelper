@@ -46,35 +46,20 @@ def handle_text_message(update, thread_id):
 
 def handle_photo_message(update, context):
     global successful_interaction
-    message = ""
+
     # take the photo near to 512x512px for vision low res mode
     photo = update.message.photo[-2]
     file = context.bot.get_file(photo.file_id)
 
+    success, message = check_file_constraints(file, photo)
+    if not success:
+        return False, message, None
+
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size} {photo.width}x{photo.height} "{update.message.caption}"')
 
-    # Extract file extension
-    _, file_extension = os.path.splitext(file.file_path)
-
-    caption = update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
-
-    if file_extension.lower() not in ALLOWED_EXTENSIONS:
-        message = 'This type of file is not supported. We currently support PNG (.png), JPEG (.jpeg and .jpg), WEBP (.webp), and non-animated GIF (.gif)'
-        return False, message, file
-    elif file.file_size >= MAX_FILE_SIZE:
-        # Calculate file sizes in MB
-        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
-        file_size_mb = file.file_size / (1024 * 1024)
-        message = f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
-        return False, message, file
-    elif photo.width > MAX_DIMENSION_SIZE or photo.height > MAX_DIMENSION_SIZE:
-        message = 'The image is too large. Please upload an image with a maximum length or width of 2000 pixels.'
-        return False, message, file
-    else:
-        print(f'image passed checks: "{file.file_path}" {file.file_size}')
-        successful_interaction = True
-        message = "Image processed successfully"
-        return True, message, file
+    successful_interaction = True
+    message = "Image processed successfully"
+    return True, message, file
 
 def handle_document_message(update, context):
     global successful_interaction
@@ -132,13 +117,14 @@ def transcript_image(update, context, thread_id, file):
         content='Переведи текст на украинский: "' + response.choices[0].message.content + '"'
     )
 
-
 def check_file_constraints(file, photo):
     file_extension = os.path.splitext(file.file_path)[1]
     if file_extension.lower() not in ALLOWED_EXTENSIONS:
         return False, "Unsupported file type."
     if file.file_size >= MAX_FILE_SIZE:
-        return False, "File too large."
+        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+        file_size_mb = file.file_size / (1024 * 1024)
+        return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
     if photo.width > MAX_DIMENSION_SIZE or photo.height > MAX_DIMENSION_SIZE:
         return False, "Image dimensions are too large."
     return True, ""
