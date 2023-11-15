@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from pathlib import Path
 from telegram import Update
 from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from openai import OpenAI
@@ -33,14 +34,13 @@ def session_scope():
     finally:
         session.close()
 
-def handle_text_message(update, thread_id):
+def handle_text_message(message, thread_id):
     try:
         # Logic to handle text messages and execute OpenAI API calls
-        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) wrote: "{update.message.text}"')
         openai.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
-            content=update.message.text
+            content=message
         )
 
         return True  # Return True on successful execution
@@ -232,11 +232,30 @@ def create_run(thread_id, assistant_id, update, context):
 
     print(f'AI responded: {messages.data[0].content[0].text.value}')
 
-    context.bot.send_message(
-        update.message.chat_id,
-        messages.data[0].content[0].text.value
+    return answer_with_text(context, messages.data[0].content[0].text.value, update.message.chat_id)
+    # return answer_with_voice(context, messages.data[0].content[0].text.value, update.message.chat_id, thread_id)
+
+
+def answer_with_text(context, message, chat_id):
+    context.bot.send_message(chat_id, message)
+
+def answer_with_voice(context, message, chat_id, thread_id):
+
+    voice_answer_folder = Path(__file__).parent / thread_id / 'tmp'
+    voice_answer_path = voice_answer_folder / "voice_answer.mp3"
+
+    os.makedirs(voice_answer_folder, exist_ok=True)
+
+    response = openai.audio.speech.create(
+        model="tts-1", # tts-1-hd
+        voice="nova",
+        input=message
     )
 
+    response.stream_to_file(voice_answer_path)
+
+    voice_file = open(voice_answer_path, "rb")
+    return context.bot.send_document(chat_id, voice_file)
 
 def message_handler(update, context):
     successful_interaction = False
@@ -254,7 +273,7 @@ def message_handler(update, context):
 
         # Handle different types of messages
         if update.message.text:
-            if handle_text_message(update, conversation.thread_id):
+            if handle_text_message(update.message.text, conversation.thread_id):
                 successful_interaction = True
         elif update.message.photo:
             success, message, file = handle_photo_message(update, context)
