@@ -1,8 +1,9 @@
 import unittest
 import main
 from unittest import mock
-from main import check_file_constraints, handle_text_message, create_conversation, handle_photo_message, transcript_image, create_run, message_handler
-from unittest.mock import Mock, patch, MagicMock
+from main import check_file_constraints, check_voice_constraints, create_conversation, transcript_image, transcript_voice
+from main import message_handler, handle_text_message, handle_photo_message, create_run
+from unittest.mock import Mock, patch, MagicMock, mock_open
 
 def create_mock_file_and_photo(file_extension=".jpg", file_size=1024, width=1000, height=1000):
     mock_file = Mock()
@@ -26,6 +27,13 @@ def create_mock_update(text="Test message", user_id=12345, first_name="Test", us
 
     return mock_update
 
+def create_mock_voice(file_extension=".mp3", file_size=1024):
+    mock_voice = Mock()
+    mock_voice.file_path = f"test{file_extension}"
+    mock_voice.file_size = file_size
+
+    return mock_voice
+
 class TestTelegramBotFunctions(unittest.TestCase):
 
     def test_check_file_constraints(self):
@@ -40,6 +48,19 @@ class TestTelegramBotFunctions(unittest.TestCase):
         # Test for an invalid file type
         mock_file_invalid, _ = create_mock_file_and_photo(file_extension=".txt")
         success, message = check_file_constraints(mock_file_invalid, mock_photo)
+        self.assertFalse(success)
+        self.assertEqual(message, "Unsupported file type.")
+
+    def test_check_voice_constraints(self):
+        # Test for a valid voice file
+        mock_voice = create_mock_voice()
+        success, message = check_voice_constraints(mock_voice, Mock())
+        self.assertTrue(success)
+        self.assertEqual(message, "")
+
+        # Test for an invalid file type
+        mock_voice_invalid = create_mock_voice(file_extension=".txt")
+        success, message = check_voice_constraints(mock_voice_invalid, Mock())
         self.assertFalse(success)
         self.assertEqual(message, "Unsupported file type.")
 
@@ -143,6 +164,42 @@ class TestTelegramBotFunctions(unittest.TestCase):
         mock_context.bot.send_message.assert_called_with(
             mock_update.message.chat_id,
             "Transcription result"
+        )
+
+    @patch('main.openai.audio.transcriptions.create')
+    @patch('main.openai.beta.threads.messages.create')
+    @patch('builtins.open', new_callable=mock_open, read_data="data")
+    def test_transcript_voice(self, mock_file_open, mock_threads_messages_create, mock_transcriptions_create):
+        # Create mocks for update, context, and the file path
+        mock_update = Mock()
+        mock_context = Mock()
+        mock_thread_id = "12345"
+        file_path = "path/to/voice.mp3"
+
+        # Set a mock response for the OpenAI transcription
+        mock_transcription_response = "Transcribed text"
+        mock_transcriptions_create.return_value = mock_transcription_response
+
+        # Call the transcript_voice function
+        transcript_voice(mock_update, mock_context, mock_thread_id, file_path)
+
+        # Assert if the file was opened correctly
+        mock_file_open.assert_called_with(file_path, "rb")
+
+        # Assert if OpenAI transcription was called correctly
+        mock_transcriptions_create.assert_called_with(
+            model="whisper-1",
+            file=mock.ANY,
+            response_format="text"
+        )
+
+        # Assert if the thread message creation was correctly mocked
+        mock_threads_messages_create.assert_called()
+
+        # Assert if the bot sends a message with the transcription
+        mock_context.bot.send_message.assert_called_with(
+            mock_update.message.chat_id,
+            mock_transcription_response
         )
 
     @patch('main.openai.beta.threads.runs.create')

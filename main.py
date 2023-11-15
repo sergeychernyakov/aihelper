@@ -149,7 +149,7 @@ def transcript_image(update, context, thread_id, file):
         content='Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
     )
 
-def translate_voice(update, context, thread_id, file_path):
+def transcript_voice(update, context, thread_id, file_path):
     audio_file= open(file_path, "rb")
     transcription = openai.audio.transcriptions.create(
       model="whisper-1",
@@ -268,7 +268,7 @@ def message_handler(update, context):
             if not success:
                 context.bot.send_message(update.message.chat_id, message)
             else:
-                translate_voice(update, context, conversation.thread_id, file)
+                transcript_voice(update, context, conversation.thread_id, file)
                 successful_interaction = True
 
         if successful_interaction:
@@ -276,9 +276,6 @@ def message_handler(update, context):
             # Update the conversation's timestamp after a successful interaction
             conversation.updated_at = datetime.utcnow()
             session.commit() # Make sure to commit only once after all updates
-
-
-# 'chat': {'first_name': 'Sergey', 'username': 'sergey8812', 'type': 'private', 'id': 5545639645}, 'new_chat_members': [], 'delete_chat_photo': False, 'voice': {'file_unique_id': 'AgADiDoAAr4dqEo', 'mime_type': 'audio/ogg', 'file_size': 47504, 'duration': 11, 'file_id': 'AwACAgIAAxkBAAIBnGVU72ukzvB_13u5DmlNiUxHfiFeAAKIOgACvh2oSg4U9VCnySa0MwQ'}, 'group_chat_created': False, 'new_chat_photo': [], 'message_id': 412, 'supergroup_chat_created': False, 'date': 1700065132, 'photo': [], 'channel_chat_created': False, 'caption_entities': [], 'entities': [], 'from': {'language_code': 'en', 'username': 'sergey8812', 'first_name': 'Sergey', 'id': 5545639645, 'is_bot': False}}
 
 
 def main():
