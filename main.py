@@ -48,19 +48,23 @@ def handle_text_message(update, thread_id):
         return False  # Return False on failure
 
 def handle_photo_message(update, context):
-    # take the photo near to 512x512px for vision low res mode
-    photo = update.message.photo[-2]
-    file = context.bot.get_file(photo.file_id)
-    print(f"Function - Mock File ID: {id(file)}, Mock Photo ID: {id(photo)}")
+    try:
+        # take the photo near to 512x512px for vision low res mode
+        photo = update.message.photo[-2]
+        file = context.bot.get_file(photo.file_id)
+        print(f"Function - Mock File ID: {id(file)}, Mock Photo ID: {id(photo)}")
 
-    success, message = check_file_constraints(file, photo)
-    if not success:
-        return False, message, None
+        success, message = check_file_constraints(file, photo)
+        if not success:
+            return False, message, None
 
-    print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size} {photo.width}x{photo.height} "{update.message.caption}"')
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size} {photo.width}x{photo.height} "{update.message.caption}"')
 
-    message = "Image processed successfully"
-    return True, message, file
+        message = "Image processed successfully"
+        return True, message, file
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, 'Some error occured while image processing', None # Return False on failure
 
 def handle_document_message(update, context):
     if update.message.document:
