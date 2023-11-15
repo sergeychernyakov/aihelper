@@ -1,7 +1,7 @@
 import unittest
 import main
 from unittest import mock
-from main import check_file_constraints, handle_text_message, create_conversation, handle_photo_message, transcript_image, create_run, text_handler
+from main import check_file_constraints, handle_text_message, create_conversation, handle_photo_message, transcript_image, create_run, message_handler
 from unittest.mock import Mock, patch, MagicMock
 
 def create_mock_file_and_photo(file_extension=".jpg", file_size=1024, width=1000, height=1000):
@@ -209,7 +209,7 @@ class TestTelegramBotFunctions(unittest.TestCase):
         mock_session.query().filter_by().first.return_value = mock_conversation
 
         mock_handle_text_message.return_value = True
-        text_handler(mock_update, mock_context)
+        message_handler(mock_update, mock_context)
 
         # Assert the create_run call
         mock_create_run.assert_called_once_with('some_thread_id', mock_conversation.assistant_id, mock_update, mock_context)

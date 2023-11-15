@@ -15,7 +15,8 @@ load_dotenv()
 openai = OpenAI()
 
 MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'}
 MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
@@ -65,6 +66,35 @@ def handle_photo_message(update, context):
     except Exception as e:
         print(f"Error: {e}")
         return False, 'Some error occured while image processing', None # Return False on failure
+
+def handle_voice_message(update, context, thread_id):
+    try:
+        # Logic to handle voice messages and execute OpenAI API calls
+        voice = update.message.voice
+        file = context.bot.get_file(voice.file_id)
+
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent voice: "{file.file_path}" {file.file_size}')
+
+        success, message = check_voice_constraints(file, voice)
+        if not success:
+            return False, message, None
+
+        # Extract file extension
+        _, file_extension = os.path.splitext(file.file_path)
+
+        # Ensure the directory exists before trying to download
+        download_dir_path = f'tmp/{thread_id}'
+        os.makedirs(download_dir_path, exist_ok=True)
+
+        # Download the file to the desired location with the extracted extension
+        download_path = f'{download_dir_path}/voice{file_extension}'
+        file.download(download_path)
+
+        message = "Voice processed successfully"
+        return True, message, download_path
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, 'Some error occured while voice processing', None # Return False on failure
 
 def handle_document_message(update, context):
     if update.message.document:
@@ -116,12 +146,37 @@ def transcript_image(update, context, thread_id, file):
     openai.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
-        content='Переведи текст на украинский: "' + response.choices[0].message.content + '"'
+        content='Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
+    )
+
+def translate_voice(update, context, thread_id, file_path):
+    audio_file= open(file_path, "rb")
+    transcription = openai.audio.transcriptions.create(
+      model="whisper-1",
+      file=audio_file,
+      response_format="text"
+    )
+
+    openai.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=transcription
+    )
+
+    context.bot.send_message(
+        update.message.chat_id,
+        transcription
+    )
+
+    openai.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content='Переведи текст на украинский язык: "' + transcription + '"'
     )
 
 def check_file_constraints(file, photo):
     file_extension = os.path.splitext(file.file_path)[1]
-    if file_extension.lower() not in ALLOWED_EXTENSIONS:
+    if file_extension.lower() not in ALLOWED_PHOTO_EXTENSIONS:
         return False, "Unsupported file type."
     if file.file_size >= MAX_FILE_SIZE:
         max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
@@ -129,6 +184,16 @@ def check_file_constraints(file, photo):
         return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
     if photo.width > MAX_DIMENSION_SIZE or photo.height > MAX_DIMENSION_SIZE:
         return False, "Image dimensions are too large."
+    return True, ""
+
+def check_voice_constraints(file, voice):
+    file_extension = os.path.splitext(file.file_path)[1]
+    if file_extension.lower() not in ALLOWED_VOICE_EXTENSIONS:
+        return False, "Unsupported file type."
+    if file.file_size >= MAX_FILE_SIZE:
+        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+        file_size_mb = file.file_size / (1024 * 1024)
+        return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
     return True, ""
 
 def create_conversation(session, update):
@@ -155,6 +220,7 @@ def create_run(thread_id, assistant_id, update, context):
     )
 
     while run.status !="completed":
+        time.sleep(2)
         run = openai.beta.threads.runs.retrieve(
           thread_id=thread_id,
           run_id=run.id
@@ -172,11 +238,13 @@ def create_run(thread_id, assistant_id, update, context):
     )
 
 
-def text_handler(update, context):
+def message_handler(update, context):
     successful_interaction = False
 
     with session_scope() as session:
-        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo."}')
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file or voice."}')
+
+        print(update.message)
 
         # Check for existing conversation or create a new one
         conversation = session.query(Conversation).filter_by(
@@ -195,6 +263,13 @@ def text_handler(update, context):
             else:
                 transcript_image(update, context, conversation.thread_id, file)
                 successful_interaction = True
+        elif update.message.voice:
+            success, message, file = handle_voice_message(update, context, conversation.thread_id)
+            if not success:
+                context.bot.send_message(update.message.chat_id, message)
+            else:
+                translate_voice(update, context, conversation.thread_id, file)
+                successful_interaction = True
 
         if successful_interaction:
             create_run(conversation.thread_id, conversation.assistant_id, update, context)
@@ -203,11 +278,14 @@ def text_handler(update, context):
             session.commit() # Make sure to commit only once after all updates
 
 
+# 'chat': {'first_name': 'Sergey', 'username': 'sergey8812', 'type': 'private', 'id': 5545639645}, 'new_chat_members': [], 'delete_chat_photo': False, 'voice': {'file_unique_id': 'AgADiDoAAr4dqEo', 'mime_type': 'audio/ogg', 'file_size': 47504, 'duration': 11, 'file_id': 'AwACAgIAAxkBAAIBnGVU72ukzvB_13u5DmlNiUxHfiFeAAKIOgACvh2oSg4U9VCnySa0MwQ'}, 'group_chat_created': False, 'new_chat_photo': [], 'message_id': 412, 'supergroup_chat_created': False, 'date': 1700065132, 'photo': [], 'channel_chat_created': False, 'caption_entities': [], 'entities': [], 'from': {'language_code': 'en', 'username': 'sergey8812', 'first_name': 'Sergey', 'id': 5545639645, 'is_bot': False}}
+
+
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
 
     # Echo any message that is not a command
-    updater.dispatcher.add_handler(MessageHandler(~Filters.command, text_handler))
+    updater.dispatcher.add_handler(MessageHandler(~Filters.command, message_handler))
 
     # Start the bot
     updater.start_polling()
