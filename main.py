@@ -33,23 +33,25 @@ def session_scope():
         session.close()
 
 def handle_text_message(update, thread_id):
-    global successful_interaction
-    # Logic to handle text messages and execute OpenAI API calls
-    print(f'{update.message.from_user.first_name}({update.message.from_user.username}) wrote: "{update.message.text}"')
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=update.message.text
-    )
-    
-    successful_interaction = True
+    try:
+        # Logic to handle text messages and execute OpenAI API calls
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) wrote: "{update.message.text}"')
+        openai.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=update.message.text
+        )
+
+        return True  # Return True on successful execution
+    except Exception as e:
+        print(f"Error: {e}")
+        return False  # Return False on failure
 
 def handle_photo_message(update, context):
-    global successful_interaction
-
     # take the photo near to 512x512px for vision low res mode
     photo = update.message.photo[-2]
     file = context.bot.get_file(photo.file_id)
+    print(f"Function - Mock File ID: {id(file)}, Mock Photo ID: {id(photo)}")
 
     success, message = check_file_constraints(file, photo)
     if not success:
@@ -57,12 +59,10 @@ def handle_photo_message(update, context):
 
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size} {photo.width}x{photo.height} "{update.message.caption}"')
 
-    successful_interaction = True
     message = "Image processed successfully"
     return True, message, file
 
 def handle_document_message(update, context):
-    global successful_interaction
     if update.message.document:
         document = update.message.document
         file = context.bot.get_file(document.file_id)
@@ -79,8 +79,6 @@ def handle_document_message(update, context):
         # Download the file to the desired location with the extracted extension
         download_path = f'{download_dir_path}/photo{file_extension}'
         file.download(download_path)
-
-        successful_interaction = True
 
 def transcript_image(update, context, thread_id, file):
 
@@ -171,7 +169,6 @@ def create_run(thread_id, assistant_id, update, context):
 
 
 def text_handler(update, context):
-    global successful_interaction
     successful_interaction = False
 
     with session_scope() as session:
@@ -185,13 +182,15 @@ def text_handler(update, context):
 
         # Handle different types of messages
         if update.message.text:
-            handle_text_message(update, conversation.thread_id)
+            if handle_text_message(update, conversation.thread_id):
+                successful_interaction = True
         elif update.message.photo:
             success, message, file = handle_photo_message(update, context)
             if not success:
                 context.bot.send_message(update.message.chat_id, message)
             else:
                 transcript_image(update, context, conversation.thread_id, file)
+                successful_interaction = True
 
         if successful_interaction:
             create_run(conversation.thread_id, conversation.assistant_id, update, context)
