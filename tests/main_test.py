@@ -1,4 +1,5 @@
 import unittest
+import main
 from unittest import mock
 from main import check_file_constraints, handle_text_message, create_conversation, handle_photo_message, transcript_image, create_run, text_handler
 from unittest.mock import Mock, patch, MagicMock
@@ -213,6 +214,30 @@ class TestTelegramBotFunctions(unittest.TestCase):
         # Assert the create_run call
         mock_create_run.assert_called_once_with('some_thread_id', mock_conversation.assistant_id, mock_update, mock_context)
 
+    @patch('main.Updater')
+    @patch('main.MessageHandler')
+    @patch('main.Filters')
+    def test_main(self, mock_Filters, mock_MessageHandler, mock_Updater):
+        # Mock the bot and dispatcher
+        mock_bot = Mock()
+        mock_dispatcher = Mock()
+        mock_Updater.return_value = Mock(bot=mock_bot, dispatcher=mock_dispatcher, start_polling=Mock(), idle=Mock())
+
+        # Run the main method
+        main.main()
+
+        # Assert Updater is called with the correct token
+        mock_Updater.assert_called_with(main.TELEGRAM_BOT_TOKEN, use_context=True)
+
+        # Assert that a MessageHandler is created
+        mock_MessageHandler.assert_called()
+
+        # Assert the handler is added to the dispatcher
+        mock_dispatcher.add_handler.assert_called()
+
+        # Assert that start_polling and idle methods are called
+        mock_Updater.return_value.start_polling.assert_called_once()
+        mock_Updater.return_value.idle.assert_called_once() 
 
 if __name__ == '__main__':
     unittest.main()
