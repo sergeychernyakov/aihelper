@@ -241,7 +241,7 @@ def answer_with_text(context, message, chat_id):
 
 def answer_with_voice(context, message, chat_id, thread_id):
 
-    voice_answer_folder = Path(__file__).parent / thread_id / 'tmp'
+    voice_answer_folder = Path(__file__).parent / 'tmp' / thread_id
     voice_answer_path = voice_answer_folder / "voice_answer.mp3"
 
     os.makedirs(voice_answer_folder, exist_ok=True)
