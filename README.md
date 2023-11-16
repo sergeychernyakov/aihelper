@@ -23,10 +23,12 @@ pip3 install sqlalchemy
 python3 -m unittest tests.main_test
 
 ### Plan
-test_transcript_image - add tests assertions
+научить робота переводить файлы
+
+remove tmp files after transcription
 
 проверить отправку png файла
-научить робота переводить файлы
+
 научить робота генерировать и присылать картинки
 научить робота брать оплату
 научить робота присылать файлы

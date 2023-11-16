@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from db.engine import SessionLocal
 from db.models.conversation import Conversation
 import random
+import shutil
 
 load_dotenv()
 
@@ -18,8 +19,9 @@ openai = OpenAI()
 
 MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
 ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'}
-MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side
+ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'} 
+ALLOWED_FILE_EXTENSIONS = ALLOWED_PHOTO_EXTENSIONS | {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip' } 
+MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
 
@@ -97,23 +99,71 @@ def handle_voice_message(update, context, thread_id):
         print(f"Error: {e}")
         return False, 'Some error occured while voice processing', None # Return False on failure
 
-def handle_document_message(update, context):
-    if update.message.document:
+def handle_document_message(update, context, thread_id):
+    try:
         document = update.message.document
         file = context.bot.get_file(document.file_id)
 
-        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size}')
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent document: "{file.file_path}" {file.file_size}')
+
+        success, message = check_document_constraints(file, document)
+        if not success:
+            return False, message, None
 
         # Extract file extension
         _, file_extension = os.path.splitext(file.file_path)
 
         # Ensure the directory exists before trying to download
-        download_dir_path = f'tmp/{conversation.thread_id}'
+        download_dir_path = f'tmp/{thread_id}'
         os.makedirs(download_dir_path, exist_ok=True)
 
         # Download the file to the desired location with the extracted extension
-        download_path = f'{download_dir_path}/photo{file_extension}'
+        download_path = f'{download_dir_path}/document{file_extension}'
         file.download(download_path)
+
+        message = "Voice processed successfully"
+        return True, message, download_path
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, 'Some error occured while document processing', None # Return False on failure
+
+def transcript_document(update, context, thread_id, assistant_id, file_path):
+    try:
+      caption = update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
+
+      # Upload a file with an "assistants" purpose
+      file = openai.files.create(
+          file=open(file_path, "rb"),
+          purpose='assistants'
+      )
+
+      openai.beta.threads.messages.create(
+          thread_id=thread_id,
+          role="user",
+          content=caption,
+          file_ids=[file.id]
+      )
+
+      openai.beta.threads.messages.create(
+          thread_id=thread_id,
+          role="user",
+          content=caption
+      )
+
+      return True, 'File sent for transcription'
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, 'Some error occured while document processing' # Return False on failure
+
+def check_document_constraints(file, voice):
+    file_extension = os.path.splitext(file.file_path)[1]
+    if file_extension.lower() not in ALLOWED_FILE_EXTENSIONS:
+        return False, "Unsupported file type."
+    if file.file_size >= MAX_FILE_SIZE:
+        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+        file_size_mb = file.file_size / (1024 * 1024)
+        return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+    return True, ""
 
 def transcript_image(update, context, thread_id, file):
 
@@ -243,6 +293,19 @@ def create_run(thread_id, assistant_id, update, context):
     else:
         answer_with_text(context, response_text, update.message.chat_id)
 
+    cleanup(thread_id, assistant_id)
+
+
+def cleanup(thread_id, assistant_id):
+    dir_path = f'tmp/{thread_id}'
+
+    # Check if the directory exists
+    if os.path.exists(dir_path):
+        # Delete directory and all its contents
+        shutil.rmtree(dir_path)
+    else:
+        print(f'The directory {dir_path} does not exist!')
+
 
 def answer_with_text(context, message, chat_id):
     context.bot.send_message(chat_id, message)
@@ -294,6 +357,13 @@ def message_handler(update, context):
                 context.bot.send_message(update.message.chat_id, message)
             else:
                 transcript_voice(update, context, conversation.thread_id, file)
+                successful_interaction = True
+        elif update.message.document:
+            success, message, file = handle_document_message(update, context, conversation.thread_id)
+            if not success:
+                context.bot.send_message(update.message.chat_id, message)
+            else:
+                transcript_document(update, context, conversation.thread_id, conversation.assistant_id, file)
                 successful_interaction = True
 
         if successful_interaction:
