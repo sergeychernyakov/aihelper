@@ -151,16 +151,6 @@ def transcript_document(update, context, thread_id, assistant_id, file_path):
         print(f"Error: {e}")
         return False, 'Some error occured while document processing' # Return False on failure
 
-def check_document_constraints(file, voice):
-    file_extension = os.path.splitext(file.file_path)[1]
-    if file_extension.lower() not in ALLOWED_FILE_EXTENSIONS:
-        return False, "Unsupported file type."
-    if file.file_size >= MAX_FILE_SIZE:
-        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
-        file_size_mb = file.file_size / (1024 * 1024)
-        return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
-    return True, ""
-
 def transcript_image(update, context, thread_id, file):
 
     caption = update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
@@ -224,7 +214,9 @@ def transcript_voice(update, context, thread_id, file_path):
 def check_file_constraints(file, photo):
     file_extension = os.path.splitext(file.file_path)[1]
     if file_extension.lower() not in ALLOWED_PHOTO_EXTENSIONS:
-        return False, "Unsupported file type."
+        allowed_extensions_str = ", ".join(ALLOWED_PHOTO_EXTENSIONS)
+        return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
+
     if file.file_size >= MAX_FILE_SIZE:
         max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
         file_size_mb = file.file_size / (1024 * 1024)
@@ -236,7 +228,19 @@ def check_file_constraints(file, photo):
 def check_voice_constraints(file, voice):
     file_extension = os.path.splitext(file.file_path)[1]
     if file_extension.lower() not in ALLOWED_VOICE_EXTENSIONS:
-        return False, "Unsupported file type."
+        allowed_extensions_str = ", ".join(ALLOWED_VOICE_EXTENSIONS)
+        return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
+    if file.file_size >= MAX_FILE_SIZE:
+        max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+        file_size_mb = file.file_size / (1024 * 1024)
+        return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+    return True, ""
+
+def check_document_constraints(file, voice):
+    file_extension = os.path.splitext(file.file_path)[1]
+    if file_extension.lower() not in ALLOWED_FILE_EXTENSIONS:
+        allowed_extensions_str = ", ".join(ALLOWED_FILE_EXTENSIONS)
+        return False, f"Unsupported file type. Allowed types: {ALLOWED_FILE_EXTENSIONS}."
     if file.file_size >= MAX_FILE_SIZE:
         max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
         file_size_mb = file.file_size / (1024 * 1024)
