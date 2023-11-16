@@ -66,15 +66,16 @@ class TestTelegramBotFunctions(unittest.TestCase):
 
     @mock.patch('main.openai')
     def test_handle_text_message(self, mock_openai):
-        mock_update = create_mock_update()
+        # Create a mock update with a string text message
+        mock_update = create_mock_update(text="Test message")
         mock_thread_id = "12345"
-        result = handle_text_message(mock_update, mock_thread_id)
+        result = handle_text_message(mock_update.message.text, mock_thread_id)
 
         # Assert if OpenAI API was called correctly
         mock_openai.beta.threads.messages.create.assert_called_with(
             thread_id=mock_thread_id,
             role="user",
-            content=mock_update.message.text
+            content="Test message"  # Ensuring this is a string as expected
         )
 
         # Assert if the function executed successfully
@@ -202,47 +203,42 @@ class TestTelegramBotFunctions(unittest.TestCase):
             mock_transcription_response
         )
 
-    @patch('main.openai.beta.threads.runs.create')
-    @patch('main.openai.beta.threads.runs.retrieve')
+    @patch('main.random.randint')
+    @patch('main.answer_with_voice')
+    @patch('main.answer_with_text')
     @patch('main.openai.beta.threads.messages.list')
-    def test_create_run(self, mock_threads_messages_list, mock_threads_runs_retrieve, mock_threads_runs_create):
-        # Create mocks for update, context, and the run object
-        mock_update = create_mock_update()
-        mock_context = Mock()
+    @patch('main.openai.beta.threads.runs.create')
+    def test_create_run(self, mock_runs_create, mock_message_list, mock_answer_with_text, mock_answer_with_voice, mock_randint):
+        # Mock setup for openai.beta.threads.runs.create
+        mock_runs_create.return_value = MagicMock(status="completed")
+
+        # Correctly mock the structure of the messages list response
+        mock_message_list.return_value = MagicMock()
+        mock_message_list.return_value.data = [MagicMock(content=[MagicMock(text=MagicMock(value="Short response"))])]
+
+        # Setup for the test (mock_update and mock_context)
         mock_thread_id = "12345"
         mock_assistant_id = "assistant_id"
-        
-        # Mock the run object and its properties
-        mock_run = Mock()
-        mock_run.status = "completed"
-        mock_threads_runs_create.return_value = mock_run
+        mock_update = MagicMock()
+        mock_context = MagicMock()
 
-        # Mock the response for runs.retrieve
-        mock_threads_runs_retrieve.return_value = mock_run
+        # Test for text response
+        mock_randint.return_value = 2  # Ensure it picks text response
+        main.create_run(mock_thread_id, mock_assistant_id, mock_update, mock_context)
 
-        # Mock the response for threads.messages.list
-        mock_message_response = Mock()
-        mock_message_response.data = [Mock(content=[Mock(text=Mock(value="AI response"))])]
-        mock_threads_messages_list.return_value = mock_message_response
+        mock_answer_with_text.assert_called_once_with(mock_context, "Short response", mock_update.message.chat_id)
+        mock_answer_with_voice.assert_not_called()
 
-        # Call the create_run function
-        create_run(mock_thread_id, mock_assistant_id, mock_update, mock_context)
+        # Reset mocks for voice response test
+        mock_answer_with_text.reset_mock()
+        mock_answer_with_voice.reset_mock()
 
-        # Assert if openai.beta.threads.runs.create was called correctly
-        mock_threads_runs_create.assert_called_with(thread_id=mock_thread_id, assistant_id=mock_assistant_id)
+        # Test for voice response
+        mock_randint.return_value = 1  # Force it to pick voice response
+        main.create_run(mock_thread_id, mock_assistant_id, mock_update, mock_context)
 
-        # Assert if openai.beta.threads.runs.retrieve was called correctly
-        # This depends on your implementation details and how often you expect the function to poll the run status
-        # ...
-
-        # Assert if openai.beta.threads.messages.list was called correctly
-        mock_threads_messages_list.assert_called_with(thread_id=mock_thread_id)
-
-        # Assert if the bot sent a message with the expected content
-        mock_context.bot.send_message.assert_called_with(
-            mock_update.message.chat_id,
-            "AI response"
-        )
+        mock_answer_with_voice.assert_called_once_with(mock_context, "Short response", mock_update.message.chat_id, mock_thread_id)
+        mock_answer_with_text.assert_not_called()
 
     @patch('main.create_run')
     @patch('main.transcript_image')

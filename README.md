@@ -23,6 +23,8 @@ pip3 install sqlalchemy
 python3 -m unittest tests.main_test
 
 ### Plan
+test_transcript_image
+
 проверить отправку png файла
 научить робота переводить файлы
 научить робота генерировать и присылать картинки

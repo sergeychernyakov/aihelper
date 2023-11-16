@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError
 from db.engine import SessionLocal
 from db.models.conversation import Conversation
+import random
 
 load_dotenv()
 
@@ -230,10 +231,17 @@ def create_run(thread_id, assistant_id, update, context):
         thread_id=thread_id
     )
 
-    print(f'AI responded: {messages.data[0].content[0].text.value}')
+    response_text = messages.data[0].content[0].text.value
+    print(f'AI responded: {response_text}')
 
-    return answer_with_text(context, messages.data[0].content[0].text.value, update.message.chat_id)
-    # return answer_with_voice(context, messages.data[0].content[0].text.value, update.message.chat_id, thread_id)
+    # Define a threshold for a short message, e.g., 100 characters
+    short_message_threshold = 100
+
+    # Randomly choose to respond with voice 1 out of 10 times
+    if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
+        answer_with_voice(context, response_text, update.message.chat_id, thread_id)
+    else:
+        answer_with_text(context, response_text, update.message.chat_id)
 
 
 def answer_with_text(context, message, chat_id):
@@ -262,8 +270,6 @@ def message_handler(update, context):
 
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file or voice."}')
-
-        print(update.message)
 
         # Check for existing conversation or create a new one
         conversation = session.query(Conversation).filter_by(
