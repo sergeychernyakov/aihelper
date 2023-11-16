@@ -20,7 +20,7 @@ openai = OpenAI()
 MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
 ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'} 
-ALLOWED_FILE_EXTENSIONS = ALLOWED_PHOTO_EXTENSIONS | {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip' } 
+ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip'}
 MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
@@ -38,18 +38,14 @@ def session_scope():
         session.close()
 
 def handle_text_message(message, thread_id):
-    try:
-        # Logic to handle text messages and execute OpenAI API calls
-        openai.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message
-        )
+    # Logic to handle text messages and execute OpenAI API calls
+    openai.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=message
+    )
 
-        return True  # Return True on successful execution
-    except Exception as e:
-        print(f"Error: {e}")
-        return False  # Return False on failure
+    return True  # Return True on successful execution
 
 def handle_photo_message(update, context):
     try:
@@ -263,7 +259,6 @@ def create_conversation(session, update):
 
     return conversation
 
-
 def create_run(thread_id, assistant_id, update, context):
     run = openai.beta.threads.runs.create(
         thread_id=thread_id,
@@ -334,44 +329,66 @@ def message_handler(update, context):
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file or voice."}')
 
-        # Check for existing conversation or create a new one
-        conversation = session.query(Conversation).filter_by(
-            user_id=update.message.from_user.id,
-            assistant_id=ASSISTANT_ID
-        ).first() or create_conversation(session, update)
+        try:
+            # Check for existing conversation or create a new one
+            conversation = session.query(Conversation).filter_by(
+                user_id=update.message.from_user.id,
+                assistant_id=ASSISTANT_ID
+            ).first() or create_conversation(session, update)
 
-        # Handle different types of messages
-        if update.message.text:
-            if handle_text_message(update.message.text, conversation.thread_id):
-                successful_interaction = True
-        elif update.message.photo:
-            success, message, file = handle_photo_message(update, context)
-            if not success:
-                context.bot.send_message(update.message.chat_id, message)
-            else:
-                transcript_image(update, context, conversation.thread_id, file)
-                successful_interaction = True
-        elif update.message.voice:
-            success, message, file = handle_voice_message(update, context, conversation.thread_id)
-            if not success:
-                context.bot.send_message(update.message.chat_id, message)
-            else:
-                transcript_voice(update, context, conversation.thread_id, file)
-                successful_interaction = True
-        elif update.message.document:
-            success, message, file = handle_document_message(update, context, conversation.thread_id)
-            if not success:
-                context.bot.send_message(update.message.chat_id, message)
-            else:
-                transcript_document(update, context, conversation.thread_id, conversation.assistant_id, file)
-                successful_interaction = True
+            # Handle different types of messages
+            if update.message.text:
+                if handle_text_message(update.message.text, conversation.thread_id):
+                    successful_interaction = True
+            elif update.message.photo:
+                success, message, file = handle_photo_message(update, context)
+                if not success:
+                    context.bot.send_message(update.message.chat_id, message)
+                else:
+                    transcript_image(update, context, conversation.thread_id, file)
+                    successful_interaction = True
+            elif update.message.voice:
+                success, message, file = handle_voice_message(update, context, conversation.thread_id)
+                if not success:
+                    context.bot.send_message(update.message.chat_id, message)
+                else:
+                    transcript_voice(update, context, conversation.thread_id, file)
+                    successful_interaction = True
+            elif update.message.document:
+                success, message, file = handle_document_message(update, context, conversation.thread_id)
+                if not success:
+                    context.bot.send_message(update.message.chat_id, message)
+                else:
+                    transcript_document(update, context, conversation.thread_id, conversation.assistant_id, file)
+                    successful_interaction = True
 
-        if successful_interaction:
-            create_run(conversation.thread_id, conversation.assistant_id, update, context)
-            # Update the conversation's timestamp after a successful interaction
-            conversation.updated_at = datetime.utcnow()
-            session.commit() # Make sure to commit only once after all updates
+            if successful_interaction:
+                create_run(conversation.thread_id, conversation.assistant_id, update, context)
+                # Update the conversation's timestamp after a successful interaction
+                conversation.updated_at = datetime.utcnow()
+                session.commit() # Make sure to commit only once after all updates
 
+        except Exception as e:
+            error_message = str(e)
+            print(f"Error: {e}")
+            if "Error code: 404" in error_message and "No thread found with id" in error_message:
+                create_thread(session, conversation)
+            elif "Failed to index file: Unsupported file" in error_message:
+                recreate_thread(session, conversation)
+            else:
+                # Generic error handling
+                print(f"Error: {e}")
+
+            return False  # Return False on failure
+
+def create_thread(session, conversation):
+    thread = openai.beta.threads.create()
+    session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
+    session.commit()
+
+def recreate_thread(session, conversation):
+    openai.beta.threads.delete(conversation.thread_id)
+    create_thread(session, conversation)
 
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
