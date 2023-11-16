@@ -183,7 +183,7 @@ def transcript_image(update, context, thread_id, file):
     openai.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
-        content='Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
+        content='Не говори о том, что ты не можешь увидеть картинку. Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
     )
 
 def transcript_voice(update, context, thread_id, file_path):
