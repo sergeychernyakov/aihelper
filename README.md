@@ -23,7 +23,7 @@ pip3 install sqlalchemy
 python3 -m unittest tests.main_test
 
 ### Plan
-test_transcript_image
+test_transcript_image - add tests assertions
 
 проверить отправку png файла
 научить робота переводить файлы

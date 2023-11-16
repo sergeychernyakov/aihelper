@@ -34,6 +34,11 @@ def create_mock_voice(file_extension=".mp3", file_size=1024):
 
     return mock_voice
 
+def create_mock_update_with_caption(caption):
+    mock_update = Mock()
+    mock_update.message.caption = caption
+    return mock_update
+
 class TestTelegramBotFunctions(unittest.TestCase):
 
     def test_check_file_constraints(self):
@@ -123,45 +128,51 @@ class TestTelegramBotFunctions(unittest.TestCase):
         # Assert if conversation has correct attributes
         self.assertEqual(conversation.user_id, mock_update.message.from_user.id)
         self.assertEqual(conversation.language_code, mock_update.message.from_user.language_code)
-        # ... other assertions ...
 
-    @mock.patch('main.openai.chat.completions.create')
-    @mock.patch('main.openai.beta.threads.messages.create')
+    @patch('main.openai.chat.completions.create')
+    @patch('main.openai.beta.threads.messages.create')
     def test_transcript_image(self, mock_threads_messages_create, mock_chat_completions_create):
-        # Create mocks for update and context
-        mock_update = create_mock_update()
+        mock_update = create_mock_update_with_caption("Test caption")
         mock_context = Mock()
-        mock_file = Mock(file_path="path/to/photo.jpg")
+        mock_file = Mock(file_path="path/to/valid_photo.jpg")
         mock_thread_id = "12345"
 
-        # Set return values for OpenAI API calls
+        # Mocking the OpenAI API response
         mock_chat_response = Mock()
         mock_chat_response.choices = [Mock(message=Mock(content="Transcription result"))]
         mock_chat_completions_create.return_value = mock_chat_response
 
-        # Call the transcript_image function
+        # Call the function
         transcript_image(mock_update, mock_context, mock_thread_id, mock_file)
 
-        # Assert if OpenAI API was called correctly for chat completions
+        # Updated Assertions
+        expected_messages = [
+            {
+                'role': 'user',
+                'content': [
+                    {'type': 'text', 'text': 'Test caption'},
+                    {'type': 'image_url', 'image_url': {'url': 'path/to/valid_photo.jpg', 'detail': 'low'}}
+                ]
+            }
+        ]
         mock_chat_completions_create.assert_called_with(
-            model="gpt-4-vision-preview",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": mock_update.message.caption or "Default caption"},
-                        {"type": "image_url", "image_url": {"url": mock_file.file_path, "detail": "low"}}
-                    ],
-                }
-            ],
+            model='gpt-4-vision-preview',
+            messages=expected_messages,
             max_tokens=100
         )
 
-        # Assert if OpenAI API was called correctly for thread messages
-        # This depends on how you expect the function to interact with the OpenAI API
-        # ...
+        mock_threads_messages_create.assert_called_with(
+            thread_id=mock_thread_id, 
+            role='user', 
+            content='Переведи текст на украинский язык: "Transcription result"'
+        )
 
-        # Assert if the bot sent a message with the expected content
+
+        actual_call = mock_chat_completions_create.call_args[1]
+        self.assertEqual(actual_call['messages'][0]['content'][1]['image_url']['url'], 'path/to/valid_photo.jpg')
+
+        self.assertEqual(actual_call['messages'][0]['content'][0]['text'], 'Test caption')
+
         mock_context.bot.send_message.assert_called_with(
             mock_update.message.chat_id,
             "Transcription result"
