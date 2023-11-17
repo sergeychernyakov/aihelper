@@ -57,7 +57,7 @@ class MessagesHandler:
             _, file_extension = os.path.splitext(file.file_path)
 
             # Ensure the directory exists before trying to download
-            download_dir_path = f'tmp/{thread_id}'
+            download_dir_path = f'tmp/{self.thread_id}'
             os.makedirs(download_dir_path, exist_ok=True)
 
             # Download the file to the desired location with the extracted extension
@@ -84,7 +84,7 @@ class MessagesHandler:
             _, file_extension = os.path.splitext(file.file_path)
 
             # Ensure the directory exists before trying to download
-            download_dir_path = f'tmp/{thread_id}'
+            download_dir_path = f'tmp/{self.thread_id}'
             os.makedirs(download_dir_path, exist_ok=True)
 
             # Download the file to the desired location with the extracted extension

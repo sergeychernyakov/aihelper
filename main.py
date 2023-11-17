@@ -14,6 +14,7 @@ import random
 import shutil
 import logging
 from lib.telegram.messages_handler import MessagesHandler
+from lib.telegram.transcriptor import Transcriptor
 
 load_dotenv()
 
@@ -35,93 +36,93 @@ def session_scope():
     finally:
         session.close()
 
-######### Transcriptors for different types of messages #########
-def transcript_document(update, context, thread_id, assistant_id, file_path):
-    try:
-      caption = update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
+# ######### Transcriptors for different types of messages #########
+# def transcript_document(update, context, thread_id, assistant_id, file_path):
+#     try:
+#       caption = update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
 
-      # Upload a file with an "assistants" purpose
-      file = openai.files.create(
-          file=open(file_path, "rb"),
-          purpose='assistants'
-      )
+#       # Upload a file with an "assistants" purpose
+#       file = openai.files.create(
+#           file=open(file_path, "rb"),
+#           purpose='assistants'
+#       )
 
-      openai.beta.threads.messages.create(
-          thread_id=thread_id,
-          role="user",
-          content=caption,
-          file_ids=[file.id]
-      )
+#       openai.beta.threads.messages.create(
+#           thread_id=thread_id,
+#           role="user",
+#           content=caption,
+#           file_ids=[file.id]
+#       )
 
-      openai.beta.threads.messages.create(
-          thread_id=thread_id,
-          role="user",
-          content=caption
-      )
+#       openai.beta.threads.messages.create(
+#           thread_id=thread_id,
+#           role="user",
+#           content=caption
+#       )
 
-      return True, 'File sent for transcription'
-    except Exception as e:
-        raise
+#       return True, 'File sent for transcription'
+#     except Exception as e:
+#         raise
 
-def transcript_image(update, context, thread_id, file):
+# def transcript_image(update, context, thread_id, file):
 
-    caption = update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
+#     caption = update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
 
-    response = openai.chat.completions.create(
-        model="gpt-4-vision-preview",
-        messages=[
-            {
-              "role": "user",
-              "content": [
-                  { "type": "text", "text": caption },
-                  { "type": "image_url", "image_url": { "url": file.file_path, "detail": "low" } }
-              ],
-            }
-        ],
-        max_tokens=100
-    )
+#     response = openai.chat.completions.create(
+#         model="gpt-4-vision-preview",
+#         messages=[
+#             {
+#               "role": "user",
+#               "content": [
+#                   { "type": "text", "text": caption },
+#                   { "type": "image_url", "image_url": { "url": file.file_path, "detail": "low" } }
+#               ],
+#             }
+#         ],
+#         max_tokens=100
+#     )
 
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=caption
-    )
+#     openai.beta.threads.messages.create(
+#         thread_id=thread_id,
+#         role="user",
+#         content=caption
+#     )
 
-    context.bot.send_message(
-        update.message.chat_id,
-        response.choices[0].message.content
-    )
+#     context.bot.send_message(
+#         update.message.chat_id,
+#         response.choices[0].message.content
+#     )
 
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content='Не говори о том, что ты не можешь увидеть картинку. Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
-    )
+#     openai.beta.threads.messages.create(
+#         thread_id=thread_id,
+#         role="user",
+#         content='Не говори о том, что ты не можешь увидеть картинку. Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
+#     )
 
-def transcript_voice(update, context, thread_id, file_path):
-    audio_file= open(file_path, "rb")
-    transcription = openai.audio.transcriptions.create(
-      model="whisper-1",
-      file=audio_file,
-      response_format="text"
-    )
+# def transcript_voice(update, context, thread_id, file_path):
+#     audio_file= open(file_path, "rb")
+#     transcription = openai.audio.transcriptions.create(
+#       model="whisper-1",
+#       file=audio_file,
+#       response_format="text"
+#     )
 
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=transcription
-    )
+#     openai.beta.threads.messages.create(
+#         thread_id=thread_id,
+#         role="user",
+#         content=transcription
+#     )
 
-    context.bot.send_message(
-        update.message.chat_id,
-        transcription
-    )
+#     context.bot.send_message(
+#         update.message.chat_id,
+#         transcription
+#     )
 
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content='Переведи текст на украинский язык: "' + transcription + '"'
-    )
+#     openai.beta.threads.messages.create(
+#         thread_id=thread_id,
+#         role="user",
+#         content='Переведи текст на украинский язык: "' + transcription + '"'
+#     )
 
 ######### Answers methods #########
 def answer_with_text(context, message, chat_id):
@@ -225,7 +226,6 @@ def error_handler(update, context):
 def message_handler(update, context):
     successful_interaction = False
 
-
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file or voice."}')
 
@@ -237,6 +237,7 @@ def message_handler(update, context):
             ).first() or create_conversation(session, update)
 
             message_handler = MessagesHandler(openai, update, context, conversation.thread_id)
+            transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
 
             # Handle different types of messages
             if update.message.text:
@@ -247,21 +248,21 @@ def message_handler(update, context):
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcript_image(update, context, conversation.thread_id, file)
+                    transcriptor.transcript_image(file)
                     successful_interaction = True
             elif update.message.voice:
                 success, message, file =  message_handler.handle_voice_message()
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcript_voice(update, context, conversation.thread_id, file)
+                    transcriptor.transcript_voice(file)
                     successful_interaction = True
             elif update.message.document:
                 success, message, file =  message_handler.handle_document_message()
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcript_document(update, context, conversation.thread_id, conversation.assistant_id, file)
+                    transcriptor.transcript_document(file)
                     successful_interaction = True
 
             if successful_interaction:

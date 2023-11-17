@@ -9,44 +9,39 @@ class ConstraintsChecker:
 
     @classmethod
     def check_photo_constraints(cls, file, photo):
-        result, message = cls._check_extension_and_size(
-            os.path.splitext(file.file_path)[1], 
-            cls.ALLOWED_PHOTO_EXTENSIONS, 
-            file.file_size
-        )
-        if not result:
-            return result, message
+        file_extension = os.path.splitext(file.file_path)[1].lower()
+        if file_extension not in cls.ALLOWED_PHOTO_EXTENSIONS:
+            allowed_extensions_str = ", ".join(cls.ALLOWED_PHOTO_EXTENSIONS)
+            return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
 
+        if file.file_size > cls.MAX_FILE_SIZE:
+            max_size_mb = cls.MAX_FILE_SIZE / (1024 * 1024)
+            file_size_mb = file.file_size / (1024 * 1024)
+            return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
         if photo.width > cls.MAX_DIMENSION_SIZE or photo.height > cls.MAX_DIMENSION_SIZE:
             return False, "Image dimensions are too large."
         return True, ""
 
     @classmethod
     def check_voice_constraints(cls, file):
-        return cls._check_extension_and_size(
-            os.path.splitext(file.file_path)[1], 
-            cls.ALLOWED_VOICE_EXTENSIONS, 
-            file.file_size
-        )
+        file_extension = os.path.splitext(file.file_path)[1].lower()
+        if file_extension not in cls.ALLOWED_VOICE_EXTENSIONS:
+            allowed_extensions_str = ", ".join(cls.ALLOWED_VOICE_EXTENSIONS)
+            return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
+        if file.file_size > cls.MAX_FILE_SIZE:
+            max_size_mb = cls.MAX_FILE_SIZE / (1024 * 1024)
+            file_size_mb = file.file_size / (1024 * 1024)
+            return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+        return True, ""
 
     @classmethod
     def check_document_constraints(cls, file):
-        return cls._check_extension_and_size(
-            os.path.splitext(file.file_path)[1], 
-            cls.ALLOWED_FILE_EXTENSIONS, 
-            file.file_size
-        )
-
-    # private
-
-    @classmethod
-    def _check_extension_and_size(cls, file_extension, allowed_extensions, file_size):
-        if file_extension.lower() not in allowed_extensions:
-            allowed_extensions_str = ", ".join(allowed_extensions)
+        file_extension = os.path.splitext(file.file_path)[1].lower()
+        if file_extension not in cls.ALLOWED_FILE_EXTENSIONS:
+            allowed_extensions_str = ", ".join(cls.ALLOWED_FILE_EXTENSIONS)
             return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
-
-        if file_size > cls.MAX_FILE_SIZE:
+        if file.file_size > cls.MAX_FILE_SIZE:
             max_size_mb = cls.MAX_FILE_SIZE / (1024 * 1024)
-            file_size_mb = file_size / (1024 * 1024)
+            file_size_mb = file.file_size / (1024 * 1024)
             return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
         return True, ""
