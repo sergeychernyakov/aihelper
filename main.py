@@ -12,19 +12,22 @@ from db.engine import SessionLocal
 from db.models.conversation import Conversation
 import random
 import shutil
+import logging
 
 load_dotenv()
 
-openai = OpenAI()
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
 
 MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
 ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'} 
 ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip'}
-MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo 
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
+MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo
 
+openai = OpenAI()
+
+######### Session #########
 @contextmanager
 def session_scope():
     session = SessionLocal()
@@ -37,15 +40,19 @@ def session_scope():
     finally:
         session.close()
 
+######### Handlers for different types of messages #########
 def handle_text_message(message, thread_id):
-    # Logic to handle text messages and execute OpenAI API calls
-    openai.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=message
-    )
+    try:
+        # Logic to handle text messages and execute OpenAI API calls
+        openai.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message
+        )
 
-    return True  # Return True on successful execution
+        return True  # Return True on successful execution
+    except Exception as e:
+        raise
 
 def handle_photo_message(update, context):
     try:
@@ -63,8 +70,7 @@ def handle_photo_message(update, context):
         message = "Image processed successfully"
         return True, message, file
     except Exception as e:
-        print(f"Error: {e}")
-        return False, 'Some error occured while image processing', None # Return False on failure
+        raise
 
 def handle_voice_message(update, context, thread_id):
     try:
@@ -92,8 +98,7 @@ def handle_voice_message(update, context, thread_id):
         message = "Voice processed successfully"
         return True, message, download_path
     except Exception as e:
-        print(f"Error: {e}")
-        return False, 'Some error occured while voice processing', None # Return False on failure
+        raise
 
 def handle_document_message(update, context, thread_id):
     try:
@@ -120,9 +125,9 @@ def handle_document_message(update, context, thread_id):
         message = "Voice processed successfully"
         return True, message, download_path
     except Exception as e:
-        print(f"Error: {e}")
-        return False, 'Some error occured while document processing', None # Return False on failure
+        raise
 
+######### Transcriptors for different types of messages #########
 def transcript_document(update, context, thread_id, assistant_id, file_path):
     try:
       caption = update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
@@ -148,8 +153,7 @@ def transcript_document(update, context, thread_id, assistant_id, file_path):
 
       return True, 'File sent for transcription'
     except Exception as e:
-        print(f"Error: {e}")
-        return False, 'Some error occured while document processing' # Return False on failure
+        raise
 
 def transcript_image(update, context, thread_id, file):
 
@@ -211,6 +215,7 @@ def transcript_voice(update, context, thread_id, file_path):
         content='Переведи текст на украинский язык: "' + transcription + '"'
     )
 
+######### Checkers for files #########
 def check_file_constraints(file, photo):
     file_extension = os.path.splitext(file.file_path)[1]
     if file_extension.lower() not in ALLOWED_PHOTO_EXTENSIONS:
@@ -247,6 +252,29 @@ def check_document_constraints(file, voice):
         return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
     return True, ""
 
+######### Answers methods #########
+def answer_with_text(context, message, chat_id):
+    context.bot.send_message(chat_id, message)
+
+def answer_with_voice(context, message, chat_id, thread_id):
+
+    voice_answer_folder = Path(__file__).parent / 'tmp' / thread_id
+    voice_answer_path = voice_answer_folder / "voice_answer.mp3"
+
+    os.makedirs(voice_answer_folder, exist_ok=True)
+
+    response = openai.audio.speech.create(
+        model="tts-1", # tts-1-hd
+        voice="nova",
+        input=message
+    )
+
+    response.stream_to_file(voice_answer_path)
+
+    voice_file = open(voice_answer_path, "rb")
+    return context.bot.send_document(chat_id, voice_file)
+
+######### Create conversation method #########
 def create_conversation(session, update):
     thread = openai.beta.threads.create()
 
@@ -263,6 +291,7 @@ def create_conversation(session, update):
 
     return conversation
 
+######### Work with OpenAI threads, runs #########
 def create_run(thread_id, assistant_id, update, context):
     run = openai.beta.threads.runs.create(
         thread_id=thread_id,
@@ -294,7 +323,16 @@ def create_run(thread_id, assistant_id, update, context):
 
     cleanup(thread_id, assistant_id)
 
+def create_thread(session, conversation):
+    thread = openai.beta.threads.create()
+    session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
+    session.commit()
 
+def recreate_thread(session, conversation):
+    openai.beta.threads.delete(conversation.thread_id)
+    create_thread(session, conversation)
+
+######### Cleanup methods #########
 def cleanup(thread_id, assistant_id):
     dir_path = f'tmp/{thread_id}'
 
@@ -305,28 +343,14 @@ def cleanup(thread_id, assistant_id):
     else:
         print(f'The directory {dir_path} does not exist!')
 
+######### Error handlers methods #########
+def error_handler(update, context):
+    """Log Errors caused by Updates."""
+    logger = logging.getLogger(__name__)
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    return False
 
-def answer_with_text(context, message, chat_id):
-    context.bot.send_message(chat_id, message)
-
-def answer_with_voice(context, message, chat_id, thread_id):
-
-    voice_answer_folder = Path(__file__).parent / 'tmp' / thread_id
-    voice_answer_path = voice_answer_folder / "voice_answer.mp3"
-
-    os.makedirs(voice_answer_folder, exist_ok=True)
-
-    response = openai.audio.speech.create(
-        model="tts-1", # tts-1-hd
-        voice="nova",
-        input=message
-    )
-
-    response.stream_to_file(voice_answer_path)
-
-    voice_file = open(voice_answer_path, "rb")
-    return context.bot.send_document(chat_id, voice_file)
-
+######### Main message handler #########
 def message_handler(update, context):
     successful_interaction = False
 
@@ -380,25 +404,16 @@ def message_handler(update, context):
             elif "Failed to index file: Unsupported file" in error_message:
                 recreate_thread(session, conversation)
             else:
-                # Generic error handling
-                print(f"Error: {e}")
-
-            return False  # Return False on failure
-
-def create_thread(session, conversation):
-    thread = openai.beta.threads.create()
-    session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
-    session.commit()
-
-def recreate_thread(session, conversation):
-    openai.beta.threads.delete(conversation.thread_id)
-    create_thread(session, conversation)
+                raise
 
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
 
     # Echo any message that is not a command
     updater.dispatcher.add_handler(MessageHandler(~Filters.command, message_handler))
+
+    # Register the error handler
+    updater.dispatcher.add_error_handler(error_handler)
 
     # Start the bot
     updater.start_polling()
