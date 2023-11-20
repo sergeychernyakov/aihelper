@@ -1,20 +1,9 @@
 import unittest
 import main
 from unittest import mock
-from main import check_file_constraints, check_voice_constraints, create_conversation, transcript_image, transcript_voice
+from main import create_conversation, transcript_image, transcript_voice
 from main import message_handler, handle_text_message, handle_photo_message, create_run
 from unittest.mock import Mock, patch, MagicMock, mock_open
-
-def create_mock_file_and_photo(file_extension=".jpg", file_size=1024, width=1000, height=1000):
-    mock_file = Mock()
-    mock_file.file_path = f"test{file_extension}"
-    mock_file.file_size = file_size
-
-    mock_photo = Mock()
-    mock_photo.width = width
-    mock_photo.height = height
-
-    return mock_file, mock_photo
 
 def create_mock_update(text="Test message", user_id=12345, first_name="Test", username="testuser"):
     mock_update = Mock()
@@ -26,13 +15,6 @@ def create_mock_update(text="Test message", user_id=12345, first_name="Test", us
     mock_update.message.from_user.username = username
 
     return mock_update
-
-def create_mock_voice(file_extension=".mp3", file_size=1024):
-    mock_voice = Mock()
-    mock_voice.file_path = f"test{file_extension}"
-    mock_voice.file_size = file_size
-
-    return mock_voice
 
 def create_mock_update_with_caption(caption):
     mock_update = Mock()
