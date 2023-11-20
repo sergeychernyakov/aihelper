@@ -36,95 +36,8 @@ def session_scope():
     finally:
         session.close()
 
-# ######### Transcriptors for different types of messages #########
-# def transcript_document(update, context, thread_id, assistant_id, file_path):
-#     try:
-#       caption = update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
 
-#       # Upload a file with an "assistants" purpose
-#       file = openai.files.create(
-#           file=open(file_path, "rb"),
-#           purpose='assistants'
-#       )
-
-#       openai.beta.threads.messages.create(
-#           thread_id=thread_id,
-#           role="user",
-#           content=caption,
-#           file_ids=[file.id]
-#       )
-
-#       openai.beta.threads.messages.create(
-#           thread_id=thread_id,
-#           role="user",
-#           content=caption
-#       )
-
-#       return True, 'File sent for transcription'
-#     except Exception as e:
-#         raise
-
-# def transcript_image(update, context, thread_id, file):
-
-#     caption = update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
-
-#     response = openai.chat.completions.create(
-#         model="gpt-4-vision-preview",
-#         messages=[
-#             {
-#               "role": "user",
-#               "content": [
-#                   { "type": "text", "text": caption },
-#                   { "type": "image_url", "image_url": { "url": file.file_path, "detail": "low" } }
-#               ],
-#             }
-#         ],
-#         max_tokens=100
-#     )
-
-#     openai.beta.threads.messages.create(
-#         thread_id=thread_id,
-#         role="user",
-#         content=caption
-#     )
-
-#     context.bot.send_message(
-#         update.message.chat_id,
-#         response.choices[0].message.content
-#     )
-
-#     openai.beta.threads.messages.create(
-#         thread_id=thread_id,
-#         role="user",
-#         content='Не говори о том, что ты не можешь увидеть картинку. Переведи текст на украинский язык: "' + response.choices[0].message.content + '"'
-#     )
-
-# def transcript_voice(update, context, thread_id, file_path):
-#     audio_file= open(file_path, "rb")
-#     transcription = openai.audio.transcriptions.create(
-#       model="whisper-1",
-#       file=audio_file,
-#       response_format="text"
-#     )
-
-#     openai.beta.threads.messages.create(
-#         thread_id=thread_id,
-#         role="user",
-#         content=transcription
-#     )
-
-#     context.bot.send_message(
-#         update.message.chat_id,
-#         transcription
-#     )
-
-#     openai.beta.threads.messages.create(
-#         thread_id=thread_id,
-#         role="user",
-#         content='Переведи текст на украинский язык: "' + transcription + '"'
-#     )
-
-######### Answers methods #########
+######### Answers methods #########  class Answer
 def answer_with_text(context, message, chat_id):
     context.bot.send_message(chat_id, message)
 
@@ -163,7 +76,7 @@ def create_conversation(session, update):
 
     return conversation
 
-######### Work with OpenAI threads, runs #########
+######### Work with OpenAI threads, runs #########   class RunsTreadsHandler
 def create_run(thread_id, assistant_id, update, context):
     run = openai.beta.threads.runs.create(
         thread_id=thread_id,
@@ -173,8 +86,8 @@ def create_run(thread_id, assistant_id, update, context):
     while run.status !="completed":
         time.sleep(2)
         run = openai.beta.threads.runs.retrieve(
-          thread_id=thread_id,
-          run_id=run.id
+            thread_id=thread_id,
+            run_id=run.id
         )
 
     messages = openai.beta.threads.messages.list(
@@ -193,7 +106,7 @@ def create_run(thread_id, assistant_id, update, context):
     else:
         answer_with_text(context, response_text, update.message.chat_id)
 
-    cleanup(thread_id, assistant_id)
+    cleanup(f'tmp/{thread_id}')
 
 def create_thread(session, conversation):
     thread = openai.beta.threads.create()
@@ -204,10 +117,8 @@ def recreate_thread(session, conversation):
     openai.beta.threads.delete(conversation.thread_id)
     create_thread(session, conversation)
 
-######### Cleanup methods #########
-def cleanup(thread_id, assistant_id):
-    dir_path = f'tmp/{thread_id}'
-
+######### Cleanup methods #########  Class utils
+def cleanup(dir_path):
     # Check if the directory exists
     if os.path.exists(dir_path):
         # Delete directory and all its contents
@@ -222,7 +133,7 @@ def error_handler(update, context):
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
     return False
 
-######### Main message handler #########
+######### Main message handler ######### move to MessagesHandler
 def message_handler(update, context):
     successful_interaction = False
 

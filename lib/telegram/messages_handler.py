@@ -27,7 +27,6 @@ class MessagesHandler:
             # take the photo near to 512x512px for vision low res mode
             photo = self.update.message.photo[-2]
             file = self.context.bot.get_file(photo.file_id)
-            print(f"Function - Mock File ID: {id(file)}, Mock Photo ID: {id(photo)}")
 
             # fix check_file_constraints
             success, message = ConstraintsChecker.check_photo_constraints(file, photo)

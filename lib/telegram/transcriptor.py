@@ -37,6 +37,12 @@ class Transcriptor:
                 self.update.message.chat_id,
                 response.choices[0].message.content
             )
+
+            self.openai.beta.threads.messages.create(
+                thread_id=self.thread_id,
+                role="user",
+                content='Переведи на украинский текст: ' + response.choices[0].message.content
+            )
         except Exception as e:
             raise
 
@@ -51,6 +57,12 @@ class Transcriptor:
             self.context.bot.send_message(
                 self.update.message.chat_id,
                 transcription
+            )
+
+            self.openai.beta.threads.messages.create(
+                thread_id=self.thread_id,
+                role="user",
+                content='Переведи на украинский текст: ' + transcription
             )
         except Exception as e:
             raise
