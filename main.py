@@ -1,19 +1,15 @@
-import time
+import os
+import logging
 from datetime import datetime
-from pathlib import Path
-from telegram import Update
 from telegram.ext import Updater, MessageHandler, Filters
 from openai import OpenAI
 from dotenv import load_dotenv
-import os
 from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError
 from db.engine import SessionLocal
 from db.models.conversation import Conversation
-import random
-import shutil
-import logging
 from lib.telegram.messages_handler import MessagesHandler
+from lib.telegram.runs_treads_handler import RunsTreadsHandler
 from lib.telegram.transcriptor import Transcriptor
 
 load_dotenv()
@@ -36,96 +32,6 @@ def session_scope():
     finally:
         session.close()
 
-
-######### Answers methods #########  class Answer
-def answer_with_text(context, message, chat_id):
-    context.bot.send_message(chat_id, message)
-
-def answer_with_voice(context, message, chat_id, thread_id):
-
-    voice_answer_folder = Path(__file__).parent / 'tmp' / thread_id
-    voice_answer_path = voice_answer_folder / "voice_answer.mp3"
-
-    os.makedirs(voice_answer_folder, exist_ok=True)
-
-    response = openai.audio.speech.create(
-        model="tts-1", # tts-1-hd
-        voice="nova",
-        input=message
-    )
-
-    response.stream_to_file(voice_answer_path)
-
-    voice_file = open(voice_answer_path, "rb")
-    return context.bot.send_document(chat_id, voice_file)
-
-######### Create conversation method #########
-def create_conversation(session, update):
-    thread = openai.beta.threads.create()
-
-    conversation = Conversation(
-      user_id=update.message.from_user.id,
-      language_code=update.message.from_user.language_code,
-      username=update.message.from_user.username,
-      thread_id=thread.id,
-      assistant_id=ASSISTANT_ID
-    )
-
-    # Add and commit the new conversation
-    session.add(conversation)
-
-    return conversation
-
-######### Work with OpenAI threads, runs #########   class RunsTreadsHandler
-def create_run(thread_id, assistant_id, update, context):
-    run = openai.beta.threads.runs.create(
-        thread_id=thread_id,
-        assistant_id=assistant_id
-    )
-
-    while run.status !="completed":
-        time.sleep(2)
-        run = openai.beta.threads.runs.retrieve(
-            thread_id=thread_id,
-            run_id=run.id
-        )
-
-    messages = openai.beta.threads.messages.list(
-        thread_id=thread_id
-    )
-
-    response_text = messages.data[0].content[0].text.value
-    print(f'AI responded: {response_text}')
-
-    # Define a threshold for a short message, e.g., 100 characters
-    short_message_threshold = 100
-
-    # Randomly choose to respond with voice 1 out of 10 times
-    if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
-        answer_with_voice(context, response_text, update.message.chat_id, thread_id)
-    else:
-        answer_with_text(context, response_text, update.message.chat_id)
-
-    cleanup(f'tmp/{thread_id}')
-
-def create_thread(session, conversation):
-    thread = openai.beta.threads.create()
-    session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
-    session.commit()
-
-def recreate_thread(session, conversation):
-    openai.beta.threads.delete(conversation.thread_id)
-    create_thread(session, conversation)
-
-######### Cleanup methods #########  Class utils
-def cleanup(dir_path):
-    # Check if the directory exists
-    if os.path.exists(dir_path):
-        # Delete directory and all its contents
-        shutil.rmtree(dir_path)
-    else:
-        print(f'The directory {dir_path} does not exist!')
-
 ######### Error handlers methods #########
 def error_handler(update, context):
     """Log Errors caused by Updates."""
@@ -145,7 +51,7 @@ def message_handler(update, context):
             conversation = session.query(Conversation).filter_by(
                 user_id=update.message.from_user.id,
                 assistant_id=ASSISTANT_ID
-            ).first() or create_conversation(session, update)
+            ).first() or _create_conversation(session, update)
 
             message_handler = MessagesHandler(openai, update, context, conversation.thread_id)
             transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
@@ -175,9 +81,10 @@ def message_handler(update, context):
                 else:
                     transcriptor.transcript_document(file)
                     successful_interaction = True
+            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation.thread_id, conversation.assistant_id)
 
             if successful_interaction:
-                create_run(conversation.thread_id, conversation.assistant_id, update, context)
+                runs_treads_handler.create_run()
                 # Update the conversation's timestamp after a successful interaction
                 conversation.updated_at = datetime.utcnow()
                 session.commit() # Make sure to commit only once after all updates
@@ -186,9 +93,9 @@ def message_handler(update, context):
             error_message = str(e)
             print(f"Error: {e}")
             if "Error code: 404" in error_message and "No thread found with id" in error_message:
-                create_thread(session, conversation)
+                runs_treads_handler.create_thread(session, conversation)
             elif "Failed to index file: Unsupported file" in error_message:
-                recreate_thread(session, conversation)
+                runs_treads_handler.recreate_thread(session, conversation)
             else:
                 raise
 
@@ -209,3 +116,22 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# private
+
+######### Create conversation method #########
+def _create_conversation(session, update):
+    thread = openai.beta.threads.create()
+
+    conversation = Conversation(
+        user_id=update.message.from_user.id,
+        language_code=update.message.from_user.language_code,
+        username=update.message.from_user.username,
+        thread_id=thread.id,
+        assistant_id=ASSISTANT_ID
+    )
+
+    # Add and commit the new conversation
+    session.add(conversation)
+
+    return conversation
