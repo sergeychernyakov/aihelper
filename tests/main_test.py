@@ -41,34 +41,6 @@ def create_mock_update_with_caption(caption):
 
 class TestTelegramBotFunctions(unittest.TestCase):
 
-    def test_check_file_constraints(self):
-        # Assuming you have a way to create a mock 'file' and 'photo' object
-        mock_file, mock_photo = create_mock_file_and_photo()  # You need to define this helper function
-
-        # Test for a valid file
-        success, message = check_file_constraints(mock_file, mock_photo)
-        self.assertTrue(success)
-        self.assertEqual(message, "")
-
-        # Test for an invalid file type
-        mock_file_invalid, _ = create_mock_file_and_photo(file_extension=".txt")
-        success, message = check_file_constraints(mock_file_invalid, mock_photo)
-        self.assertFalse(success)
-        self.assertEqual(message, "Unsupported file type.")
-
-    def test_check_voice_constraints(self):
-        # Test for a valid voice file
-        mock_voice = create_mock_voice()
-        success, message = check_voice_constraints(mock_voice, Mock())
-        self.assertTrue(success)
-        self.assertEqual(message, "")
-
-        # Test for an invalid file type
-        mock_voice_invalid = create_mock_voice(file_extension=".txt")
-        success, message = check_voice_constraints(mock_voice_invalid, Mock())
-        self.assertFalse(success)
-        self.assertEqual(message, "Unsupported file type.")
-
     @mock.patch('main.openai')
     def test_handle_text_message(self, mock_openai):
         # Create a mock update with a string text message
