@@ -1,48 +1,43 @@
 import unittest
-import main
-from unittest import mock
-from main import message_handler
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch
+from main import message_handler, main, TELEGRAM_BOT_TOKEN, ASSISTANT_ID
+from telegram import Update, User, Message
+from db.models.conversation import Conversation
 
-def create_mock_update(text="Test message", user_id=12345, first_name="Test", username="testuser"):
-    mock_update = Mock()
-    mock_update.message = Mock()
-    mock_update.message.text = text
-    mock_update.message.from_user = Mock()
-    mock_update.message.from_user.id = user_id
-    mock_update.message.from_user.first_name = first_name
-    mock_update.message.from_user.username = username
+class TestTelegramBot(unittest.TestCase):
 
-    return mock_update
-
-def create_mock_update_with_caption(caption):
-    mock_update = Mock()
-    mock_update.message.caption = caption
-    return mock_update
-
-class TestTelegramBotFunctions(unittest.TestCase):
-
-    @patch('main.RunsTreadsHandler.create_run')
+    @patch('main.openai', new_callable=Mock)
+    @patch('main.MessagesHandler')
+    @patch('main.Transcriptor')
+    @patch('main.RunsTreadsHandler')
     @patch('main.session_scope')
-    def test_message_handler(self, mock_session_scope, mock_create_run):
-        # Mock setup
-        mock_session = MagicMock()
-        mock_session_scope.return_value.__enter__.return_value = mock_session
-        mock_update = create_mock_update()
+    def test_message_handler_text(self, mock_session_scope, mock_runs_treads_handler, 
+                                mock_transcriptor, mock_messages_handler, mock_openai_global):
+
+        # Mock dependencies
+        mock_update = Mock(spec=Update)
         mock_context = Mock()
-        mock_conversation = Mock()
-        mock_conversation.thread_id = 'some_thread_id'
-        mock_create_conversation.return_value = mock_conversation
+        mock_session = Mock()
+        mock_session_scope.return_value.__enter__.return_value = mock_session
+        mock_user = User(123, 'TestUser', False)
+        mock_message = Message(1, mock_user, None, Mock())
+        mock_message.text = 'Hello'
+        mock_update.message = mock_message
 
-        # Ensure conversation is retrieved
-        mock_session.query().filter_by().first.return_value = mock_conversation
-
-        mock_handle_text_message.return_value = True
+        # Call the function
         message_handler(mock_update, mock_context)
 
-        # Assert the create_run call
-        mock_create_run.assert_called_once()
-        mock_create_run.assert_called_once_with('some_thread_id', mock_conversation.assistant_id, mock_update, mock_context)
+        # Assertions for MessagesHandler
+        mock_messages_handler.assert_called_once_with(
+            mock_openai_global,
+            mock_update, 
+            mock_context, 
+            mock_session.query().filter_by().first().thread_id
+        )
+
+        # Assert the correct database query
+        mock_session.query.assert_called()
+        self.assertGreaterEqual(mock_session.query().filter_by().first.call_count, 1)
 
     @patch('main.Updater')
     @patch('main.MessageHandler')
@@ -54,10 +49,10 @@ class TestTelegramBotFunctions(unittest.TestCase):
         mock_Updater.return_value = Mock(bot=mock_bot, dispatcher=mock_dispatcher, start_polling=Mock(), idle=Mock())
 
         # Run the main method
-        main.main()
+        main()
 
         # Assert Updater is called with the correct token
-        mock_Updater.assert_called_with(main.TELEGRAM_BOT_TOKEN, use_context=True)
+        mock_Updater.assert_called_with(TELEGRAM_BOT_TOKEN, use_context=True)
 
         # Assert that a MessageHandler is created
         mock_MessageHandler.assert_called()

@@ -24,8 +24,7 @@ python3 -m unittest tests.main_test
 
 
 ### Plan
-refactor code to classes
-cover with tests
+fix main test
 refactor classes to not repeat yorself
 научить робота генерировать и присылать картинки
 
