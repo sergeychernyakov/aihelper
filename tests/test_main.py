@@ -4,7 +4,7 @@ from main import message_handler, main, TELEGRAM_BOT_TOKEN, ASSISTANT_ID
 from telegram import Update, User, Message
 from db.models.conversation import Conversation
 
-class TestTelegramBot(unittest.TestCase):
+class TestMain(unittest.TestCase):
 
     @patch('main.openai', new_callable=Mock)
     @patch('main.MessagesHandler')

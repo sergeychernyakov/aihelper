@@ -20,11 +20,14 @@ pip3 install python-telegram-bot
 pip3 install sqlalchemy
 
 ### Testing
-python3 -m unittest tests.main_test
+python3 -m unittest discover -s tests
+# run one test
+python3 -m unittest tests.test_main
+
+
 
 
 ### Plan
-fix main test
 refactor classes to not repeat yorself
 научить робота генерировать и присылать картинки
 
