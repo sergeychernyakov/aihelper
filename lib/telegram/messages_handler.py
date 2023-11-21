@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
 
 class MessagesHandler:
@@ -55,12 +56,15 @@ class MessagesHandler:
             # Extract file extension
             _, file_extension = os.path.splitext(file.file_path)
 
+            # Determine the project root directory
+            project_root = Path(__file__).parent.parent.parent
+            tmp_dir_path = project_root / 'tmp' / self.thread_id
+
             # Ensure the directory exists before trying to download
-            download_dir_path = f'tmp/{self.thread_id}'
-            os.makedirs(download_dir_path, exist_ok=True)
+            os.makedirs(tmp_dir_path, exist_ok=True)
 
             # Download the file to the desired location with the extracted extension
-            download_path = f'{download_dir_path}/voice{file_extension}'
+            download_path = tmp_dir_path / f'voice{file_extension}'
             file.download(download_path)
 
             message = "Voice processed successfully"
@@ -82,12 +86,15 @@ class MessagesHandler:
             # Extract file extension
             _, file_extension = os.path.splitext(file.file_path)
 
+            # Determine the project root directory
+            project_root = Path(__file__).parent.parent.parent
+            tmp_dir_path = project_root / 'tmp' / self.thread_id
+
             # Ensure the directory exists before trying to download
-            download_dir_path = f'tmp/{self.thread_id}'
-            os.makedirs(download_dir_path, exist_ok=True)
+            os.makedirs(tmp_dir_path, exist_ok=True)
 
             # Download the file to the desired location with the extracted extension
-            download_path = f'{download_dir_path}/document{file_extension}'
+            download_path = tmp_dir_path / f'document{file_extension}'
             file.download(download_path)
 
             message = "Voice processed successfully"

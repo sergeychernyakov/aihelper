@@ -26,8 +26,8 @@ python3 -m unittest tests.test_main
 
 
 
-
 ### Plan
+fix /tmp created inside lib 
 refactor classes to not repeat yorself
 научить робота генерировать и присылать картинки
 
