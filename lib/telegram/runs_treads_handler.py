@@ -1,10 +1,10 @@
-
-
 import time
 import random
+import json
 from lib.telegram.answer import Answer
 from lib.telegram.helpers import Helpers
 from db.models.conversation import Conversation
+from lib.telegram.image import Image
 
 class RunsTreadsHandler:
     def __init__(self, openai_client, update, context, thread_id, assistant_id):
@@ -29,6 +29,9 @@ class RunsTreadsHandler:
                 run_id=run.id
             )
 
+            if run.status == 'requires_action':
+                self.submit_tool_outputs(run)
+
         messages = self.openai.beta.threads.messages.list(
             thread_id=self.thread_id
         )
@@ -44,6 +47,7 @@ class RunsTreadsHandler:
             self.answer.answer_with_text(response_text)
 
         Helpers.cleanup_folder(f'tmp/{self.thread_id}')
+        return run.id
 
     def create_thread(self, session, conversation):
         thread = self.openai.beta.threads.create()
@@ -53,3 +57,57 @@ class RunsTreadsHandler:
     def recreate_thread(self, session, conversation):
         self.openai.beta.threads.delete(conversation.thread_id)
         self.create_thread(session, conversation)
+
+    def cancel_run(self, thread_id, run_id):
+        # Check if both thread_id and run_id are present and not None
+        if thread_id and run_id:
+            try:
+                # Attempt to cancel the run
+                run = self.openai.beta.threads.runs.cancel(
+                    thread_id=thread_id,
+                    run_id=run_id
+                )
+                # Add any additional logic here if needed, e.g., logging the cancellation
+            except Exception as e:
+                # Handle exceptions, e.g., log an error message
+                print(f"Error occurred while cancelling the run: {e}")
+        else:
+            # Handle the case where thread_id or run_id is missing
+            print("Cannot cancel run: Missing thread_id or run_id.")
+
+    def submit_tool_outputs(self, run):
+        tool_outputs = []
+
+        for tool_call in run.required_action.submit_tool_outputs.tool_calls:
+            tool_call_id = tool_call.id  # Access the id attribute
+            function_name = tool_call.function.name  # Access the function name attribute
+            arguments = tool_call.function.arguments  # Access the arguments attribute
+
+            # Parse arguments if it's a JSON string
+            args = json.loads(arguments)
+
+            # Handle different function calls
+            if function_name == 'generateImage':
+                # Assuming Image class has a generateImage method
+                image = Image(self.openai)
+                image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
+                self.context.bot.send_photo(self.update.message.chat_id, image_url)
+                output = {
+                    "tool_call_id": tool_call_id,
+                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите: {revised_prompt}. Пожалуйста, не говорите что не можете генерировать изображения, не обрезайте параметры ссылки иначе ссылка не будет работать.',
+                }
+            else:
+                # Handle other function calls or throw an error
+                output = {
+                    "tool_call_id": tool_call_id,
+                    "output": '',
+                }
+
+            tool_outputs.append(output)
+
+        # Submit tool outputs back to the OpenAI API
+        self.openai.beta.threads.runs.submit_tool_outputs(
+            thread_id=self.thread_id,
+            run_id=run.id,
+            tool_outputs=tool_outputs
+        )

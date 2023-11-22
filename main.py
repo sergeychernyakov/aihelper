@@ -11,6 +11,7 @@ from db.models.conversation import Conversation
 from lib.telegram.messages_handler import MessagesHandler
 from lib.telegram.runs_treads_handler import RunsTreadsHandler
 from lib.telegram.transcriptor import Transcriptor
+from lib.telegram.helpers import Helpers
 
 load_dotenv()
 
@@ -55,6 +56,7 @@ def message_handler(update, context):
 
             message_handler = MessagesHandler(openai, update, context, conversation.thread_id)
             transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
+            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation.thread_id, conversation.assistant_id)
 
             # Handle different types of messages
             if update.message.text:
@@ -81,7 +83,6 @@ def message_handler(update, context):
                 else:
                     transcriptor.transcript_document(file)
                     successful_interaction = True
-            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation.thread_id, conversation.assistant_id)
 
             if successful_interaction:
                 runs_treads_handler.create_run()
@@ -96,6 +97,9 @@ def message_handler(update, context):
                 runs_treads_handler.create_thread(session, conversation)
             elif "Failed to index file: Unsupported file" in error_message:
                 runs_treads_handler.recreate_thread(session, conversation)
+            elif "Can't add messages to thread_" in error_message:
+                thread_id, run_id = Helpers.get_thread_id_and_run_id_from_string(error_message)
+                runs_treads_handler.cancel_run(thread_id, run_id)
             else:
                 raise
 
