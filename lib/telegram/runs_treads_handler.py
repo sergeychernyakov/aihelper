@@ -94,7 +94,7 @@ class RunsTreadsHandler:
                 self.context.bot.send_photo(self.update.message.chat_id, image_url)
                 output = {
                     "tool_call_id": tool_call_id,
-                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите: {revised_prompt}. Пожалуйста, не говорите что не можете генерировать изображения, не обрезайте параметры ссылки иначе ссылка не будет работать.',
+                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите: {revised_prompt}. Пожалуйста, не говорите что не можете генерировать изображения, используйте сслылку на изображение со всеми параметрами.',
                 }
             else:
                 # Handle other function calls or throw an error
