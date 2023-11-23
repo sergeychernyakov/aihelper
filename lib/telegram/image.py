@@ -17,9 +17,9 @@ class Image:
             if hasattr(response, 'data') and response.data:
                 return response.data[0].url, response.data[0].revised_prompt  # Accessing URL using proper object notation
             else:
-                return "No image generated"
+                return "No image generated",''
         except Exception as e:
-            return f"Error in generating image: {e}"
+            return f"Error in generating image: {e}",''
 
 # Example of usage:
 

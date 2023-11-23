@@ -1,4 +1,6 @@
 import unittest
+import io
+import json
 from unittest.mock import Mock, patch, mock_open  # Import mock_open here
 from lib.telegram.runs_treads_handler import RunsTreadsHandler
 
@@ -60,6 +62,66 @@ class TestRunsTreadsHandler(unittest.TestCase):
         self.mock_openai_client.beta.threads.delete.assert_called_once_with('existing_thread_id')
         self.mock_session.query().filter_by().update.assert_called_once()
         self.mock_session.commit.assert_called_once()
+
+    def test_cancel_run_with_valid_ids(self):
+        # Test cancel_run with valid thread_id and run_id
+        self.handler.cancel_run('valid_thread_id', 'valid_run_id')
+        # Verify if the openai client's cancel method was called correctly
+        self.mock_openai_client.beta.threads.runs.cancel.assert_called_once_with(
+            thread_id='valid_thread_id',
+            run_id='valid_run_id'
+        )
+
+    def test_cancel_run_with_invalid_ids(self):
+        with patch('sys.stdout', new=io.StringIO()) as fake_output:
+            self.handler.cancel_run(None, None)
+            self.assertIn("Cannot cancel run: Missing thread_id or run_id.", fake_output.getvalue())
+
+    def test_cancel_run_exception_handling(self):
+        with patch('sys.stdout', new=io.StringIO()) as fake_output:
+            self.mock_openai_client.beta.threads.runs.cancel.side_effect = Exception("Test Exception")
+            self.handler.cancel_run('valid_thread_id', 'valid_run_id')
+            self.assertIn("Error occurred while cancelling the run: Test Exception", fake_output.getvalue())
+
+
+    @patch('lib.telegram.runs_treads_handler.Image')
+    def test_submit_tool_outputs_with_generateImage(self, mock_image_class):
+        mock_image_instance = mock_image_class.return_value
+        mock_image_instance.generate.return_value = ('image_url', 'revised_prompt')
+
+        # Mocking a run object with tool calls
+        mock_tool_call = Mock(
+            id='tool_call_id',
+            type='function',
+            function=Mock(
+                name='generateImage',
+                arguments=json.dumps({'description': 'test description'})
+            )
+        )
+        mock_tool_call.function.name = 'generateImage'
+        mock_run = Mock(
+            id='run_id',
+            required_action=Mock(
+                submit_tool_outputs=Mock(
+                    tool_calls=[mock_tool_call]
+                )
+            )
+        )
+
+        # Executing the method
+        self.handler.submit_tool_outputs(mock_run)
+
+        # Assertions
+        mock_image_instance.generate.assert_called_once_with('test description')
+        self.mock_openai_client.beta.threads.runs.submit_tool_outputs.assert_called_once_with(
+            thread_id='thread_id',
+            run_id='run_id',
+            tool_outputs=[{
+                "tool_call_id": 'tool_call_id',
+                "output": 'image_url - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: revised_prompt.'
+            }]
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

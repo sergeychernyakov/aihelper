@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .base import Base  # Make sure this is an absolute import
 
-DATABASE_URI = 'sqlite:///aihelper.db' 
+DATABASE_URI = 'sqlite:///db/aihelper.db'
 
 engine = create_engine(DATABASE_URI, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

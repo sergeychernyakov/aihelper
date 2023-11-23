@@ -85,16 +85,16 @@ class RunsTreadsHandler:
 
             # Parse arguments if it's a JSON string
             args = json.loads(arguments)
-
             # Handle different function calls
             if function_name == 'generateImage':
                 # Assuming Image class has a generateImage method
                 image = Image(self.openai)
                 image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
-                self.context.bot.send_photo(self.update.message.chat_id, image_url)
+                
+                self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
                 output = {
                     "tool_call_id": tool_call_id,
-                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите: {revised_prompt}. Пожалуйста, не говорите что не можете генерировать изображения, используйте сслылку на изображение со всеми параметрами.',
+                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
                 }
             else:
                 # Handle other function calls or throw an error
