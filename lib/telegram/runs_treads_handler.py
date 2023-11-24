@@ -5,6 +5,7 @@ from lib.telegram.answer import Answer
 from lib.telegram.helpers import Helpers
 from db.models.conversation import Conversation
 from lib.telegram.image import Image
+from lib.telegram.email_sender import EmailSender
 
 class RunsTreadsHandler:
     def __init__(self, openai_client, update, context, thread_id, assistant_id):
@@ -87,15 +88,9 @@ class RunsTreadsHandler:
             args = json.loads(arguments)
             # Handle different function calls
             if function_name == 'generateImage':
-                # Assuming Image class has a generateImage method
-                image = Image(self.openai)
-                image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
-                
-                self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
-                output = {
-                    "tool_call_id": tool_call_id,
-                    "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
-                }
+                output = self._generate_image(tool_call_id, args)
+            elif function_name == 'sendEmail':
+                output = self._send_email(tool_call_id, args)
             else:
                 # Handle other function calls or throw an error
                 output = {
@@ -111,3 +106,25 @@ class RunsTreadsHandler:
             run_id=run.id,
             tool_outputs=tool_outputs
         )
+
+    # private
+
+    def _send_email(self, tool_call_id, args):
+        sender = EmailSender(self.openai)
+        attachment = 'attachment'
+        sender.send_email(args['email'], args['text'], attachment)
+        return {
+            "tool_call_id": tool_call_id,
+            "output": f'Письмо спешно отправлено.'
+        }
+
+    def _generate_image(self, tool_call_id, args):
+        # Assuming Image class has a generateImage method
+        image = Image(self.openai)
+        image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
+        
+        self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
+        return {
+            "tool_call_id": tool_call_id,
+            "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
+        }

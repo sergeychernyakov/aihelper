@@ -43,6 +43,8 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 
 ### Plan
+добавить действие отправить на почту
+
 научить робота присылать файлы - отвечать на файл файлом с переводом, спрашивать отправить перевод на почту? - сохранять email
 
 refactor 1 class to be more DRY
