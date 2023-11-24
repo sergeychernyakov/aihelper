@@ -109,22 +109,25 @@ class RunsTreadsHandler:
 
     # private
 
+    # Functions
     def _send_email(self, tool_call_id, args):
         sender = EmailSender(self.openai)
         attachment = 'attachment'
         sender.send_email(args['email'], args['text'], attachment)
+        self.context.bot.send_message(self.update.message.chat_id, 'Письмо успешно отправлено')
         return {
             "tool_call_id": tool_call_id,
-            "output": f'Письмо спешно отправлено.'
+            "output": f'Письмо успешно отправлено. Отвечать на сообщение не нужно.'
         }
 
     def _generate_image(self, tool_call_id, args):
         # Assuming Image class has a generateImage method
         image = Image(self.openai)
         image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
-        
+
         self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
         return {
             "tool_call_id": tool_call_id,
-            "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
+            "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Отвечать на сообщение не нужно.'
+            # "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
         }
