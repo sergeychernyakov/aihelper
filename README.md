@@ -22,6 +22,7 @@ pip3 install secure-smtplib
 python3 -m unittest discover -s tests
 # run one test
 python3 -m unittest tests.test_main
+python3 -m unittest tests/test_lib/test_telegram/test_runs_treads_handler.py
 
 
 ### Prompt

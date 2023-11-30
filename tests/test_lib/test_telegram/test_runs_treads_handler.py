@@ -1,6 +1,8 @@
 import unittest
 import io
 import json
+import shutil
+import os
 from unittest.mock import Mock, patch, mock_open  # Import mock_open here
 from lib.telegram.runs_treads_handler import RunsTreadsHandler
 
@@ -121,6 +123,14 @@ class TestRunsTreadsHandler(unittest.TestCase):
                 "output": 'image_url - эта картинка уже отправлена пользователю в чат в телеграме. Отвечать на сообщение не нужно.'
             }]
         )
+
+    def tearDown(self):
+        temp_dir_path = './tmp/thread_id'  # Ensure this is the correct path
+        if os.path.exists(temp_dir_path):
+            try:
+                shutil.rmtree(temp_dir_path)
+            except Exception as e:
+                print(f"Error deleting temporary directory {temp_dir_path}: {e}")
 
 
 if __name__ == '__main__':
