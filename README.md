@@ -56,11 +56,11 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 
 ### Plan
-refactor 1 class to be more DRY
-
 добавить /ping проверка работает ли бот
 
 сделать подсчет токенов
+
+refactor 1 class to be more DRY
 научить робота брать оплату
 поработать с языком - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках
 научить робота отвечать голосом
