@@ -97,7 +97,7 @@ class MessagesHandler:
             download_path = tmp_dir_path / f'document{file_extension}'
             file.download(download_path)
 
-            message = "Voice processed successfully"
+            message = "Document processed successfully"
             return True, message, download_path
         except Exception as e:
             raise

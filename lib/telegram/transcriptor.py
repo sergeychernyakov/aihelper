@@ -8,17 +8,21 @@ class Transcriptor:
 
     def transcript_document(self, file_path):
         try:
-            caption = self.update.message.caption or "Что в этом файле? Если в файле есть текст, переведи его на украинский язык."
+            caption = self.update.message.caption or "Что в этом (последнем) файле? Если в файле есть текст, переведи его на украинский язык."
             file = self.openai.files.create(
                 file=open(file_path, "rb"),
                 purpose='assistants'
             )
-            self.openai.beta.threads.messages.create(
+            print(caption)
+            print(file)
+            response = self.openai.beta.threads.messages.create(
                 thread_id=self.thread_id,
                 role="user",
                 content=caption,
                 file_ids=[file.id]
             )
+            print('self.openai.beta.threads.messages.create')
+            print(response)
             return True, 'File sent for transcription'
         except Exception as e:
             raise

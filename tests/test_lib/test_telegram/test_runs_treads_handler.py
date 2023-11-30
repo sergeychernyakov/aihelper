@@ -118,7 +118,7 @@ class TestRunsTreadsHandler(unittest.TestCase):
             run_id='run_id',
             tool_outputs=[{
                 "tool_call_id": 'tool_call_id',
-                "output": 'image_url - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: revised_prompt.'
+                "output": 'image_url - эта картинка уже отправлена пользователю в чат в телеграме. Отвечать на сообщение не нужно.'
             }]
         )
 

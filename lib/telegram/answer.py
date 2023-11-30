@@ -12,7 +12,7 @@ class Answer:
         self.context.bot.send_message(self.chat_id, message)
 
     def answer_with_voice(self, message):
-        voice_answer_folder = Path(__file__).parent / 'tmp' / self.thread_id
+        voice_answer_folder = Path(__file__).parent.parent.parent / 'tmp' / self.thread_id
         voice_answer_path = voice_answer_folder / "voice_answer.mp3"
 
         os.makedirs(voice_answer_folder, exist_ok=True)
