@@ -55,8 +55,9 @@ Remember, I'm here to assist with translations and to make your language learnin
   "usage": { "prompt_tokens": 5, "completion_tokens": 5, "total_tokens": 10 } }
 
     - add balance to the database
-    - get price for the current message
-    - 
+    - reduce the balance to message amount
+    - add check if balance is anought for question
+
 
 refactor 1 class to be more DRY  Transcriptor
 научить робота брать оплату

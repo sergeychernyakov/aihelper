@@ -35,7 +35,7 @@ class Tokenizer:
 
         # Adjust the formatting based on the cost
         if total_cost < 0.01:
-            return round(total_cost, 4)  # Less rounding for very small amounts
+            return round(total_cost, 5)  # Less rounding for very small amounts
         else:
             return round(total_cost, 2)  # Standard rounding for larger amounts
 

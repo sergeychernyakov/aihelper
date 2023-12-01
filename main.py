@@ -22,6 +22,25 @@ ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the en
 
 openai = OpenAI()
 
+# private
+
+######### Create conversation method #########
+def _create_conversation(session, update):
+    thread = openai.beta.threads.create()
+
+    conversation = Conversation(
+        user_id=update.message.from_user.id,
+        language_code=update.message.from_user.language_code,
+        username=update.message.from_user.username,
+        thread_id=thread.id,
+        assistant_id=ASSISTANT_ID
+    )
+
+    # Add and commit the new conversation
+    session.add(conversation)
+
+    return conversation
+
 ######### Session #########
 @contextmanager
 def session_scope():
@@ -128,22 +147,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# private
-
-######### Create conversation method #########
-def _create_conversation(session, update):
-    thread = openai.beta.threads.create()
-
-    conversation = Conversation(
-        user_id=update.message.from_user.id,
-        language_code=update.message.from_user.language_code,
-        username=update.message.from_user.username,
-        thread_id=thread.id,
-        assistant_id=ASSISTANT_ID
-    )
-
-    # Add and commit the new conversation
-    session.add(conversation)
-
-    return conversation
