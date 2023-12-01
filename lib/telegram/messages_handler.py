@@ -1,6 +1,8 @@
 import os
+import tiktoken
 from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
+from lib.telegram.tokenizer import Tokenizer
 
 class MessagesHandler:
     def __init__(self, openai_client, update, context, thread_id):
@@ -8,12 +10,15 @@ class MessagesHandler:
         self.update = update
         self.context = context
         self.thread_id = thread_id
+        self.tokenizer = Tokenizer()
 
     ######### Handlers for different types of messages #########
     def handle_text_message(self, message):
         try:
+            tokens = self.tokenizer.num_tokens_from_string(message)
+            
             # Logic to handle text messages and execute OpenAI API calls
-            self.openai.beta.threads.messages.create(
+            response = self.openai.beta.threads.messages.create(
                 thread_id=self.thread_id,
                 role="user",
                 content=message

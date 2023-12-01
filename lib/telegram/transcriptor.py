@@ -35,7 +35,8 @@ class Transcriptor:
                 messages=[
                     {"role": "user", "content": [{"type": "text", "text": caption}, {"type": "image_url", "image_url": {"url": file.file_path, "detail": "low"}}]}
                 ],
-                max_tokens=100
+                max_tokens=100,
+                temperature=1.0,
             )
             self.context.bot.send_message(
                 self.update.message.chat_id,
@@ -56,7 +57,8 @@ class Transcriptor:
             transcription = self.openai.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
-                response_format="text"
+                response_format="text",
+                temperature='1.0'
             )
             self.context.bot.send_message(
                 self.update.message.chat_id,

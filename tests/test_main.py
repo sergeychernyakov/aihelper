@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
-from main import message_handler, main, TELEGRAM_BOT_TOKEN, ASSISTANT_ID
+from main import message_handler, main, ping, TELEGRAM_BOT_TOKEN, ASSISTANT_ID
 from telegram import Update, User, Message
 from db.models.conversation import Conversation
 
@@ -63,6 +63,23 @@ class TestMain(unittest.TestCase):
         # Assert that start_polling and idle methods are called
         mock_Updater.return_value.start_polling.assert_called_once()
         mock_Updater.return_value.idle.assert_called_once() 
+
+    @patch('main.CallbackContext')
+    def test_ping(self, mock_context):
+        # Mocking the Update and User objects
+        mock_update = Mock()
+        mock_user = Mock()
+        mock_user.first_name = "TestFirstName"
+        mock_user.username = "TestUsername"
+        mock_user.id = 12345  # mock user ID
+        mock_update.message = Mock(from_user=mock_user)
+
+        # Call the ping function with the mock objects
+        ping(mock_update, mock_context)
+
+        # Assert that send_message is called with correct arguments
+        mock_context.bot.send_message.assert_called_with(mock_user.id, 'pong')
+
 
 if __name__ == '__main__':
     unittest.main()

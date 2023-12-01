@@ -1,7 +1,8 @@
 import os
 import logging
 from datetime import datetime
-from telegram.ext import Updater, MessageHandler, Filters
+from telegram import Update
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext, CommandHandler
 from openai import OpenAI
 from dotenv import load_dotenv
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ from lib.telegram.messages_handler import MessagesHandler
 from lib.telegram.runs_treads_handler import RunsTreadsHandler
 from lib.telegram.transcriptor import Transcriptor
 from lib.telegram.helpers import Helpers
+from lib.telegram.tokenizer import Tokenizer
 
 load_dotenv()
 
@@ -103,8 +105,14 @@ def message_handler(update, context):
             else:
                 raise
 
+def ping(update: Update, context: CallbackContext) -> None:
+    print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent ping.')
+    context.bot.send_message(update.message.from_user.id, 'pong')
+
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
+
+    updater.dispatcher.add_handler(CommandHandler('ping', ping))
 
     # Echo any message that is not a command
     updater.dispatcher.add_handler(MessageHandler(~Filters.command, message_handler))
