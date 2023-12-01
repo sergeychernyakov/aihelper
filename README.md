@@ -60,7 +60,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 сделать подсчет токенов
   "usage": { "prompt_tokens": 5, "completion_tokens": 5, "total_tokens": 10 } }
 
-    - add balance to the database
     - reduce the balance to message amount
     - add check if balance is anought for question
 
