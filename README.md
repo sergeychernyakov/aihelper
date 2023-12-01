@@ -14,6 +14,12 @@ pip3 install python-telegram-bot
 
 ### Database
 pip3 install sqlalchemy
+pip3 install alembic
+alembic init alembic
+
+alembic revision --autogenerate -m "Add balance column"
+alembic upgrade head
+alembic downgrade -1
 
 ### Emails sender
 pip3 install secure-smtplib
