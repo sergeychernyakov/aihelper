@@ -58,11 +58,7 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 ### Plan
 сделать подсчет токенов
-  "usage": { "prompt_tokens": 5, "completion_tokens": 5, "total_tokens": 10 } }
-
-    - reduce the balance to message amount
     - fix texts
-
 
 refactor 1 class to be more DRY  Transcriptor
 научить робота брать оплату

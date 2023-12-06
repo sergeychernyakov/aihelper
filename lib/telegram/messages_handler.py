@@ -28,7 +28,7 @@ class MessagesHandler:
 
             # Update the balance
             amount = self.tokenizer.tokens_to_money_from_string(message)
-            print(f'Conversation balance decreased by: {amount} for input text')
+            print(f'---->>> Conversation balance decreased by: {amount} for input text')
             self.conversation.balance -= amount
 
             return True, "Message processed successfully."

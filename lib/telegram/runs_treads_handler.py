@@ -7,20 +7,31 @@ from db.models.conversation import Conversation
 from lib.telegram.image import Image
 from lib.telegram.email_sender import EmailSender
 from lib.telegram.tokenizer import Tokenizer
+from datetime import datetime, timedelta
 
 class RunsTreadsHandler:
-    def __init__(self, openai_client, update, context, conversation):
+    def __init__(self, openai_client, update, context, conversation, session):
         self.openai = openai_client
         self.update = update
         self.context = context
+        self.session = session
         self.conversation = conversation
         self.thread_id = conversation.thread_id
         self.assistant_id = conversation.assistant_id
         self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
         self.tokenizer = Tokenizer()
+        self.thread_recreation_interval = timedelta(hours=1)
 
     ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
+    
+    # create thread every hour
+    
     def create_run(self):
+        if datetime.utcnow() - self.conversation.updated_at >= self.thread_recreation_interval:
+            # Recreate thread if interval has passed
+            self.recreate_thread(self.session, self.conversation)
+            self.conversation.updated_at = datetime.utcnow()  # Update the timestamp in the conversation
+
         run = self.openai.beta.threads.runs.create(
             thread_id=self.thread_id,
             assistant_id=self.assistant_id
@@ -44,7 +55,7 @@ class RunsTreadsHandler:
 
         # Update the balance
         amount =  self.tokenizer.tokens_to_money_from_string(response_text, "output")
-        print(f'Conversation balance decreased by: {amount} for output text')
+        print(f'---->>> Conversation balance decreased by: {amount} for output text')
         self.conversation.balance -= amount
 
         # Define a threshold for a short message, e.g., 100 characters
@@ -55,7 +66,7 @@ class RunsTreadsHandler:
 
             # Update the balance
             amount = self.tokenizer.tokens_to_money_to_voice(response_text)
-            print(f'Conversation balance decreased by: {amount} for output voice')
+            print(f'---->>> Conversation balance decreased by: {amount} for output voice')
             self.conversation.balance -= amount
         else:
             self.answer.answer_with_text(response_text)
@@ -65,6 +76,7 @@ class RunsTreadsHandler:
 
     def create_thread(self, session, conversation):
         thread = self.openai.beta.threads.create()
+        self.thread_id = thread.id
         session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
         session.commit()
 

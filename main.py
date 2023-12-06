@@ -77,7 +77,7 @@ def message_handler(update, context):
 
             message_handler = MessagesHandler(openai, update, context, conversation)
             transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
-            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation)
+            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
 
             # Handle different types of messages
             if update.message.text:
