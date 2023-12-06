@@ -1,8 +1,10 @@
 import unittest
 from unittest.mock import Mock, patch
-from main import message_handler, main, ping, TELEGRAM_BOT_TOKEN, ASSISTANT_ID
+from main import message_handler, main, ping, TELEGRAM_BOT_TOKEN
 from telegram import Update, User, Message
 from db.models.conversation import Conversation
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 class TestMain(unittest.TestCase):
 
@@ -11,7 +13,7 @@ class TestMain(unittest.TestCase):
     @patch('main.Transcriptor')
     @patch('main.RunsTreadsHandler')
     @patch('main.session_scope')
-    def test_message_handler_text(self, mock_session_scope, mock_runs_treads_handler, 
+    def test_message_handler_text(self, mock_session_scope, mock_runs_treads_handler,
                                 mock_transcriptor, mock_messages_handler, mock_openai_global):
 
         # Mock dependencies
@@ -24,15 +26,29 @@ class TestMain(unittest.TestCase):
         mock_message.text = 'Hello'
         mock_update.message = mock_message
 
-        # Call the function
-        message_handler(mock_update, mock_context)
+        # Mock Conversation object with a realistic updated_at and balance
+        mock_conversation = Mock(spec=Conversation)
+        mock_conversation.updated_at = datetime.utcnow() - timedelta(hours=2)
+        mock_conversation.balance = Decimal('5.0')  # Example balance
+        mock_session.query().filter_by().first.return_value = mock_conversation
+
+        # Set thread recreation interval
+        mock_runs_treads_handler.return_value.thread_recreation_interval = timedelta(hours=1)
+
+        # Mock the return value of openai.beta.threads.messages.list
+        mock_openai_global.beta.threads.messages.list.return_value = [Mock(content=[Mock(type='text', text=Mock(value='Hello'))])]
+
+        # Mock the tokenizer to return a Decimal amount
+        with patch('main.Tokenizer.calculate_thread_total_amount', return_value=Decimal('1.0')):
+            # Call the function
+            message_handler(mock_update, mock_context)
 
         # Assertions for MessagesHandler
         mock_messages_handler.assert_called_once_with(
             mock_openai_global,
-            mock_update, 
-            mock_context, 
-            mock_session.query().filter_by().first().thread_id
+            mock_update,
+            mock_context,
+            mock_conversation
         )
 
         # Assert the correct database query
@@ -79,7 +95,6 @@ class TestMain(unittest.TestCase):
 
         # Assert that send_message is called with correct arguments
         mock_context.bot.send_message.assert_called_with(mock_user.id, 'pong')
-
 
 if __name__ == '__main__':
     unittest.main()
