@@ -1,6 +1,10 @@
 import tiktoken
+from decimal import Decimal
 
 class Tokenizer:
+    MAX_OUTPUT_TOKENS = 4096
+    PROFIT_MARGIN = Decimal('0.16') # 16% profit margin
+
     # Prices within the class
     PRICES = {
         "gpt-4-1106-preview": {"input": 0.01, "output": 0.03},
@@ -12,32 +16,122 @@ class Tokenizer:
         "gpt-3.5-turbo-0613": {"input": 0.0015, "output": 0.0020},
         "gpt-3.5-turbo-16k": {"input": 0.0015, "output": 0.0020},
         "gpt-3.5-turbo-16k-0613": {"input": 0.0015, "output": 0.0020},
-        "gpt-3.5-turbo-instruct": {"input": 0.0015, "output": 0.0020}
+        "gpt-3.5-turbo-instruct": {"input": 0.0015, "output": 0.0020},
+        "tts": 0.0015,
+        "whisper": 0.006
     }
 
     def __init__(self, model="gpt-3.5-turbo"):
+        """
+        Initializes the tokenizer with a specific model.
+
+        :param model: The model to be used for tokenization.
+        """
         self.model = model
         self.encoding = tiktoken.encoding_for_model(model)
 
     def num_tokens_from_string(self, string: str) -> int:
-        """Returns the number of tokens in a text string."""
+        """
+        Returns the number of tokens in a given text string.
+
+        :param string: The text string to tokenize.
+        :return: The number of tokens in the string.
+        """
         return len(self.encoding.encode(string))
 
-    def tokens_to_money(self, tokens: int, token_type: str = "input") -> float:
-        """Calculates the cost of tokens based on the model and token type (input or output)."""
+    def tokens_to_money(self, tokens: int, token_type: str = "input") -> Decimal:
+        """
+        Calculates the cost of a given number of tokens, including a profit margin.
+
+        :param tokens: The number of tokens to calculate the cost for.
+        :param token_type: The type of tokens ('input' or 'output').
+        :return: The cost in Decimal, including the profit margin.
+        """
         if token_type not in ['input', 'output']:
             raise ValueError("token_type must be either 'input' or 'output'")
         if tokens < 0:
             raise ValueError("Number of tokens cannot be negative")
 
-        price_per_token = self.PRICES.get(self.model, {}).get(token_type, 0) / 1000
-        total_cost = tokens * price_per_token
+        price_per_token = Decimal(str(self.PRICES.get(self.model, {}).get(token_type, 0))) / Decimal('1000')
+        total_cost = Decimal(str(tokens)) * price_per_token
+
+        # Add the profit to the total cost
+        profit = total_cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = total_cost + profit
 
         # Adjust the formatting based on the cost
-        if total_cost < 0.01:
-            return round(total_cost, 5)  # Less rounding for very small amounts
+        if total_cost_with_profit < Decimal('0.01'):
+            return total_cost_with_profit.quantize(Decimal('0.000001'))  # Less rounding for very small amounts
         else:
-            return round(total_cost, 2)  # Standard rounding for larger amounts
+            return total_cost_with_profit.quantize(Decimal('0.01'))  # Standard rounding for larger amounts
+
+
+    def tokens_to_money_from_string(self, string: str, token_type: str = "input") -> Decimal:
+        """
+        Calculates the cost of tokens required for a given string, based on the model and token type.
+
+        :param string: The text string to process.
+        :param token_type: The type of tokens ('input' or 'output').
+        :return: The cost in Decimal for processing the given string.
+        """
+        # Get the number of tokens in the string
+        tokens = self.num_tokens_from_string(string)
+
+        # Use the existing method to calculate the cost
+        return self.tokens_to_money(tokens, token_type)
+
+    def tokens_to_money_to_voice(self, string: str) -> Decimal:
+        """
+        Calculates the cost of converting a given string to voice using TTS.
+
+        :param string: The text string to be converted to voice.
+        :return: The cost in Decimal for converting the text to voice.
+        """
+        tts_cost_per_1k_chars = Decimal(str(self.PRICES.get("tts", 0)))  # TTS cost per 1,000 characters
+        num_chars = len(string)
+        cost = (Decimal(num_chars) / Decimal('1000')) * tts_cost_per_1k_chars
+
+        # Add the profit to the total cost
+        profit = cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
+    def tokens_to_money_from_voice(self, seconds: int) -> Decimal:
+        """
+        Calculates the cost of transcribing voice based on duration in seconds.
+
+        :param seconds: The duration of the voice recording in seconds.
+        :return: The cost in Decimal for transcribing the voice.
+        """
+        whisper_cost_per_minute = Decimal(str(self.PRICES.get("whisper", 0)))  # Whisper cost per minute
+        minutes = Decimal(seconds) / Decimal('60')
+        cost = minutes * whisper_cost_per_minute
+
+        # Add the profit to the total cost
+        profit = cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
+    def has_sufficient_balance_for_message(self, message: str, balance: Decimal, token_type: str = "input") -> bool:
+        """
+        Checks if the user's balance is sufficient to cover the cost of the tokens for a given message,
+        considering the potential cost of output tokens if the token type is 'input'.
+
+        :param message: The message to be processed.
+        :param balance: The current balance of the user.
+        :param token_type: The type of token to consider ('input' or 'output').
+        :return: True if the balance is sufficient, False otherwise.
+        """
+        tokens_required = self.num_tokens_from_string(message)
+        cost = self.tokens_to_money(tokens_required, token_type)
+
+        if token_type == 'input':
+            output_cost = self.tokens_to_money(Tokenizer.MAX_OUTPUT_TOKENS, 'output')
+            total_cost = cost + output_cost
+        else:
+            total_cost = cost
+
+        return balance >= total_cost
 
 
 # Example Usage
@@ -46,6 +140,10 @@ class Tokenizer:
 # tokenizer = Tokenizer("gpt-4")
 # input_tokens = tokenizer.num_tokens_from_string("Hello, world!")
 # output_tokens = 500  # Assume 500 tokens for the output
+
+
+# tokenizer.tokens_to_money_from_string('hi')
+
 
 # try:
 #     input_cost = tokenizer.tokens_to_money(input_tokens)  # Defaults to 'input'

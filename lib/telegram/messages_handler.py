@@ -3,29 +3,37 @@ import tiktoken
 from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
 from lib.telegram.tokenizer import Tokenizer
+import logging
 
 class MessagesHandler:
-    def __init__(self, openai_client, update, context, thread_id):
+    def __init__(self, openai_client, update, context, conversation):
         self.openai = openai_client
         self.update = update
         self.context = context
-        self.thread_id = thread_id
+        self.conversation = conversation
+        self.thread_id = conversation.thread_id
         self.tokenizer = Tokenizer()
 
-    ######### Handlers for different types of messages #########
     def handle_text_message(self, message):
+        logger = logging.getLogger(__name__)
         try:
-            tokens = self.tokenizer.num_tokens_from_string(message)
-            
-            # Logic to handle text messages and execute OpenAI API calls
-            response = self.openai.beta.threads.messages.create(
-                thread_id=self.thread_id,
-                role="user",
-                content=message
-            )
+            # Check if the balance is sufficient
+            if not self.tokenizer.has_sufficient_balance_for_message(message, self.conversation.balance):
+                logger.info("Insufficient balance.")
+                print("Insufficient balance.")
+                return False, "Insufficient balance to process the message."
 
-            return True  # Return True on successful execution
+            # Process the message
+            self.openai.beta.threads.messages.create(thread_id=self.thread_id, role="user", content=message)
+
+            # Update the balance
+            amount = self.tokenizer.tokens_to_money_from_string(message)
+            print(f'Conversation balance decreased by: {amount} for input text')
+            self.conversation.balance -= amount
+
+            return True, "Message processed successfully."
         except Exception as e:
+            logger.error(f"Error in handle_text_message: {e}", exc_info=True)
             raise
 
     def handle_photo_message(self):

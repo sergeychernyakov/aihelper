@@ -15,11 +15,11 @@ pip3 install python-telegram-bot
 ### Database
 pip3 install sqlalchemy
 pip3 install alembic
-alembic init alembic
+python3 -m alembic init alembic
 
-alembic revision --autogenerate -m "Add balance column"
-alembic upgrade head
-alembic downgrade -1
+python3 -m alembic revision --autogenerate -m "Add balance column"
+python3 -m alembic upgrade head
+python3 -m alembic downgrade -1
 
 ### Emails sender
 pip3 install secure-smtplib
@@ -61,7 +61,7 @@ Remember, I'm here to assist with translations and to make your language learnin
   "usage": { "prompt_tokens": 5, "completion_tokens": 5, "total_tokens": 10 } }
 
     - reduce the balance to message amount
-    - add check if balance is anought for question
+    - fix texts
 
 
 refactor 1 class to be more DRY  Transcriptor

@@ -6,15 +6,18 @@ from lib.telegram.helpers import Helpers
 from db.models.conversation import Conversation
 from lib.telegram.image import Image
 from lib.telegram.email_sender import EmailSender
+from lib.telegram.tokenizer import Tokenizer
 
 class RunsTreadsHandler:
-    def __init__(self, openai_client, update, context, thread_id, assistant_id):
+    def __init__(self, openai_client, update, context, conversation):
         self.openai = openai_client
         self.update = update
         self.context = context
-        self.thread_id = thread_id
-        self.assistant_id = assistant_id
-        self.answer = Answer(openai_client, context, update.message.chat_id, thread_id)
+        self.conversation = conversation
+        self.thread_id = conversation.thread_id
+        self.assistant_id = conversation.assistant_id
+        self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
+        self.tokenizer = Tokenizer()
 
     ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
     def create_run(self):
@@ -39,11 +42,21 @@ class RunsTreadsHandler:
         response_text = messages.data[0].content[0].text.value
         print(f'AI responded: {response_text}')
 
+        # Update the balance
+        amount =  self.tokenizer.tokens_to_money_from_string(response_text, "output")
+        print(f'Conversation balance decreased by: {amount} for output text')
+        self.conversation.balance -= amount
+
         # Define a threshold for a short message, e.g., 100 characters
         short_message_threshold = 100
         # Randomly choose to respond with voice 1 out of 10 times
         if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
             self.answer.answer_with_voice(response_text)
+
+            # Update the balance
+            amount = self.tokenizer.tokens_to_money_to_voice(response_text)
+            print(f'Conversation balance decreased by: {amount} for output voice')
+            self.conversation.balance -= amount
         else:
             self.answer.answer_with_text(response_text)
 
