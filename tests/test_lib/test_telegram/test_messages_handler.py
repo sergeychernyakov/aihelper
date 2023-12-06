@@ -13,8 +13,12 @@ class TestMessagesHandler(unittest.TestCase):
         self.mock_update.message = Mock()
         self.mock_context.bot = self.mock_bot
 
+        # Mock conversation with thread_id attribute
+        self.mock_conversation = Mock()
+        self.mock_conversation.thread_id = 'thread_id'
+
         # Setup for MessagesHandler instance
-        self.handler = MessagesHandler(self.mock_openai_client, self.mock_update, self.mock_context, 'thread_id')
+        self.handler = MessagesHandler(self.mock_openai_client, self.mock_update, self.mock_context, self.mock_conversation)
 
     def test_handle_text_message(self):
         message = "Test message"

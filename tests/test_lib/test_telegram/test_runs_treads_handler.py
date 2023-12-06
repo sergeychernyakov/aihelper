@@ -5,6 +5,7 @@ import shutil
 import os
 from unittest.mock import Mock, patch, mock_open  # Import mock_open here
 from lib.telegram.runs_treads_handler import RunsTreadsHandler
+from decimal import Decimal
 
 class TestRunsTreadsHandler(unittest.TestCase):
 
@@ -14,10 +15,21 @@ class TestRunsTreadsHandler(unittest.TestCase):
         self.mock_update = Mock()
         self.mock_context = Mock()
         self.mock_session = Mock()
+
+        # Mock conversation object with required attributes
         self.mock_conversation = Mock()
+        self.mock_conversation.thread_id = 'thread_id'
+        self.mock_conversation.assistant_id = 'assistant_id'
+        self.mock_conversation.balance = Decimal('10.0')  # Assign a Decimal value to balance
 
         # Setup for RunsTreadsHandler instance
-        self.handler = RunsTreadsHandler(self.mock_openai_client, self.mock_update, self.mock_context, 'thread_id', 'assistant_id')
+        self.handler = RunsTreadsHandler(
+            self.mock_openai_client, 
+            self.mock_update, 
+            self.mock_context, 
+            self.mock_conversation, 
+            self.mock_session
+        )
 
     @patch('lib.telegram.answer.Answer')
     @patch('lib.telegram.helpers.Helpers.cleanup_folder')
