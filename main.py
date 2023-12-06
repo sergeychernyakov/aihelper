@@ -14,6 +14,7 @@ from lib.telegram.runs_treads_handler import RunsTreadsHandler
 from lib.telegram.transcriptor import Transcriptor
 from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
+from datetime import datetime
 
 load_dotenv()
 
@@ -75,9 +76,13 @@ def message_handler(update, context):
                 assistant_id=ASSISTANT_ID
             ).first() or _create_conversation(session, update)
 
+            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
+            if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
+                # Recreate thread if interval has passed
+                runs_treads_handler.recreate_thread(session, conversation)
+
             message_handler = MessagesHandler(openai, update, context, conversation)
             transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
-            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
 
             # Handle different types of messages
             if update.message.text:
@@ -106,6 +111,19 @@ def message_handler(update, context):
                     successful_interaction = True
 
             if successful_interaction:
+                tokenizer = Tokenizer()
+                # Update the balance
+                messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id)
+                amount = tokenizer.calculate_thread_total_amount(messages)
+                # Check if the balance is sufficient
+                if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
+                    print("Insufficient balance.")
+                    context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                    return False
+
+                print(f'---->>> Conversation balance decreased by: ${amount} for input text')
+                conversation.balance -= amount
+
                 runs_treads_handler.create_run()
                 # Update the conversation's timestamp after a successful interaction
                 conversation.updated_at = datetime.utcnow()

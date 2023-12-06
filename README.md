@@ -55,20 +55,21 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 
-
 ### Plan
-сделать подсчет токенов
-    - fix texts
+  сделать подсчет токенов
+    - fix tests
+    - count images recognition and decrease amount
+    - count voice messages and decrease amount
+    - count files and decrease amount
+    - delete files from thread after processing
+    - count images creation and decrease amount
+    - create function finish conversation - delete current thread
 
 refactor 1 class to be more DRY  Transcriptor
 научить робота брать оплату
 
 поработать с языком - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках
-научить робота отвечать голосом
-научить робота прикреплять файлы
-научить робота отправлять письмо с вложением на почту
-
-
+научить робота отвечать голосом - создать функцию
 
 отвечать на /start описанием того что может робот, показать ролик
 Контакты:

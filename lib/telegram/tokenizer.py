@@ -133,6 +133,42 @@ class Tokenizer:
 
         return balance >= total_cost
 
+    def has_sufficient_balance_for_amount(self, amount: Decimal, balance: Decimal) -> bool:
+        """
+        Checks if the user's balance is sufficient to cover a specified amount.
+
+        :param amount: The amount to be covered.
+        :param balance: The current balance of the user.
+        :return: True if the balance is sufficient, False otherwise.
+        """
+        return balance >= amount
+
+    def calculate_thread_tokens(self, messages):
+        """
+        Calculates the total number of tokens in a list of messages from thread.
+
+        :param messages: A list of messages from a conversation.
+        :return: The total number of tokens in the messages.
+        """
+        total_tokens = 0
+        for message in messages:
+            if message.content and message.content[0].type == 'text':
+                text = message.content[0].text.value
+                total_tokens += self.num_tokens_from_string(text)
+
+        return total_tokens
+
+    def calculate_thread_total_amount(self, messages):
+        """
+        Calculates the total cost for a list of messages.
+
+        :param messages: A list of messages from a conversation.
+        :param token_type: The type of tokens ('input' or 'output').
+        :return: The total cost in Decimal for processing the messages.
+        """
+        total_tokens = self.calculate_thread_tokens(messages)
+        return self.tokens_to_money(total_tokens, 'input')
+
 
 # Example Usage
 # python3

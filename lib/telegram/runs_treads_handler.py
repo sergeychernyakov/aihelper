@@ -7,7 +7,7 @@ from db.models.conversation import Conversation
 from lib.telegram.image import Image
 from lib.telegram.email_sender import EmailSender
 from lib.telegram.tokenizer import Tokenizer
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 class RunsTreadsHandler:
     def __init__(self, openai_client, update, context, conversation, session):
@@ -23,15 +23,7 @@ class RunsTreadsHandler:
         self.thread_recreation_interval = timedelta(hours=1)
 
     ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
-    
-    # create thread every hour
-    
     def create_run(self):
-        if datetime.utcnow() - self.conversation.updated_at >= self.thread_recreation_interval:
-            # Recreate thread if interval has passed
-            self.recreate_thread(self.session, self.conversation)
-            self.conversation.updated_at = datetime.utcnow()  # Update the timestamp in the conversation
-
         run = self.openai.beta.threads.runs.create(
             thread_id=self.thread_id,
             assistant_id=self.assistant_id
