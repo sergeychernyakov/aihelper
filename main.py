@@ -15,6 +15,8 @@ from lib.telegram.transcriptor import Transcriptor
 from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
 from datetime import datetime
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
 
 load_dotenv()
 
@@ -22,6 +24,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ASSISTANT_ID = os.getenv('URT_ASSISTANT_ID')  # Use the assistant id from the environment variable
 
 openai = OpenAI()
+
+# Suppress only the single InsecureRequestWarning from urllib3
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 # private
 
@@ -82,7 +87,7 @@ def message_handler(update, context):
                 runs_treads_handler.recreate_thread(session, conversation)
 
             message_handler = MessagesHandler(openai, update, context, conversation)
-            transcriptor = Transcriptor(openai, update, context, conversation.thread_id, conversation.assistant_id)
+            transcriptor = Transcriptor(openai, update, context, conversation)
 
             # Handle different types of messages
             if update.message.text:
@@ -103,24 +108,26 @@ def message_handler(update, context):
                     transcriptor.transcript_voice(file)
                     successful_interaction = True
             elif update.message.document:
-                success, message, file =  message_handler.handle_document_message()
+                success, message, file, amount =  message_handler.handle_document_message()
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcriptor.transcript_document(file)
+                    transcriptor.transcript_document(file, amount)
                     successful_interaction = True
 
             if successful_interaction:
+
                 tokenizer = Tokenizer()
-                # Update the balance
                 messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id)
                 amount = tokenizer.calculate_thread_total_amount(messages)
+                print(messages)
                 # Check if the balance is sufficient
                 if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
                     print("Insufficient balance.")
                     context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
                     return False
 
+                # Update the balance
                 print(f'---->>> Conversation balance decreased by: ${amount} for input text')
                 conversation.balance -= amount
 

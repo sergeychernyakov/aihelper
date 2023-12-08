@@ -18,7 +18,8 @@ class Tokenizer:
         "gpt-3.5-turbo-16k-0613": {"input": 0.0015, "output": 0.0020},
         "gpt-3.5-turbo-instruct": {"input": 0.0015, "output": 0.0020},
         "tts": 0.0015,
-        "whisper": 0.006
+        "whisper": 0.006,
+        "retrieval": 0.2
     }
 
     def __init__(self, model="gpt-3.5-turbo"):
@@ -65,7 +66,6 @@ class Tokenizer:
         else:
             return total_cost_with_profit.quantize(Decimal('0.01'))  # Standard rounding for larger amounts
 
-
     def tokens_to_money_from_string(self, string: str, token_type: str = "input") -> Decimal:
         """
         Calculates the cost of tokens required for a given string, based on the model and token type.
@@ -110,6 +110,30 @@ class Tokenizer:
         # Add the profit to the total cost
         profit = cost * Tokenizer.PROFIT_MARGIN
         total_cost_with_profit = cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
+    def tokens_to_money_from_document(self, file_size: int) -> Decimal:
+        """
+        Calculates the cost of processing a document based on its file size.
+
+        :param file_size: The file size in bytes.
+        :return: The cost in Decimal for processing the document.
+        """
+        retrieval_cost_per_gb = Decimal('0.20')  # Cost per GB
+        bytes_per_gb = Decimal('1e9')  # Number of bytes in a GB
+        minimum_cost = Decimal('0.001')  # Minimum cost for document processing
+
+        # Convert file size to GB and calculate cost
+        cost = (Decimal(file_size) / bytes_per_gb) * retrieval_cost_per_gb
+
+        # Add the profit to the total cost
+        profit = cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = cost + profit
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < minimum_cost:
+            total_cost_with_profit = minimum_cost
+
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
     def has_sufficient_balance_for_message(self, message: str, balance: Decimal, token_type: str = "input") -> bool:

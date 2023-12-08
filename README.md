@@ -57,15 +57,15 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 ### Plan
   сделать подсчет токенов
-    - fix tests
+    + count files and decrease amount
+    - delete files from thread after processing
+   - fix tests
+
     - count images recognition and decrease amount
     - count voice messages and decrease amount
-    - count files and decrease amount
-    - delete files from thread after processing
     - count images creation and decrease amount
     - create function finish conversation - delete current thread
 
-refactor 1 class to be more DRY  Transcriptor
 научить робота брать оплату
 
 поработать с языком - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках

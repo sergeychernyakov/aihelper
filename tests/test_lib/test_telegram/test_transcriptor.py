@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch, mock_open
 from lib.telegram.transcriptor import Transcriptor
+from decimal import Decimal
 
 class TestTranscriptor(unittest.TestCase):
 
@@ -13,13 +14,20 @@ class TestTranscriptor(unittest.TestCase):
         self.mock_update.message = Mock(caption=None, chat_id='chat_id')
         self.mock_context.bot = self.mock_bot
 
+        # Mock conversation object with required attributes
+        self.mock_conversation = Mock()
+        self.mock_conversation.thread_id = 'thread_id'
+        self.mock_conversation.assistant_id = 'assistant_id'
+        self.mock_conversation.balance = Decimal('5.0')  # Example balance
+
         # Setup for Transcriptor instance
-        self.transcriptor = Transcriptor(self.mock_openai_client, self.mock_update, self.mock_context, 'thread_id', 'assistant_id')
+        self.transcriptor = Transcriptor(self.mock_openai_client, self.mock_update, self.mock_context, self.mock_conversation)
 
     @patch('builtins.open', new_callable=mock_open)
     def test_transcript_document(self, mock_file):
         file_path = "path/to/document"
-        self.transcriptor.transcript_document(file_path)
+        mock_amount = Decimal('1.0')  # Mock amount
+        self.transcriptor.transcript_document(file_path, mock_amount)
 
         mock_file.assert_called_once_with(file_path, "rb")
         self.mock_openai_client.files.create.assert_called_once()

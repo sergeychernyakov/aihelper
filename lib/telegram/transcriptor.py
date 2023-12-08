@@ -1,35 +1,80 @@
+from lib.telegram.tokenizer import Tokenizer
+from decimal import Decimal
 class Transcriptor:
-    def __init__(self, openai_client, update, context, thread_id, assistant_id):
+    """
+    The Transcriptor class handles the transcription of different types of media (documents, images, and voice recordings)
+    sent through a Telegram bot. It utilizes the OpenAI API to process these media files and generates responses
+    that are sent back to the user via the Telegram bot. It also manages the creation of messages in an OpenAI thread
+    corresponding to the user's requests.
+    """
+    def __init__(self, openai_client, update, context, conversation):
+        """
+        Initialize the Transcriptor class.
+
+        :param openai_client: OpenAI client instance for API calls.
+        :param update: Telegram update object containing message details.
+        :param context: Telegram context object for the bot.
+        :param thread_id: Thread ID for the OpenAI conversation.
+        :param assistant_id: Assistant ID for the OpenAI conversation.
+        """
         self.openai = openai_client
         self.update = update
         self.context = context
-        self.thread_id = thread_id
-        self.assistant_id = assistant_id
+        self.conversation = conversation
+        self.thread_id = conversation.thread_id
+        self.assistant_id = conversation.assistant_id
+        self.tokenizer = Tokenizer()
 
-    def transcript_document(self, file_path):
+    def __send_message(self, content):
+        """
+        Send a message to the Telegram chat.
+
+        :param content: The content of the message to be sent.
+        """
+        self.context.bot.send_message(self.update.message.chat_id, content)
+
+    def __create_thread_message(self, content, file_ids=None):
+        """
+        Create a message in the OpenAI thread.
+
+        :param content: The content of the message to be created in the thread.
+        :param file_ids: List of file IDs to be attached to the message (optional).
+        """
+        return self.openai.beta.threads.messages.create(
+            thread_id=self.thread_id,
+            role="user",
+            content=content,
+            file_ids=file_ids if file_ids else []
+        )
+
+    def transcript_document(self, file_path: str, amount: Decimal):
+        """
+        Transcribe a document file and create a corresponding thread message.
+
+        :param file_path: Path to the document file.
+        :return: Tuple (Boolean, Message) indicating success and response message.
+        """
         try:
-            caption = self.update.message.caption or "Что в этом (последнем) файле? Если в файле есть текст, переведи его на украинский язык."
-            file = self.openai.files.create(
-                file=open(file_path, "rb"),
-                purpose='assistants'
-            )
-            print(caption)
-            print(file)
-            response = self.openai.beta.threads.messages.create(
-                thread_id=self.thread_id,
-                role="user",
-                content=caption,
-                file_ids=[file.id]
-            )
-            print('self.openai.beta.threads.messages.create')
-            print(response)
+            caption = self.update.message.caption or "Describe this document. If it contains text, translate it to Ukrainian."
+            file = self.openai.files.create(file=open(file_path, "rb"), purpose='assistants')
+
+            print(f'---->>> Conversation balance decreased by: ${amount} for input document')
+            self.conversation.balance -= amount
+
+            self.__create_thread_message(caption, file_ids=[file.id])
             return True, 'File sent for transcription'
         except Exception as e:
             raise
 
     def transcript_image(self, file):
+        """
+        Transcribe an image file and create a corresponding thread message.
+
+        :param file: Telegram file object for the image.
+        :return: Tuple (Boolean, Message) indicating success and response message.
+        """
         try:
-            caption = self.update.message.caption or "Что на этой картинке? Если на картинке есть текст - выведи его."
+            caption = self.update.message.caption or "What's in this image? If there's text, extract it."
             response = self.openai.chat.completions.create(
                 model="gpt-4-vision-preview",
                 messages=[
@@ -38,20 +83,20 @@ class Transcriptor:
                 max_tokens=100,
                 temperature=1.0,
             )
-            self.context.bot.send_message(
-                self.update.message.chat_id,
-                response.choices[0].message.content
-            )
 
-            self.openai.beta.threads.messages.create(
-                thread_id=self.thread_id,
-                role="user",
-                content='Переведи на украинский текст: ' + response.choices[0].message.content
-            )
+            self.__send_message(response.choices[0].message.content)
+            self.__create_thread_message('Translate to Ukrainian: ' + response.choices[0].message.content)
+            return True, 'Image processed successfully'
         except Exception as e:
             raise
 
     def transcript_voice(self, file_path):
+        """
+        Transcribe a voice file and create a corresponding thread message.
+
+        :param file_path: Path to the voice file.
+        :return: Tuple (Boolean, Message) indicating success and response message.
+        """
         try:
             audio_file = open(file_path, "rb")
             transcription = self.openai.audio.transcriptions.create(
@@ -60,15 +105,36 @@ class Transcriptor:
                 response_format="text",
                 temperature='1.0'
             )
-            self.context.bot.send_message(
-                self.update.message.chat_id,
-                transcription
-            )
 
-            self.openai.beta.threads.messages.create(
-                thread_id=self.thread_id,
-                role="user",
-                content='Переведи на украинский текст: ' + transcription
-            )
+            self.__send_message(transcription)
+            self.__create_thread_message('Translate to Ukrainian: ' + transcription)
+            return True, 'Voice processed successfully'
         except Exception as e:
             raise
+
+
+# Example of usage
+
+# # Initialize necessary components
+# openai_client = get_openai_client()
+# update = get_telegram_update()
+# context = get_telegram_context()
+# thread_id = "your_thread_id"  # Replace with actual thread ID
+# assistant_id = "your_assistant_id"  # Replace with actual assistant ID
+
+# # Create an instance of Transcriptor
+# transcriptor = Transcriptor(openai_client, update, context, )
+
+# # Example usage scenarios
+# # Scenario 1: Transcribing a document
+# file_path = "/path/to/document.pdf"  # Replace with actual file path
+# success, message = transcriptor.transcript_document(file_path)
+# print(f"Transcription success: {success}, Message: {message}")
+
+# # Scenario 2: Transcribing an image
+# image_file = update.message.photo[-1]  # Assuming the last photo in the array is the one you want to transcribe
+# transcriptor.transcript_image(image_file)
+
+# # Scenario 3: Transcribing a voice message
+# voice_file_path = "/path/to/voice_message.ogg"  # Replace with actual voice file path
+# transcriptor.transcript_voice(voice_file_path)

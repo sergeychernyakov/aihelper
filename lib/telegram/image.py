@@ -12,7 +12,6 @@ class Image:
                 n=1,
                 size="1024x1024"
             )
-            print(response)
             # Check if the response has the expected attributes
             if hasattr(response, 'data') and response.data:
                 return response.data[0].url, response.data[0].revised_prompt  # Accessing URL using proper object notation
