@@ -116,9 +116,8 @@ def message_handler(update, context):
                     successful_interaction = True
 
             if successful_interaction:
-
                 tokenizer = Tokenizer()
-                messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id)
+                messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id, limit=100)
                 amount = tokenizer.calculate_thread_total_amount(messages)
                 print(messages)
                 # Check if the balance is sufficient
@@ -130,6 +129,8 @@ def message_handler(update, context):
                 # Update the balance
                 print(f'---->>> Conversation balance decreased by: ${amount} for input text')
                 conversation.balance -= amount
+
+                return False
 
                 runs_treads_handler.create_run()
                 # Update the conversation's timestamp after a successful interaction

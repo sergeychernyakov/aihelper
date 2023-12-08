@@ -57,6 +57,11 @@ class Transcriptor:
         try:
             caption = self.update.message.caption or "Describe this document. If it contains text, translate it to Ukrainian."
             file = self.openai.files.create(file=open(file_path, "rb"), purpose='assistants')
+            content = self.openai.files.retrieve_content(file.id).decode('utf-8')
+            print(file.content.decode('utf-8'))
+            return False
+            file_content = self.openai.files.retrieve(file).content.decode('utf-8')
+            print(file_content)
 
             print(f'---->>> Conversation balance decreased by: ${amount} for input document')
             self.conversation.balance -= amount
@@ -123,7 +128,7 @@ class Transcriptor:
 # assistant_id = "your_assistant_id"  # Replace with actual assistant ID
 
 # # Create an instance of Transcriptor
-# transcriptor = Transcriptor(openai_client, update, context, )
+# transcriptor = Transcriptor(openai_client, update, context, conversation)
 
 # # Example usage scenarios
 # # Scenario 1: Transcribing a document
