@@ -82,13 +82,6 @@ class MessagesHandler:
             if not success:
                 return False, message, None
 
-            # Check if the balance is sufficient
-            amount = self.tokenizer.tokens_to_money_from_document(file.file_size)
-            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = f'Insufficient balance to process the document (${self.conversation.balance})'
-                print(message)
-                return False, message, None
-
             # Extract file extension
             _, file_extension = os.path.splitext(file.file_path)
 
@@ -104,6 +97,6 @@ class MessagesHandler:
             file.download(download_path)
 
             message = "Document processed successfully"
-            return True, message, download_path, amount
+            return True, message, download_path
         except Exception as e:
             raise

@@ -1,10 +1,38 @@
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class Assistant:
-    def __init__(self, openai_client, assistant_id):
-        self.openai = openai_client
-        self.assistant_id = assistant_id
+    def __init__(self, openai_client=None, assistant_id=None):
+        """
+        Initializes the Assistant class with an OpenAI client and an assistant ID.
+        If not provided, it initializes the OpenAI client and fetches the assistant ID from environment variables.
+        """
+        self.openai = openai_client if openai_client else OpenAI()
+        self.assistant_id = assistant_id if assistant_id else os.getenv('URT_ASSISTANT_ID')
+
+        if not self.assistant_id:
+            raise ValueError("Assistant ID is not provided and not found in environment variables.")
+
+    def get_openai_client(self):
+        """
+        Returns the OpenAI client instance.
+        """
+        return self.openai
+
+    def get_assistant_id(self):
+        """
+        Returns the Assistant ID.
+        """
+        return self.assistant_id
 
     def add_function_to_assistant(self, name, description, instructions, properties=[], required=[]):
+        """
+        Adds a function to the assistant with the specified details.
+        """
         self.openai.beta.assistants.update(
             self.assistant_id,
             instructions=instructions,
@@ -23,6 +51,17 @@ class Assistant:
             }]
         )
 
+    def prompt(self):
+        """
+        Retrieves the current assistant's instructions.
+        """
+        assistant_details = self.openai.beta.assistants.retrieve(self.assistant_id)
+        if hasattr(assistant_details, 'instructions'):
+            return assistant_details.instructions
+        else:
+            raise AttributeError("Assistant object does not have 'instructions' attribute")
+
+
 # Example of usage:
 # import os
 # from openai import OpenAI
@@ -31,7 +70,7 @@ class Assistant:
 
 # load_dotenv()
 # openai = OpenAI()
-# assistant = Assistant(openai, os.getenv('URT_ASSISTANT_ID'))
+# assistant = Assistant()
 
 # properties = { "description": {"type": "string", "description": "Image description (prompt) for dall-e-3."}}
 # assistant.add_function_to_assistant('generateImage', 'Generate image', 'Now you are able to generate image with that function. Use the provided functions to generate image.', properties, ['description'])

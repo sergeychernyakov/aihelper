@@ -1,5 +1,6 @@
 import tiktoken
 from decimal import Decimal
+from lib.telegram.assistant import Assistant
 
 class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096
@@ -182,17 +183,23 @@ class Tokenizer:
 
         return total_tokens
 
+    def calculate_assistant_prompt_tokens(self):
+        assistant = Assistant()
+        prompt_text = assistant.prompt()
+        if prompt_text:
+            return self.num_tokens_from_string(prompt_text)
+        else:
+            return 0
+
     def calculate_thread_total_amount(self, messages):
-        """
-        Calculates the total cost for a list of messages.
-
-        :param messages: A list of messages from a conversation.
-        :param token_type: The type of tokens ('input' or 'output').
-        :return: The total cost in Decimal for processing the messages.
-        """
-        total_tokens = self.calculate_thread_tokens(messages)
-        return self.tokens_to_money(total_tokens, 'input')
-
+        messages_tokens = self.calculate_thread_tokens(messages)
+        prompt_tokens = self.calculate_assistant_prompt_tokens()        
+        if prompt_tokens is not None:
+            return self.tokens_to_money(messages_tokens + prompt_tokens, 'input')
+        else:
+            # Handle the case where prompt_tokens is None
+            # Perhaps return a default value or raise an error
+            return self.tokens_to_money(messages_tokens, 'input')
 
 # Example Usage
 # python3

@@ -1,13 +1,12 @@
 import os
 import docx
 from bs4 import BeautifulSoup
-from PyPDF2 import PdfReader
 from pptx import Presentation
 from textract import process
 from striprtf.striprtf import rtf_to_text
 import zipfile
+import tarfile
 import shutil
-import subprocess
 import pdfplumber
 
 class TextExtractor:
@@ -43,17 +42,14 @@ class TextExtractor:
                 return TextExtractor._extract_from_doc(file_path)
             elif ext == '.rtf':
                 return TextExtractor._extract_from_rtf(file_path)
-            elif ext == '.pages':
-                return TextExtractor._extract_from_pages(file_path)
             elif ext == '.rtfd':
                 return TextExtractor._extract_from_rtfd(file_path)
             elif ext == '.tar':
-                return "Tar file extraction not implemented"
+                return TextExtractor._extract_from_tar(file_path)
             elif ext == '.zip':
-                return "Zip file extraction not implemented"
+                return TextExtractor._extract_from_zip(file_path)
         else:
             return "Unsupported file format"
-
     @staticmethod
     def _read_plain_text(file_path):
         """
@@ -205,6 +201,61 @@ class TextExtractor:
             # Clean up the temporary directory
             shutil.rmtree(temp_dir, ignore_errors=True)
 
+    @staticmethod
+    def _extract_from_tar(file_path):
+        temp_dir = os.path.join('tmp', 'tar_extraction')
+        extracted_text = []
+
+        try:
+            os.makedirs(temp_dir, exist_ok=True)
+            with tarfile.open(file_path, 'r:*') as tar:
+                tar.extractall(temp_dir)
+            
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    if file.startswith('.') or '__MACOSX' in root:
+                        # Skip hidden files and macOS specific metadata files
+                        continue
+
+                    file_path_within_tar = os.path.join(root, file)
+                    ext = os.path.splitext(file_path_within_tar)[1].lower()
+                    if ext in TextExtractor.ALLOWED_FILE_EXTENSIONS:
+                        extracted_text.append(TextExtractor.extract_text(file_path_within_tar))
+
+            return '\n'.join(extracted_text)
+        except Exception as e:
+            return f"Error extracting text from .tar: {e}"
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    @staticmethod
+    def _extract_from_zip(file_path):
+        temp_dir = os.path.join('tmp', 'zip_extraction')
+        extracted_text = []
+
+        try:
+            os.makedirs(temp_dir, exist_ok=True)
+            with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    if '__MACOSX' in root or file.startswith('.'):
+                        # Skip metadata files and hidden files
+                        continue
+
+                    file_path_within_zip = os.path.join(root, file)
+                    ext = os.path.splitext(file_path_within_zip)[1].lower()
+                    if ext in TextExtractor.ALLOWED_FILE_EXTENSIONS:
+                        file_text = TextExtractor.extract_text(file_path_within_zip)
+                        if file_text:
+                            extracted_text.append(file_text)
+
+            return '\n'.join(extracted_text)
+        except Exception as e:
+            return f"Error extracting text from .zip: {e}"
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 # Example usage:
 # Suppose you have a document in one of the supported formats (e.g., 'document.docx').
@@ -224,17 +275,12 @@ class TextExtractor:
 # 'tmp/document.doc',
 # 'tmp/document.rtfd',
 # 'tmp/document.rtf',
-# # 'tmp/document.tar',  # Assuming tar and zip extraction not implemented yet
-# # 'tmp/document.zip'
-# ]
-
-
-# file_paths = [
-# 'tmp/document.pdf',
+# 'tmp/document.tar',
+# 'tmp/document.zip',
 # ]
 
 # # # Loop through each file path, extract text, and print it
 # for file_path in file_paths:
 #     print(f"\nExtracting text from {file_path}:")
 #     extracted_text = TextExtractor.extract_text(file_path)
-#     print(extracted_text)
+#     print(extracted_text[:1000])

@@ -23,15 +23,18 @@ class TestTranscriptor(unittest.TestCase):
         # Setup for Transcriptor instance
         self.transcriptor = Transcriptor(self.mock_openai_client, self.mock_update, self.mock_context, self.mock_conversation)
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_transcript_document(self, mock_file):
-        file_path = "path/to/document"
-        mock_amount = Decimal('1.0')  # Mock amount
-        self.transcriptor.transcript_document(file_path, mock_amount)
 
-        mock_file.assert_called_once_with(file_path, "rb")
-        self.mock_openai_client.files.create.assert_called_once()
+    @patch('lib.telegram.text_extractor.TextExtractor.extract_text')
+    def test_transcript_document(self, mock_extract_text):
+        file_path = "path/to/document"
+        mock_extract_text.return_value = "Mocked extracted text"
+
+        success = self.transcriptor.transcript_document(file_path)
+
+        mock_extract_text.assert_called_once_with(file_path)
+        self.assertTrue(success)
         self.mock_openai_client.beta.threads.messages.create.assert_called_once()
+
 
     def test_transcript_image(self):
         file = Mock(file_path="path/to/image")

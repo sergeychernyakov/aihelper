@@ -1,4 +1,5 @@
 from lib.telegram.tokenizer import Tokenizer
+from lib.telegram.text_extractor import TextExtractor
 from decimal import Decimal
 class Transcriptor:
     """
@@ -47,7 +48,7 @@ class Transcriptor:
             file_ids=file_ids if file_ids else []
         )
 
-    def transcript_document(self, file_path: str, amount: Decimal):
+    def transcript_document(self, file_path: str):
         """
         Transcribe a document file and create a corresponding thread message.
 
@@ -55,19 +56,10 @@ class Transcriptor:
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
         try:
-            caption = self.update.message.caption or "Describe this document. If it contains text, translate it to Ukrainian."
-            file = self.openai.files.create(file=open(file_path, "rb"), purpose='assistants')
-            content = self.openai.files.retrieve_content(file.id).decode('utf-8')
-            print(file.content.decode('utf-8'))
-            return False
-            file_content = self.openai.files.retrieve(file).content.decode('utf-8')
-            print(file_content)
-
-            print(f'---->>> Conversation balance decreased by: ${amount} for input document')
-            self.conversation.balance -= amount
-
-            self.__create_thread_message(caption, file_ids=[file.id])
-            return True, 'File sent for transcription'
+            extracted_text = TextExtractor.extract_text(file_path)
+            caption = self.update.message.caption or "Translate the text to Ukrainian: "
+            self.__create_thread_message(f'{caption}: {extracted_text}')
+            return True
         except Exception as e:
             raise
 
@@ -103,19 +95,19 @@ class Transcriptor:
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
         try:
-            audio_file = open(file_path, "rb")
-            transcription = self.openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file,
-                response_format="text",
-                temperature='1.0'
-            )
+            with open(file_path, "rb") as audio_file:
+                transcription = self.openai.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    response_format="text",
+                    temperature='1.0'
+                )
 
-            self.__send_message(transcription)
-            self.__create_thread_message('Translate to Ukrainian: ' + transcription)
+                self.__send_message(transcription)
+                self.__create_thread_message('Translate to Ukrainian: ' + transcription)
             return True, 'Voice processed successfully'
         except Exception as e:
-            raise
+            return False, f"Failed to transcribe document: {e}"
 
 
 # Example of usage
