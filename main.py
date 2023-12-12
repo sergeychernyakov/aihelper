@@ -102,15 +102,13 @@ def message_handler(update, context):
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcriptor.transcript_image(file)
-                    successful_interaction = True
+                    successful_interaction = transcriptor.transcript_image(file)
             elif update.message.voice:
-                success, message, file =  message_handler.handle_voice_message()
+                success, message, file, amount =  message_handler.handle_voice_message()
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcriptor.transcript_voice(file)
-                    successful_interaction = True
+                    successful_interaction = transcriptor.transcript_voice(file, amount)
             elif update.message.document:
                 success, message, file = message_handler.handle_document_message()
                 if not success:

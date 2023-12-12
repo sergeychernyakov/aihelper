@@ -5,11 +5,12 @@ from lib.telegram.assistant import Assistant
 class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096
     PROFIT_MARGIN = Decimal('0.16') # 16% profit margin
+    MINIMUM_COST = Decimal('0.001')
 
     # Prices within the class
     PRICES = {
         "gpt-4-1106-preview": {"input": 0.01, "output": 0.03},
-        "gpt-4-1106-vision-preview": {"input": 0.01, "output": 0.03},
+        "gpt-4-1106-vision-preview": {"input": 0.01, "output": 0.03, "image": 0.00085},
         "gpt-4": {"input": 0.03, "output": 0.06},
         "gpt-4-32k": {"input": 0.06, "output": 0.12},
         "gpt-3.5-turbo": {"input": 0.0010, "output": 0.0020},
@@ -81,21 +82,27 @@ class Tokenizer:
         # Use the existing method to calculate the cost
         return self.tokens_to_money(tokens, token_type)
 
-    def tokens_to_money_to_voice(self, string: str) -> Decimal:
+    def tokens_to_money_from_voice(self, seconds: int) -> Decimal:
         """
-        Calculates the cost of converting a given string to voice using TTS.
+        Calculates the cost of transcribing voice based on duration in seconds.
 
-        :param string: The text string to be converted to voice.
-        :return: The cost in Decimal for converting the text to voice.
+        :param seconds: The duration of the voice recording in seconds.
+        :return: The cost in Decimal for transcribing the voice.
         """
-        tts_cost_per_1k_chars = Decimal(str(self.PRICES.get("tts", 0)))  # TTS cost per 1,000 characters
-        num_chars = len(string)
-        cost = (Decimal(num_chars) / Decimal('1000')) * tts_cost_per_1k_chars
+        whisper_cost_per_minute = Decimal(str(self.PRICES.get("whisper", 0)))  # Whisper cost per minute
+        minutes = Decimal(seconds) / Decimal('60')
+        cost = minutes * whisper_cost_per_minute
 
         # Add the profit to the total cost
         profit = cost * Tokenizer.PROFIT_MARGIN
         total_cost_with_profit = cost + profit
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
+            total_cost_with_profit = Tokenizer.MINIMUM_COST
+
         return total_cost_with_profit.quantize(Decimal('0.000001'))
+
 
     def tokens_to_money_from_voice(self, seconds: int) -> Decimal:
         """
@@ -113,6 +120,19 @@ class Tokenizer:
         total_cost_with_profit = cost + profit
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
+    def tokens_to_money_from_image(self) -> Decimal:
+        """
+        Calculates the cost of processing an image using the specified model.
+
+        :return: The cost in Decimal for processing the image.
+        """
+        image_cost = Decimal(str(self.PRICES.get("gpt-4-1106-vision-preview", {}).get("image", 0)))
+
+        # Add the profit to the total cost
+        profit = image_cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = image_cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
     def tokens_to_money_from_document(self, file_size: int) -> Decimal:
         """
         Calculates the cost of processing a document based on its file size.
@@ -122,7 +142,6 @@ class Tokenizer:
         """
         retrieval_cost_per_gb = Decimal('0.20')  # Cost per GB
         bytes_per_gb = Decimal('1e9')  # Number of bytes in a GB
-        minimum_cost = Decimal('0.001')  # Minimum cost for document processing
 
         # Convert file size to GB and calculate cost
         cost = (Decimal(file_size) / bytes_per_gb) * retrieval_cost_per_gb
@@ -132,8 +151,8 @@ class Tokenizer:
         total_cost_with_profit = cost + profit
 
         # Ensure the total cost is not less than the minimum cost
-        if total_cost_with_profit < minimum_cost:
-            total_cost_with_profit = minimum_cost
+        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
+            total_cost_with_profit = Tokenizer.MINIMUM_COST
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 

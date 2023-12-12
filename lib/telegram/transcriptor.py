@@ -72,6 +72,17 @@ class Transcriptor:
         """
         try:
             caption = self.update.message.caption or "What's in this image? If there's text, extract it."
+        
+            #calculate caption
+            amount = self.tokenizer.tokens_to_money_from_string(caption)
+            amount += self.tokenizer.tokens_to_money_from_image()
+            # Check if the balance is sufficient
+            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+                message = "Insufficient balance to process the image."
+                print(message)
+                self.context.bot.send_message(self.update.message.chat_id, message)
+                return False
+
             response = self.openai.chat.completions.create(
                 model="gpt-4-vision-preview",
                 messages=[
@@ -81,13 +92,18 @@ class Transcriptor:
                 temperature=1.0,
             )
 
+            # Update the balance
+            amount = self.tokenizer.tokens_to_money(response.usage.total_tokens)
+            print(f'---->>> Conversation balance decreased by: ${amount} for image processing.')
+            self.conversation.balance -= amount
+
             self.__send_message(response.choices[0].message.content)
             self.__create_thread_message('Translate to Ukrainian: ' + response.choices[0].message.content)
             return True, 'Image processed successfully'
         except Exception as e:
             raise
 
-    def transcript_voice(self, file_path):
+    def transcript_voice(self, file_path: str, amount: Decimal = 0):
         """
         Transcribe a voice file and create a corresponding thread message.
 
@@ -102,6 +118,10 @@ class Transcriptor:
                     response_format="text",
                     temperature='1.0'
                 )
+
+                # Update the balance
+                print(f'---->>> Conversation balance decreased by: ${amount} for voice transcription.')
+                self.conversation.balance -= amount
 
                 self.__send_message(transcription)
                 self.__create_thread_message('Translate to Ukrainian: ' + transcription)

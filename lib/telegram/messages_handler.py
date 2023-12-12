@@ -1,5 +1,4 @@
 import os
-import tiktoken
 from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
 from lib.telegram.tokenizer import Tokenizer
@@ -45,12 +44,19 @@ class MessagesHandler:
             # Logic to handle voice messages and execute OpenAI API calls
             voice = self.update.message.voice
             file = self.context.bot.get_file(voice.file_id)
-
             print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent voice: "{file.file_path}" {file.file_size}')
 
             success, message = ConstraintsChecker.check_voice_constraints(file)
             if not success:
-                return False, message, None
+                return False, message, None, None
+
+            # Check if the balance is sufficient
+            amount = self.tokenizer.tokens_to_money_from_voice(voice.duration)
+            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+                message = "Insufficient balance to process the voice message."
+                print(message)
+                self.context.bot.send_message(self.update.message.chat_id, message)
+                return False, message, None, amount
 
             # Extract file extension
             _, file_extension = os.path.splitext(file.file_path)
@@ -67,7 +73,7 @@ class MessagesHandler:
             file.download(download_path)
 
             message = "Voice processed successfully"
-            return True, message, download_path
+            return True, message, download_path, amount
         except Exception as e:
             raise
 
