@@ -131,20 +131,33 @@ class RunsTreadsHandler:
         sender = EmailSender(self.openai)
         attachment = 'attachment'
         sender.send_email(args['email'], args['text'], attachment)
-        self.context.bot.send_message(self.update.message.chat_id, 'Письмо успешно отправлено')
+        self.context.bot.send_message(self.update.message.chat_id, 'Letter successfully sent.')
         return {
             "tool_call_id": tool_call_id,
-            "output": f'Письмо успешно отправлено. Отвечать на сообщение не нужно.'
+            "output": f'Letter successfully sent. There is no need to reply to the message.'
         }
 
     def _generate_image(self, tool_call_id, args):
+        # Check if the balance is sufficient
+        amount = self.tokenizer.tokens_to_money_from_string(args['description'])
+        amount += self.tokenizer.tokens_to_money_to_image()
+        if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+            message = "Insufficient balance to process the generating image."
+            print(message)
+            self.context.bot.send_message(self.update.message.chat_id, message)
+            return False, message
+
         # Assuming Image class has a generateImage method
         image = Image(self.openai)
         image_url, revised_prompt = image.generate(args['description'])  # Pass the description argument
 
+        # Update the balance
+        amount += self.tokenizer.tokens_to_money_from_string(revised_prompt)
+        print(f'---->>> Conversation balance decreased by: ${amount} for generating image.')
+        self.conversation.balance -= amount
+
         self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
         return {
             "tool_call_id": tool_call_id,
-            "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Отвечать на сообщение не нужно.'
-            # "output": f'{image_url} - эта картинка уже отправлена пользователю в чат в телеграме. Переведите на украинский: {revised_prompt}.'
+            "output": f'{image_url} - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message."'
         }

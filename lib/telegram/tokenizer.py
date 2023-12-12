@@ -21,7 +21,8 @@ class Tokenizer:
         "gpt-3.5-turbo-instruct": {"input": 0.0015, "output": 0.0020},
         "tts": 0.0015,
         "whisper": 0.006,
-        "retrieval": 0.2
+        "retrieval": 0.2,
+        "dall-e-3": 0.040
     }
 
     def __init__(self, model="gpt-3.5-turbo"):
@@ -131,6 +132,24 @@ class Tokenizer:
         # Add the profit to the total cost
         profit = image_cost * Tokenizer.PROFIT_MARGIN
         total_cost_with_profit = image_cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
+    def tokens_to_money_to_image(self) -> Decimal:
+        """
+        Calculates the cost of generating an image using DALL-E 3.
+
+        :return: The cost in Decimal for generating the image.
+        """
+        dall_e_image_cost = Decimal(str(self.PRICES.get("dall-e-3", 0)))
+
+        # Add the profit to the total cost
+        profit = dall_e_image_cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = dall_e_image_cost + profit
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
+            total_cost_with_profit = Tokenizer.MINIMUM_COST
+
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
     def tokens_to_money_from_document(self, file_size: int) -> Decimal:
