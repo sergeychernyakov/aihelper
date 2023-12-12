@@ -117,6 +117,7 @@ class TextExtractor:
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
                 text.append(page.extract_text())
+                
         return '\n'.join(filter(None, text))
 
     @staticmethod

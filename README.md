@@ -65,7 +65,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 ### Plan
   сделать подсчет токенов
-    - fix tests
     - cover TextExtractor with tests
     - translate big files
 
