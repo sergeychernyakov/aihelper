@@ -83,6 +83,22 @@ class Tokenizer:
         # Use the existing method to calculate the cost
         return self.tokens_to_money(tokens, token_type)
 
+    def tokens_to_money_to_voice(self, string: str) -> Decimal:
+        """
+        Calculates the cost of converting a given string to voice using TTS.
+
+        :param string: The text string to be converted to voice.
+        :return: The cost in Decimal for converting the text to voice.
+        """
+        tts_cost_per_1k_chars = Decimal(str(self.PRICES.get("tts", 0)))  # TTS cost per 1,000 characters
+        num_chars = len(string)
+        cost = (Decimal(num_chars) / Decimal('1000')) * tts_cost_per_1k_chars
+
+        # Add the profit to the total cost
+        profit = cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = cost + profit
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
     def tokens_to_money_from_voice(self, seconds: int) -> Decimal:
         """
         Calculates the cost of transcribing voice based on duration in seconds.
@@ -102,23 +118,6 @@ class Tokenizer:
         if total_cost_with_profit < Tokenizer.MINIMUM_COST:
             total_cost_with_profit = Tokenizer.MINIMUM_COST
 
-        return total_cost_with_profit.quantize(Decimal('0.000001'))
-
-
-    def tokens_to_money_from_voice(self, seconds: int) -> Decimal:
-        """
-        Calculates the cost of transcribing voice based on duration in seconds.
-
-        :param seconds: The duration of the voice recording in seconds.
-        :return: The cost in Decimal for transcribing the voice.
-        """
-        whisper_cost_per_minute = Decimal(str(self.PRICES.get("whisper", 0)))  # Whisper cost per minute
-        minutes = Decimal(seconds) / Decimal('60')
-        cost = minutes * whisper_cost_per_minute
-
-        # Add the profit to the total cost
-        profit = cost * Tokenizer.PROFIT_MARGIN
-        total_cost_with_profit = cost + profit
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
     def tokens_to_money_from_image(self) -> Decimal:

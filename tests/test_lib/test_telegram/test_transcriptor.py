@@ -40,8 +40,10 @@ class TestTranscriptor(unittest.TestCase):
         file = Mock(file_path="path/to/image")
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Mocked Content"))]
+        mock_response.usage = Mock(total_tokens=123)  # Set a specific integer for total_tokens
+
         self.mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         self.transcriptor.transcript_image(file)
 
         self.mock_openai_client.chat.completions.create.assert_called_once()

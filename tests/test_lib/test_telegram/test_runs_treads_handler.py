@@ -100,7 +100,9 @@ class TestRunsTreadsHandler(unittest.TestCase):
 
     @patch('lib.telegram.runs_treads_handler.Image')
     def test_submit_tool_outputs_with_generateImage(self, mock_image_class):
+        # Create a mock instance of the Image class
         mock_image_instance = mock_image_class.return_value
+        # Mock the return value of the generate method
         mock_image_instance.generate.return_value = ('image_url', 'revised_prompt')
 
         # Mocking a run object with tool calls
@@ -125,6 +127,9 @@ class TestRunsTreadsHandler(unittest.TestCase):
         # Executing the method
         self.handler.submit_tool_outputs(mock_run)
 
+        # Define the expected output string
+        expected_output = 'image_url - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message.'
+
         # Assertions
         mock_image_instance.generate.assert_called_once_with('test description')
         self.mock_openai_client.beta.threads.runs.submit_tool_outputs.assert_called_once_with(
@@ -132,9 +137,10 @@ class TestRunsTreadsHandler(unittest.TestCase):
             run_id='run_id',
             tool_outputs=[{
                 "tool_call_id": 'tool_call_id',
-                "output": 'image_url - эта картинка уже отправлена пользователю в чат в телеграме. Отвечать на сообщение не нужно.'
+                "output": expected_output
             }]
         )
+
 
     def tearDown(self):
         temp_dir_path = './tmp/thread_id'  # Ensure this is the correct path

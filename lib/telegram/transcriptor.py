@@ -103,11 +103,12 @@ class Transcriptor:
         except Exception as e:
             raise
 
-    def transcript_voice(self, file_path: str, amount: Decimal = 0):
+    def transcript_voice(self, file_path: str, amount: Decimal = Tokenizer.MINIMUM_COST):
         """
         Transcribe a voice file and create a corresponding thread message.
 
         :param file_path: Path to the voice file.
+        :param amount: The cost for transcribing the voice file.
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
         try:

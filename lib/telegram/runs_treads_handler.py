@@ -159,5 +159,5 @@ class RunsTreadsHandler:
         self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
         return {
             "tool_call_id": tool_call_id,
-            "output": f'{image_url} - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message."'
+            "output": f'{image_url} - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message.'
         }

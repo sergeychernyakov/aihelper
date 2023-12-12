@@ -65,7 +65,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 ### Plan
   сделать подсчет токенов
-    - count images creation and decrease amount
     - fix tests
 
     - count video recognition and decrease amount
