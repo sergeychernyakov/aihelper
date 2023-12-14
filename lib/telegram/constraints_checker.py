@@ -7,6 +7,10 @@ class ConstraintsChecker:
     ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip'}
     MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo
 
+    # New allowed video extensions and max file size
+    ALLOWED_VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mov', '.wmv', '.flv'}
+    MAX_VIDEO_FILE_SIZE = 20.0 * 1024 * 1024  # 10 MB in bytes
+
     @classmethod
     def check_photo_constraints(cls, file, photo):
         extension_check = cls._check_file_extension(os.path.splitext(file.file_path)[1].lower(), cls.ALLOWED_PHOTO_EXTENSIONS)
@@ -37,7 +41,25 @@ class ConstraintsChecker:
 
         return cls._check_file_size(file.file_size)
 
+   # New method for checking video constraints
+    @classmethod
+    def check_video_constraints(cls, file):
+        extension_check = cls._check_file_extension(os.path.splitext(file.file_path)[1].lower(), cls.ALLOWED_VIDEO_EXTENSIONS)
+        if not extension_check[0]:
+            return extension_check
+
+        return cls._check_video_file_size(file.file_size)
+
     # Protected methods
+
+    # Additional helper method for checking video file size
+    @classmethod
+    def _check_video_file_size(cls, file_size):
+        if file_size > cls.MAX_VIDEO_FILE_SIZE:
+            max_size_mb = cls.MAX_VIDEO_FILE_SIZE / (1024 * 1024)
+            file_size_mb = file_size / (1024 * 1024)
+            return False, f'The video file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+        return True, ""
 
     @classmethod
     def _check_file_extension(cls, file_extension, allowed_extensions):

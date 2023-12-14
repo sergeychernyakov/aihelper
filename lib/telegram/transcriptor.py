@@ -1,3 +1,7 @@
+import cv2
+import base64
+import os
+from pathlib import Path
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.text_extractor import TextExtractor
 from decimal import Decimal
@@ -8,6 +12,10 @@ class Transcriptor:
     that are sent back to the user via the Telegram bot. It also manages the creation of messages in an OpenAI thread
     corresponding to the user's requests.
     """
+
+    # Class constant for frame interval
+    FRAME_INTERVAL = 60
+
     def __init__(self, openai_client, update, context, conversation):
         """
         Initialize the Transcriptor class.
@@ -130,6 +138,110 @@ class Transcriptor:
         except Exception as e:
             return False, f"Failed to transcribe document: {e}"
 
+    def transcript_video(self, file_path: str):
+        """
+        Transcribe a video file and create a corresponding thread message.
+
+        :param file_path: Path to the video file.
+        :return: Tuple (Boolean, Message) indicating success and response message.
+        """
+        try:       
+            # Extract frames and possibly audio from the video
+            frames = self._extract_video_content(file_path)
+
+            # Generate a video description using frames and audio transcription
+            description = self._generate_video_description(frames)
+
+            print(f'AI transcripted video: {description}')
+
+            # Create a thread message with the description
+            self.__create_thread_message('Translate to Ukrainian: ' + description)
+
+            return True, 'Video processed successfully'
+        except Exception as e:
+            print(f"Failed to transcribe video: {e}")
+            return False, f"Failed to transcribe video: {e}"
+
+    # Private helper methods (these need to be implemented according to your specific requirements)
+
+    def _extract_video_content(self, video_file_path):
+        """
+        Extracts frames from a video file at specified intervals and encodes them in base64 format.
+
+        :param video_file_path: The file path of the video from which frames are to be extracted.
+        :return: A list of base64 encoded strings representing the extracted frames.
+        """
+
+        # Convert video_file_path to string if it's a Path object
+        if isinstance(video_file_path, Path):
+            video_file_path = str(video_file_path)
+
+        # Check if the video file path is valid
+        if not os.path.exists(video_file_path):
+            raise ValueError(f"Invalid video file path: {video_file_path}")
+        
+        # Open the video file
+        video = cv2.VideoCapture(video_file_path)
+        if not video.isOpened():
+            raise IOError(f"Failed to open video file: {video_file_path}")
+        
+        # Extract frames from the video
+        base64_frames = []
+        fps = video.get(cv2.CAP_PROP_FPS)
+        frame_interval = int(fps * Transcriptor.FRAME_INTERVAL)
+
+        frame_count = 0
+        while True:
+            ret, frame = video.read()
+            if not ret:
+                break
+
+            if frame_count % frame_interval == 0:
+                _, buffer = cv2.imencode('.jpg', frame)
+                base64_frames.append(base64.b64encode(buffer).decode('utf-8'))
+
+            frame_count += 1
+
+        video.release()
+        return base64_frames
+
+    def _generate_video_description(self, base64_frames):
+        """
+        Generate a description for a video based on its frames.
+
+        :param base64_frames: List of base64 encoded frames from the video.
+        :return: A string containing the generated description of the video.
+        """
+        # Craft the prompt
+        prompt_messages = [
+            {
+                "role": "user",
+                "content": [
+                    self.update.message.caption or "These are frames from a video. Generate a compelling description for the video.",
+                    *map(lambda x: {"image": x, "resize": 768}, base64_frames),
+                ],
+            },
+        ]
+
+        # Parameters for the OpenAI API request
+        params = {
+            "model": "gpt-4-vision-preview",
+            "messages": prompt_messages,
+            "max_tokens": 100,
+            "temperature": 1.0,
+        }
+
+        # Send the request to OpenAI
+        response = self.openai.chat.completions.create(**params)
+
+        # Update the balance
+        amount = self.tokenizer.tokens_to_money(response.usage.total_tokens)
+        print(f'---->>> Conversation balance decreased by: ${amount} for video processing.')
+        self.conversation.balance -= amount
+
+        # Extract and return the generated description
+        return response.choices[0].message.content
+
 
 # Example of usage
 
@@ -156,3 +268,8 @@ class Transcriptor:
 # # Scenario 3: Transcribing a voice message
 # voice_file_path = "/path/to/voice_message.ogg"  # Replace with actual voice file path
 # transcriptor.transcript_voice(voice_file_path)
+
+# Example of extracting frames from a video
+# video_file_path = "/path/to/video.mp4"  # Replace with actual video file path
+# base64_frames = transcriptor._extract_video_content(video_file_path)
+# print(f'{len(base64_frames)} frames extracted from the video.')

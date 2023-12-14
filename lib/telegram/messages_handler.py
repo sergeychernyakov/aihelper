@@ -77,6 +77,46 @@ class MessagesHandler:
         except Exception as e:
             raise
 
+    def handle_video_message(self):
+        try:
+            # Logic to handle video messages
+            video = self.update.message.video
+            file = self.context.bot.get_file(video.file_id)
+            print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent video: "{file.file_path}" {file.file_size}, duration: {video.duration}')
+
+            success, message = ConstraintsChecker.check_video_constraints(file)
+            if not success:
+                return False, message, None
+
+            # Check if the balance is sufficient
+            amount = self.tokenizer.tokens_to_money_from_string(self.update.message.caption)
+            amount += self.tokenizer.tokens_to_money_from_video(video.duration)
+            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+                message = "Insufficient balance to process the video message."
+                print(message)
+                self.context.bot.send_message(self.update.message.chat_id, message)
+                return False, message, None
+
+            # Extract file extension
+            _, file_extension = os.path.splitext(file.file_path)
+
+            # Determine the project root directory
+            project_root = Path(__file__).parent.parent.parent
+            tmp_dir_path = project_root / 'tmp' / self.thread_id
+
+            # Ensure the directory exists before trying to download
+            os.makedirs(tmp_dir_path, exist_ok=True)
+
+            # Download the file to the desired location with the extracted extension
+            download_path = tmp_dir_path / f'video{file_extension}'
+            file.download(download_path)
+
+            message = "Video processed successfully"
+            return True, message, download_path
+        except Exception as e:
+            print(f"Error in handle_video_message: {e}")
+            raise
+
     def handle_document_message(self):
         try:
             document = self.update.message.document

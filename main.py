@@ -76,7 +76,9 @@ def message_handler(update, context):
     successful_interaction = False
 
     with session_scope() as session:
-        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file or voice."}')
+        print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file, video or voice."}')
+
+        
 
         try:
             # Check for existing conversation or create a new one
@@ -85,10 +87,14 @@ def message_handler(update, context):
                 assistant_id=ASSISTANT_ID
             ).first() or _create_conversation(session, update)
 
+            print(f'!!!!!!! conversation.thread_id: {conversation.thread_id}')
+
             runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
             if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
                 # Recreate thread if interval has passed
                 runs_treads_handler.recreate_thread(session, conversation)
+
+            print(f'!!!!!!! conversation.thread_id: {conversation.thread_id}')
 
             message_handler = MessagesHandler(openai, update, context, conversation)
             transcriptor = Transcriptor(openai, update, context, conversation)
@@ -103,6 +109,12 @@ def message_handler(update, context):
                     context.bot.send_message(update.message.chat_id, message)
                 else:
                     successful_interaction = transcriptor.transcript_image(file)
+            elif update.message.video:
+                success, message, file = message_handler.handle_video_message()
+                if not success:
+                    context.bot.send_message(update.message.chat_id, message)
+                else:
+                    successful_interaction = transcriptor.transcript_video(file)
             elif update.message.voice:
                 success, message, file, amount =  message_handler.handle_voice_message()
                 if not success:

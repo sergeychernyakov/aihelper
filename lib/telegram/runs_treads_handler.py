@@ -69,6 +69,7 @@ class RunsTreadsHandler:
     def create_thread(self, session, conversation):
         thread = self.openai.beta.threads.create()
         self.thread_id = thread.id
+        conversation.thread_id = thread.id
         session.query(Conversation).filter_by(id=conversation.id).update({"thread_id": thread.id})
         session.commit()
 

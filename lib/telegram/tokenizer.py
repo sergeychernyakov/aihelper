@@ -174,6 +174,33 @@ class Tokenizer:
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
+    def tokens_to_money_from_video(self, seconds: int, frame_interval: int = 60) -> Decimal:
+        """
+        Calculates the cost of processing a video based on its duration in seconds.
+
+        :param seconds: The duration of the video in seconds.
+        :param frame_interval: The interval in seconds at which frames are considered for processing.
+        :return: The cost in Decimal for processing the video.
+        """
+        # Calculate the number of frames based on the interval
+        num_frames = Decimal(seconds) / Decimal(frame_interval)
+
+        # Get the cost per frame (image)
+        image_cost = Decimal(str(self.PRICES.get("gpt-4-1106-vision-preview", {}).get("image", 0)))
+
+        # Calculate the total cost for all frames
+        total_cost = num_frames * image_cost
+
+        # Add the profit to the total cost
+        profit = total_cost * Tokenizer.PROFIT_MARGIN
+        total_cost_with_profit = total_cost + profit
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
+            total_cost_with_profit = Tokenizer.MINIMUM_COST
+
+        return total_cost_with_profit.quantize(Decimal('0.000001'))
+
     def has_sufficient_balance_for_message(self, message: str, balance: Decimal, token_type: str = "input") -> bool:
         """
         Checks if the user's balance is sufficient to cover the cost of the tokens for a given message,
@@ -221,6 +248,15 @@ class Tokenizer:
         return total_tokens
 
     def calculate_assistant_prompt_tokens(self):
+        """
+        Calculates the total number of tokens used in the assistant's prompt.
+
+        This method retrieves the prompt text from the assistant and calculates the
+        number of tokens it consists of. The prompt text is the initial set of instructions
+        or information that the assistant uses to guide its responses or actions.
+
+        :return: The total number of tokens in the assistant's prompt.
+        """
         assistant = Assistant()
         prompt_text = assistant.prompt()
         if prompt_text:
@@ -229,6 +265,16 @@ class Tokenizer:
             return 0
 
     def calculate_thread_total_amount(self, messages):
+        """
+        Calculates the total cost of processing a thread of messages based on token usage.
+
+        This method combines the token counts from both the thread messages and the
+        assistant's prompt, and then calculates the total cost for processing these tokens.
+        It considers both the input and output tokens generated during the conversation.
+
+        :param messages: A list of messages from a conversation thread.
+        :return: The total cost in Decimal for processing the tokens in the thread.
+        """
         messages_tokens = self.calculate_thread_tokens(messages)
         prompt_tokens = self.calculate_assistant_prompt_tokens()        
         if prompt_tokens is not None:
