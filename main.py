@@ -159,10 +159,67 @@ def ping(update: Update, context: CallbackContext) -> None:
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent ping.')
     context.bot.send_message(update.message.from_user.id, 'pong')
 
+def finish(update: Update, context: CallbackContext) -> None:
+    """
+    Handle the /finish command. Sends a goodbye message to the user and recreates the conversation thread.
+
+    :param update: The Telegram update object.
+    :param context: The context object provided by the Telegram bot framework.
+    """
+    with session_scope() as session:
+        try:
+            # Retrieve the conversation for the user who sent the command
+            conversation = session.query(Conversation).filter_by(
+                user_id=update.message.from_user.id,
+                assistant_id=ASSISTANT_ID
+            ).first()
+
+            if conversation:
+                # Send a goodbye message
+                context.bot.send_message(update.message.chat_id, 'Goodbye! If you need assistance again, just send me a message.')
+
+                # Recreate the conversation thread
+                runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
+                runs_treads_handler.recreate_thread(session, conversation)
+            else:
+                context.bot.send_message(update.message.chat_id, 'No active conversation found.')
+
+        except SQLAlchemyError as e:
+            print(f"An error occurred: {e}")
+            context.bot.send_message(update.message.chat_id, 'An error occurred while processing your request.')
+
+def balance(update: Update, context: CallbackContext) -> None:
+    """
+    Respond to the /balance command by sending the current balance of the user's conversation.
+
+    :param update: The Telegram update object.
+    :param context: The context object provided by the Telegram bot framework.
+    """
+    with session_scope() as session:
+        try:
+            # Retrieve the conversation for the user who sent the command
+            conversation = session.query(Conversation).filter_by(
+                user_id=update.message.from_user.id,
+                assistant_id=ASSISTANT_ID
+            ).first()
+
+            # If a conversation exists, send the current balance
+            if conversation:
+                balance_amount = conversation.balance
+                context.bot.send_message(update.message.chat_id, f'Your current balance is: ${balance_amount:.2f}')
+            else:
+                context.bot.send_message(update.message.chat_id, 'No active conversation found.')
+
+        except SQLAlchemyError as e:
+            print(f"An error occurred: {e}")
+            context.bot.send_message(update.message.chat_id, 'An error occurred while fetching the balance.')
+
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
 
     updater.dispatcher.add_handler(CommandHandler('ping', ping))
+    updater.dispatcher.add_handler(CommandHandler('balance', balance))
+    updater.dispatcher.add_handler(CommandHandler('finish', finish))
 
     # Echo any message that is not a command
     updater.dispatcher.add_handler(MessageHandler(~Filters.command, message_handler))

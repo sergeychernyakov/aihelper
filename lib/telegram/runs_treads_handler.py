@@ -100,63 +100,6 @@ class RunsTreadsHandler:
         Helpers.cleanup_folder(f'tmp/{self.thread_id}')
         return run.id
 
-
-    ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
-    def create_run(self):
-        run = self.openai.beta.threads.runs.create(
-            thread_id=self.thread_id,
-            assistant_id=self.assistant_id
-        )
-
-        while run.status !="completed":
-            time.sleep(2)
-            run = self.openai.beta.threads.runs.retrieve(
-                thread_id=self.thread_id,
-                run_id=run.id
-            )
-
-            if run.status == 'requires_action':
-                self.submit_tool_outputs(run)
-
-        messages = self.openai.beta.threads.messages.list(
-            thread_id=self.thread_id
-        )
-        
-        print(messages.data[0].content)
-        
-        response_text = messages.data[0].content[0].text.value
-        print(f'AI responded: {response_text}')
-
-        # Update the balance
-        amount =  self.tokenizer.tokens_to_money_from_string(response_text, "output")
-        print(f'---->>> Conversation balance decreased by: {amount} for output text')
-        self.conversation.balance -= amount
-
-        # Define a threshold for a short message, e.g., 100 characters
-        short_message_threshold = 100
-        # Randomly choose to respond with voice 1 out of 10 times
-        if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
-            self.answer.answer_with_voice(response_text)
-
-            # Update the balance
-            amount = self.tokenizer.tokens_to_money_to_voice(response_text)
-            print(f'---->>> Conversation balance decreased by: {amount} for output voice')
-            self.conversation.balance -= amount
-        else:
-            self.answer.answer_with_text(response_text)
-
-        # Check if there are annotations present in the message content
-        if 'annotations' in messages.data[0].content[0].text:
-            # Extract the annotation data
-            annotation_data = messages.data[0].content[0].text.annotations[0]
-            # Use the answer_with_document method to send the document
-            self.answer.answer_with_document(annotation_data)
-
-        Helpers.cleanup_folder(f'tmp/{self.thread_id}')
-        return run.id
-
-
-
     def create_thread(self, session, conversation):
         thread = self.openai.beta.threads.create()
         self.thread_id = thread.id
