@@ -78,8 +78,6 @@ def message_handler(update, context):
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file, video or voice."}')
 
-        
-
         try:
             # Check for existing conversation or create a new one
             conversation = session.query(Conversation).filter_by(
@@ -87,14 +85,10 @@ def message_handler(update, context):
                 assistant_id=ASSISTANT_ID
             ).first() or _create_conversation(session, update)
 
-            print(f'!!!!!!! conversation.thread_id: {conversation.thread_id}')
-
             runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session)
             if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
                 # Recreate thread if interval has passed
                 runs_treads_handler.recreate_thread(session, conversation)
-
-            print(f'!!!!!!! conversation.thread_id: {conversation.thread_id}')
 
             message_handler = MessagesHandler(openai, update, context, conversation)
             transcriptor = Transcriptor(openai, update, context, conversation)

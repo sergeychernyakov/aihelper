@@ -4,8 +4,8 @@ from lib.telegram.assistant import Assistant
 
 class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096
-    PROFIT_MARGIN = Decimal('0.16') # 16% profit margin
-    MINIMUM_COST = Decimal('0.001')
+    PROFIT_MARGIN = Decimal('0.31') # 16% profit margin
+    MINIMUM_COST = Decimal('0.003')
 
     # Prices within the class
     PRICES = {
