@@ -11,7 +11,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 class RunsTreadsHandler:
-    def __init__(self, openai_client, update, context, conversation, session):
+    def __init__(self, openai_client, update, context, conversation, session, chat_id):
         self.openai = openai_client
         self.update = update
         self.context = context
@@ -19,7 +19,7 @@ class RunsTreadsHandler:
         self.conversation = conversation
         self.thread_id = conversation.thread_id
         self.assistant_id = conversation.assistant_id
-        self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
+        self.answer = Answer(openai_client, context, chat_id, self.thread_id)
         self.tokenizer = Tokenizer()
         self.thread_recreation_interval = timedelta(hours=1)
 

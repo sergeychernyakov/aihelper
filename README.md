@@ -68,15 +68,11 @@ Remember, I'm here to assist with translations and to make your language learnin
 ### Plan
   сделать подсчет токенов
     - create function finish conversation - delete current thread
-
     - translate big files
 
-
-
 научить робота брать оплату
-
 поработать с языком - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках
-научить робота отвечать голосом - создать функцию
+
 
 отвечать на /start описанием того что может робот, показать ролик
 Контакты:
@@ -86,7 +82,9 @@ Remember, I'm here to assist with translations and to make your language learnin
 поддержка:
 попробуйте наши другие боты: список ботов
 
-
+Доступные действия:
+/balance - узнать текущий баланс
+/finish - добавить описание
 
 
 Hello! I'm Nova, your friendly Russian-Ukrainian translation assistant on Telegram. 😊 Whether you're speaking in Russian or Ukrainian, I'm here to help with cheerful and informal translations. Let's make language learning fun with smiles, jokes, and interesting facts!
