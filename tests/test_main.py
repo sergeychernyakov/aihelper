@@ -14,7 +14,7 @@ class TestMain(unittest.TestCase):
     @patch('main.RunsTreadsHandler')
     @patch('main.session_scope')
     def test_message_handler_text(self, mock_session_scope, mock_runs_treads_handler,
-                                mock_transcriptor, mock_messages_handler, mock_openai_global):
+                                  mock_transcriptor, mock_messages_handler, mock_openai_global):
 
         # Mock dependencies
         mock_update = Mock(spec=Update)
@@ -22,8 +22,12 @@ class TestMain(unittest.TestCase):
         mock_session = Mock()
         mock_session_scope.return_value.__enter__.return_value = mock_session
         mock_user = User(123, 'TestUser', False)
-        mock_message = Message(1, mock_user, None, Mock())
+        mock_chat = Mock()  # Mock the chat object
+        mock_chat.id = 456  # Assign a mock chat ID
+        mock_message = Mock(spec=Message)  # Use Mock with spec
+        mock_message.chat = mock_chat
         mock_message.text = 'Hello'
+        mock_message.from_user = mock_user
         mock_update.message = mock_message
 
         # Mock Conversation object with a realistic updated_at and balance

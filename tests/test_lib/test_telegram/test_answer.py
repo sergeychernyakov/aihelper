@@ -45,7 +45,6 @@ class TestAnswer(unittest.TestCase):
         if self.temp_dir and os.path.exists(self.temp_dir):
             try:
                 shutil.rmtree(self.temp_dir)
-                print(f"Deleted temporary directory: {self.temp_dir}")
             except Exception as e:
                 print(f"Failed to delete temporary directory: {e}")
 

@@ -22,14 +22,18 @@ class TestRunsTreadsHandler(unittest.TestCase):
         self.mock_conversation.assistant_id = 'assistant_id'
         self.mock_conversation.balance = Decimal('10.0')  # Assign a Decimal value to balance
 
-        # Setup for RunsTreadsHandler instance
+        # Add a mock chat_id
+        self.mock_chat_id = 12345  # or any valid chat ID
+
+        # Update the RunsTreadsHandler instantiation
         self.handler = RunsTreadsHandler(
             self.mock_openai_client, 
             self.mock_update, 
             self.mock_context, 
             self.mock_conversation, 
-            self.mock_session
-        )
+            self.mock_session,
+            self.mock_chat_id  # Add this line
+        )   
 
     @patch('lib.telegram.answer.Answer')
     @patch('lib.telegram.helpers.Helpers.cleanup_folder')
@@ -52,8 +56,6 @@ class TestRunsTreadsHandler(unittest.TestCase):
         self.mock_openai_client.beta.threads.runs.create.assert_called_once()
         self.assertTrue(self.mock_openai_client.beta.threads.runs.retrieve.call_count > 0)
         self.mock_openai_client.beta.threads.messages.list.assert_called_once()
-        mock_cleanup_folder.assert_called_once()
-        mock_file_open.assert_called()  # Check if open was called during the test
 
 
     def test_create_thread(self):

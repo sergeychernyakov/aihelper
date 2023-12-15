@@ -101,46 +101,55 @@ class Transcriptor:
         :param file_path: Path to the document file.
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
-        try:
-            extracted_text = TextExtractor.extract_text(file_path)
-            caption = self.update.message.caption or "Translate the text to Ukrainian: "
+        # try:
+        extracted_text = TextExtractor.extract_text(file_path)
+        caption = self.update.message.caption or "Translate the text to Ukrainian: "
 
-            # Check if the balance is sufficient
-            amount = self.tokenizer.tokens_to_money_from_string(caption)
-            amount += self.tokenizer.tokens_to_money_from_string(extracted_text)
-            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = "Insufficient balance to process the document."
-                print(message)
-                self.context.bot.send_message(self.update.message.chat_id, message)
-                return False
-
-            # Split the extracted text into smaller pieces and translate each piece
-            full_translated_text = ""
-            num_pieces = (len(extracted_text) + self.MAX_MESSAGE_LENGTH - 1) // self.MAX_MESSAGE_LENGTH
-            for i in range(num_pieces):
-                start_index = i * self.MAX_MESSAGE_LENGTH
-                end_index = start_index + self.MAX_MESSAGE_LENGTH
-                text_piece = extracted_text[start_index:end_index]
-
-                translated_text, total_tokens = self.__create_non_thread_message(f'{caption}: {text_piece}')
-                full_translated_text += translated_text + "\n\n"
-
-                # Update the balance
-                amount = self.tokenizer.tokens_to_money(total_tokens)
-                print(f'---->>> Conversation balance decreased by: ${amount} for translation processing.')
-                self.conversation.balance -= amount
-
-            # Truncate the text for Telegram message and send a notification about the full text
-            truncated_text = (full_translated_text[:200] + '... (truncated)') if len(full_translated_text) > 200 else full_translated_text
-            self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
-            
-            # Send the full translated text as a document
-            self.answer.answer_with_document(full_translated_text)
-
-            return True
-        except Exception as e:
-            print(f"Failed to transcribe document: {e}")
+        # Check if the balance is sufficient
+        amount = self.tokenizer.tokens_to_money_from_string(caption)
+        amount += self.tokenizer.tokens_to_money_from_string(extracted_text)
+        if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+            message = "Insufficient balance to process the document."
+            print(message)
+            self.context.bot.send_message(self.update.message.chat_id, message)
             return False
+
+        # Split the extracted text into smaller pieces and translate each piece
+        full_translated_text = ""
+        num_pieces = (len(extracted_text) + self.MAX_MESSAGE_LENGTH - 1) // self.MAX_MESSAGE_LENGTH
+        for i in range(num_pieces):
+            start_index = i * self.MAX_MESSAGE_LENGTH
+            end_index = start_index + self.MAX_MESSAGE_LENGTH
+            text_piece = extracted_text[start_index:end_index]
+
+            translated_text, total_tokens = self.__create_non_thread_message(f'{caption}: {text_piece}')
+            full_translated_text += translated_text + "\n\n"
+
+            # Update the balance
+            amount = self.tokenizer.tokens_to_money(total_tokens)
+            print(f'---->>> Conversation balance decreased by: ${amount} for translation processing.')
+            self.conversation.balance -= amount
+
+        # Truncate the text for Telegram message and send a notification about the full text
+        truncated_text = (full_translated_text[:200] + '... (truncated)') if len(full_translated_text) > 200 else full_translated_text
+        self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
+        
+        # Before the call to answer_with_document, add a print statement
+        print("About to call answer_with_document with text:", full_translated_text)
+        
+        print(f'print(self.answer): {id(self.answer)}')
+
+        # Send the full translated text as a document
+        self.answer.answer_with_document(full_translated_text)
+
+        # After the call, add another print statement
+        print("Called answer_with_document")
+
+        return True
+    
+        # except Exception as e:
+        #     print(f"Failed to transcribe document: {e}")
+        #     return False
 
     def transcript_image(self, file):
         """
