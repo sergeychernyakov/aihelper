@@ -1,3 +1,9 @@
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# Suppress only the single InsecureRequestWarning from urllib3
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
+
 import os
 import logging
 from datetime import datetime
@@ -15,8 +21,6 @@ from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.assistant import Assistant
 from datetime import datetime
-import warnings
-from urllib3.exceptions import InsecureRequestWarning
 
 load_dotenv()
 
@@ -28,9 +32,6 @@ openai = assistant.get_openai_client()
 
 ASSISTANT_ID = assistant.get_assistant_id()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-
-# Suppress only the single InsecureRequestWarning from urllib3
-warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 # private
 

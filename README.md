@@ -66,7 +66,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 
 ### Plan
-  - fix tests
   - supress error message
 
   - научить робота брать оплату
