@@ -46,9 +46,15 @@ def _create_conversation(session, update):
         assistant_id=ASSISTANT_ID
     )
 
-    # Add and commit the new conversation
+    # Add the new conversation
     session.add(conversation)
-
+    # Commit the session to save changes
+    session.commit()
+    # Refresh the conversation object to get the latest state from the database
+    session.refresh(conversation)
+    
+    print(f"New conversation created at: {conversation.updated_at}")
+    
     return conversation
 
 ######### Session #########
@@ -84,6 +90,8 @@ def message_handler(update, context):
                 user_id=update.message.from_user.id,
                 assistant_id=ASSISTANT_ID
             ).first() or _create_conversation(session, update)
+            
+            print(f"Updated at: {conversation.updated_at}, Current time: {datetime.utcnow()}")
 
             runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, update.message.chat_id)
             if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
@@ -116,11 +124,13 @@ def message_handler(update, context):
                 else:
                     successful_interaction = transcriptor.transcript_voice(file, amount)
             elif update.message.document:
+                transcriptor.assistant = assistant
                 success, message, file = message_handler.handle_document_message()
                 if not success:
                     context.bot.send_message(update.message.chat_id, message)
                 else:
-                    successful_interaction = transcriptor.transcript_document(file)
+                    transcriptor.transcript_document(file)
+                    # no need to run thread - already answered to the chat.
 
             if successful_interaction:
                 tokenizer = Tokenizer()
@@ -141,6 +151,8 @@ def message_handler(update, context):
                 # Update the conversation's timestamp after a successful interaction
                 conversation.updated_at = datetime.utcnow()
                 session.commit() # Make sure to commit only once after all updates
+
+            Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
 
         except Exception as e:
             error_message = str(e)

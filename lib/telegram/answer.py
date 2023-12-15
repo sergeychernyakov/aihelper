@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from docx import Document
 
 class Answer:
     def __init__(self, openai_client, context, chat_id, thread_id):
@@ -71,7 +72,7 @@ class Answer:
         with open(image_path, "rb") as image_file:
             return self.context.bot.send_photo(self.chat_id, image_file)
 
-    def answer_with_document(self, annotation_data):
+    def answer_with_annotation(self, annotation_data):
         """
         Send a document to the Telegram chat.
 
@@ -96,3 +97,31 @@ class Answer:
 
         with open(file_path, "rb") as document_file:
             return self.context.bot.send_document(self.chat_id, document_file)
+
+    def answer_with_document(self, text: str):
+        """
+        Send a document to the Telegram chat.
+
+        This method creates a .docx document file with the given text, 
+        saves it to a temporary directory specific to the thread ID, 
+        and then sends it to the chat.
+
+        :param text: The text content to be written to the document.
+        """
+        # Define the temporary directory for this thread
+        tmp_folder = Path(__file__).parent.parent.parent / 'tmp' / self.thread_id
+        os.makedirs(tmp_folder, exist_ok=True)
+
+        # Define the file path for the new document
+        document_path = tmp_folder / "output_document.docx"
+
+        # Create a new Document
+        doc = Document()
+        doc.add_paragraph(text)
+
+        # Save the document
+        doc.save(document_path)
+
+        # Send the document to the Telegram chat
+        with open(document_path, "rb") as file_to_send:
+            return self.context.bot.send_document(self.chat_id, file_to_send)

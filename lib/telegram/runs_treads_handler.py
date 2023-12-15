@@ -11,6 +11,9 @@ from datetime import timedelta
 from decimal import Decimal
 
 class RunsTreadsHandler:
+
+    MAX_RUN_DURATION = 180 
+
     def __init__(self, openai_client, update, context, conversation, session, chat_id):
         self.openai = openai_client
         self.update = update
@@ -37,17 +40,23 @@ class RunsTreadsHandler:
             assistant_id=self.assistant_id
         )
 
-        # Check the status of the run until it's completed
+        start_time = time.time()  # Record the start time of the run
+
         while run.status != "completed":
-            time.sleep(2)
+            time.sleep(3)
             run = self.openai.beta.threads.runs.retrieve(
                 thread_id=self.thread_id,
                 run_id=run.id
             )
 
-            # If the run requires action, submit tool outputs
             if run.status == 'requires_action':
                 self.submit_tool_outputs(run)
+
+            # Check if the maximum run duration is exceeded
+            if time.time() - start_time > self.MAX_RUN_DURATION:
+                print("!!!!!! Run exceeded maximum duration, cancelling...")
+                self.cancel_run(self.thread_id, run.id)
+                break
 
         # List messages from the thread
         messages = self.openai.beta.threads.messages.list(
@@ -85,7 +94,7 @@ class RunsTreadsHandler:
                     self.conversation.balance -= amount
 
                     annotation_data = content.text.annotations[0]
-                    self.answer.answer_with_document(annotation_data)
+                    self.answer.answer_with_annotation(annotation_data)
 
             elif content.type == 'image_file':
                 # Decrease balance for output text
@@ -97,7 +106,6 @@ class RunsTreadsHandler:
                 file_id = content.image_file.file_id
                 self.answer.answer_with_image(file_id)
 
-        Helpers.cleanup_folder(f'tmp/{self.thread_id}')
         return run.id
 
     def create_thread(self, session, conversation):

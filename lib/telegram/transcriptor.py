@@ -4,8 +4,12 @@ import os
 from pathlib import Path
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.text_extractor import TextExtractor
+from lib.telegram.answer import Answer
 from decimal import Decimal
 class Transcriptor:
+
+    MAX_MESSAGE_LENGTH = 3000 
+
     """
     The Transcriptor class handles the transcription of different types of media (documents, images, and voice recordings)
     sent through a Telegram bot. It utilizes the OpenAI API to process these media files and generates responses
@@ -33,6 +37,8 @@ class Transcriptor:
         self.thread_id = conversation.thread_id
         self.assistant_id = conversation.assistant_id
         self.tokenizer = Tokenizer()
+        self.assistant = None
+        self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
 
     def __send_message(self, content):
         """
@@ -56,9 +62,41 @@ class Transcriptor:
             file_ids=file_ids if file_ids else []
         )
 
+    def __create_non_thread_message(self, content):
+        """
+        Generate a non-thread response using the OpenAI API.
+
+        :param content: The content of the message to be processed.
+        :return: The response from the AI.
+        """
+        try:
+            # Get the prompt from the Assistant class
+            assistant_prompt = self.assistant.prompt()
+
+            # Prepare the messages for the AI
+            messages = [
+                {"role": "system", "content": assistant_prompt},
+                {"role": "user", "content": content},
+            ]
+
+            # Send the request to OpenAI
+            response = self.openai.chat.completions.create(
+                model=self.tokenizer.model,
+                messages=messages,
+                temperature=1.0,
+            )
+
+            # Extract and return the AI's response
+            return response.choices[0].message.content, response.usage.total_tokens
+
+        except Exception as e:
+            print(f"Failed to generate non-thread message: {e}")
+            return "Error: Unable to process the request.", 0
+
     def transcript_document(self, file_path: str):
         """
-        Transcribe a document file and create a corresponding thread message.
+        Transcribe a document file, split the extracted text into pieces, translate each piece,
+        combine them, and send the full translated text as a document.
 
         :param file_path: Path to the document file.
         :return: Tuple (Boolean, Message) indicating success and response message.
@@ -66,10 +104,43 @@ class Transcriptor:
         try:
             extracted_text = TextExtractor.extract_text(file_path)
             caption = self.update.message.caption or "Translate the text to Ukrainian: "
-            self.__create_thread_message(f'{caption}: {extracted_text}')
+
+            # Check if the balance is sufficient
+            amount = self.tokenizer.tokens_to_money_from_string(caption)
+            amount += self.tokenizer.tokens_to_money_from_string(extracted_text)
+            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
+                message = "Insufficient balance to process the document."
+                print(message)
+                self.context.bot.send_message(self.update.message.chat_id, message)
+                return False
+
+            # Split the extracted text into smaller pieces and translate each piece
+            full_translated_text = ""
+            num_pieces = (len(extracted_text) + self.MAX_MESSAGE_LENGTH - 1) // self.MAX_MESSAGE_LENGTH
+            for i in range(num_pieces):
+                start_index = i * self.MAX_MESSAGE_LENGTH
+                end_index = start_index + self.MAX_MESSAGE_LENGTH
+                text_piece = extracted_text[start_index:end_index]
+
+                translated_text, total_tokens = self.__create_non_thread_message(f'{caption}: {text_piece}')
+                full_translated_text += translated_text + "\n\n"
+
+                # Update the balance
+                amount = self.tokenizer.tokens_to_money(total_tokens)
+                print(f'---->>> Conversation balance decreased by: ${amount} for translation processing.')
+                self.conversation.balance -= amount
+
+            # Truncate the text for Telegram message and send a notification about the full text
+            truncated_text = (full_translated_text[:200] + '... (truncated)') if len(full_translated_text) > 200 else full_translated_text
+            self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
+            
+            # Send the full translated text as a document
+            self.answer.answer_with_document(full_translated_text)
+
             return True
         except Exception as e:
-            raise
+            print(f"Failed to transcribe document: {e}")
+            return False
 
     def transcript_image(self, file):
         """
@@ -80,7 +151,7 @@ class Transcriptor:
         """
         try:
             caption = self.update.message.caption or "What's in this image? If there's text, extract it."
-        
+
             #calculate caption
             amount = self.tokenizer.tokens_to_money_from_string(caption)
             amount += self.tokenizer.tokens_to_money_from_image()
