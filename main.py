@@ -237,7 +237,19 @@ def balance(update: Update, context: CallbackContext, from_button=False):
         else:
             context.bot.send_message(chat_id, 'No active conversation found.')
 
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext) -> None:    
+    with session_scope() as session:
+        # Check for an existing conversation or create a new one
+        user_id = update.message.from_user.id
+        conversation = session.query(Conversation).filter_by(
+            user_id=user_id,
+            assistant_id=ASSISTANT_ID
+        ).first()
+
+    if not conversation:
+        conversation = _create_conversation(session, update)
+        print(f"New conversation created with ID: {conversation.id}")
+
     # Initial part of the welcome message
     start_balance = Tokenizer.START_BALANCE
     initial_welcome_message = (
@@ -295,7 +307,6 @@ def button(update: Update, context: CallbackContext):
         balance(update, context, from_button=True)
     elif callback_data == 'finish':
         finish(update, context, from_button=True)
-
 
 
 def main():
