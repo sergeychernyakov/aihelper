@@ -17,13 +17,13 @@ class Answer:
         self.chat_id = chat_id
         self.thread_id = thread_id
 
-    def answer_with_text(self, message):
+    async def answer_with_text(self, message):
         """
         Send a text message to the Telegram chat.
 
         :param message: The content of the text message to be sent.
         """
-        self.context.bot.send_message(self.chat_id, message)
+        await self.context.bot.send_message(self.chat_id, message)
 
     def answer_with_voice(self, message):
         """

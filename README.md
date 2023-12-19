@@ -18,6 +18,7 @@ pip install -r requirements.txt
 
 ### telegram
 pip3 install python-telegram-bot
+python3.9 -m pip install python-telegram-bot==20.7
 
 ### Database
 pip3 install sqlalchemy
@@ -67,7 +68,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 ### Plan
   - supress error message
-
   - научить робота брать оплату
 
 поработать с языком - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках

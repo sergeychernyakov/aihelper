@@ -7,8 +7,9 @@ warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 import os
 import logging
 from datetime import datetime
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, MessageHandler, filters, CallbackContext, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler
 from dotenv import load_dotenv
 from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,7 +21,7 @@ from lib.telegram.transcriptor import Transcriptor
 from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.assistant import Assistant
-from datetime import datetime
+from lib.telegram.payment import Payment
 
 load_dotenv()
 
@@ -79,7 +80,7 @@ def error_handler(update, context):
     return False
 
 ######### Main message handler ######### move to MessagesHandler
-def message_handler(update, context):
+async def message_handler(update, context):
     successful_interaction = False
 
     with session_scope() as session:
@@ -109,26 +110,26 @@ def message_handler(update, context):
             elif update.message.photo:
                 success, message, file = message_handler.handle_photo_message()
                 if not success:
-                    context.bot.send_message(update.message.chat_id, message)
+                    await context.bot.send_message(update.message.chat_id, message)
                 else:
                     successful_interaction = transcriptor.transcript_image(file)
             elif update.message.video:
                 success, message, file = message_handler.handle_video_message()
                 if not success:
-                    context.bot.send_message(update.message.chat_id, message)
+                    await context.bot.send_message(update.message.chat_id, message)
                 else:
                     successful_interaction = transcriptor.transcript_video(file)
             elif update.message.voice:
                 success, message, file, amount =  message_handler.handle_voice_message()
                 if not success:
-                    context.bot.send_message(update.message.chat_id, message)
+                    await context.bot.send_message(update.message.chat_id, message)
                 else:
                     successful_interaction = transcriptor.transcript_voice(file, amount)
             elif update.message.document:
                 transcriptor.assistant = assistant
                 success, message, file = message_handler.handle_document_message()
                 if not success:
-                    context.bot.send_message(update.message.chat_id, message)
+                    await context.bot.send_message(update.message.chat_id, message)
                 else:
                     transcriptor.transcript_document(file)
                     # no need to run thread - already answered to the chat.
@@ -141,7 +142,7 @@ def message_handler(update, context):
                 # Check if the balance is sufficient
                 if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
                     print("Insufficient balance.")
-                    context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                    await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
                     return False
 
                 # Update the balance
@@ -168,11 +169,11 @@ def message_handler(update, context):
             else:
                 raise
 
-def ping(update: Update, context: CallbackContext) -> None:
+async def ping(update: Update, context: CallbackContext) -> None:
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent ping.')
-    context.bot.send_message(update.message.from_user.id, 'pong')
+    await context.bot.send_message(update.message.from_user.id, 'pong')
 
-def finish(update: Update, context: CallbackContext, from_button=False):
+async def finish(update: Update, context: CallbackContext, from_button=False) -> None:
     """
     Handle the /finish command or button press. Sends a goodbye message to the user and recreates the conversation thread.
 
@@ -195,20 +196,20 @@ def finish(update: Update, context: CallbackContext, from_button=False):
             ).first()
 
             if conversation:
-                context.bot.send_message(chat_id, 'Goodbye! If you need assistance again, just send me a message.')
+                await context.bot.send_message(chat_id, 'Goodbye! If you need assistance again, just send me a message.')
 
                 # Create the RunsTreadsHandler using the correct chat_id
                 runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, chat_id)
 
                 runs_treads_handler.recreate_thread(session, conversation)
             else:
-                context.bot.send_message(chat_id, 'No active conversation found.')
+                await context.bot.send_message(chat_id, 'No active conversation found.')
 
         except SQLAlchemyError as e:
             print(f"An error occurred: {e}")
-            context.bot.send_message(chat_id, 'An error occurred while processing your request.')
+            await context.bot.send_message(chat_id, 'An error occurred while processing your request.')
 
-def balance(update: Update, context: CallbackContext, from_button=False):
+async def balance(update: Update, context: CallbackContext, from_button=False) -> None:
     """
     Respond to the /balance command or button press by sending the current balance of the user's conversation.
 
@@ -234,11 +235,11 @@ def balance(update: Update, context: CallbackContext, from_button=False):
         # Existing logic to send balance information
         if conversation:
             balance_amount = conversation.balance
-            context.bot.send_message(chat_id, f'Your current balance is: ${balance_amount:.2f}')
+            await context.bot.send_message(chat_id, f'Your current balance is: ${balance_amount:.2f}')
         else:
-            context.bot.send_message(chat_id, 'No active conversation found.')
+            await context.bot.send_message(chat_id, 'No active conversation found.')
 
-def start(update: Update, context: CallbackContext) -> None:    
+async def start(update: Update, context: CallbackContext) -> None:    
     with session_scope() as session:
         # Check for an existing conversation or create a new one
         user_id = update.message.from_user.id
@@ -279,7 +280,7 @@ def start(update: Update, context: CallbackContext) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Send the initial part of the welcome message
-    context.bot.send_message(update.message.chat_id, initial_welcome_message, reply_markup=reply_markup)
+    await context.bot.send_message(update.message.chat_id, initial_welcome_message, reply_markup=reply_markup)
 
     remaining_welcome_message = (
         "/balance - Check your current balance\n"
@@ -290,47 +291,53 @@ def start(update: Update, context: CallbackContext) -> None:
     )
 
     # Send the remaining part of the welcome message with buttons
-    context.bot.send_message(update.message.chat_id, remaining_welcome_message)
+    await context.bot.send_message(update.message.chat_id, remaining_welcome_message)
 
     # Send a welcome video
     video_path = 'welcome_video.mov'
     with open(video_path, 'rb') as video:
-        context.bot.send_video(update.message.chat_id, video)
+        await context.bot.send_video(update.message.chat_id, video)
 
 
-def button(update: Update, context: CallbackContext):
+async def button(update: Update, context: CallbackContext):
     query = update.callback_query
-    query.answer()
+    await query.answer()
 
     callback_data = query.data
 
     if callback_data == 'balance':
-        balance(update, context, from_button=True)
+        await balance(update, context, from_button=True)
     elif callback_data == 'finish':
-        finish(update, context, from_button=True)
+        await finish(update, context, from_button=True)
 
+def main() -> None:
+    payment = Payment()
 
-def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
+    # Create an instance of the Application
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    updater.dispatcher.add_handler(CommandHandler('start', start))
-    updater.dispatcher.add_handler(CommandHandler('ping', ping))
-    updater.dispatcher.add_handler(CommandHandler('balance', balance))
-    updater.dispatcher.add_handler(CommandHandler('finish', finish))
+    # Register handlers
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('ping', ping))
+    application.add_handler(CommandHandler('balance', balance))
+    application.add_handler(CommandHandler('finish', finish))
+    application.add_handler(CallbackQueryHandler(button))
 
-    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+    # Payments handling
+    payment = Payment()
+    application.add_handler(CommandHandler('invoice', payment.send_invoice))
+    application.add_handler(PreCheckoutQueryHandler(payment.precheckout_callback))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, payment.successful_payment_callback))
 
-    # Echo any message that is not a command
-    updater.dispatcher.add_handler(MessageHandler(~Filters.command, message_handler))
+    # General message handling
+    application.add_handler(MessageHandler(~filters.COMMAND, message_handler))
 
-    # Register the error handler
-    updater.dispatcher.add_error_handler(error_handler)
+    # Error handling
+    application.add_error_handler(error_handler)
 
     # Start the bot
-    updater.start_polling()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-    # Run the bot until you press Ctrl-C or the bot receives a shutdown signal
-    updater.idle()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

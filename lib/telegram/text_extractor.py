@@ -2,7 +2,7 @@ import os
 import docx
 from bs4 import BeautifulSoup
 from pptx import Presentation
-from textract import process
+# from textract import process
 from striprtf.striprtf import rtf_to_text
 import zipfile
 import tarfile
