@@ -39,11 +39,12 @@ class MessagesHandler:
         except Exception as e:
             raise
 
-    def handle_voice_message(self):
+    async def handle_voice_message(self):
         try:
             # Logic to handle voice messages and execute OpenAI API calls
             voice = self.update.message.voice
-            file = self.context.bot.get_file(voice.file_id)
+            file = await self.context.bot.get_file(voice.file_id)
+            file_path = file.file_path
             print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent voice: "{file.file_path}" {file.file_size}')
 
             success, message = ConstraintsChecker.check_voice_constraints(file)
@@ -55,26 +56,28 @@ class MessagesHandler:
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = "Insufficient balance to process the voice message."
                 print(message)
-                self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.context.bot.send_message(self.update.message.chat_id, message)
                 return False, message, None, amount
 
-            # Extract file extension
-            _, file_extension = os.path.splitext(file.file_path)
+            # Extract file extension (assuming .oga format for voice messages)
+            _, file_extension = os.path.splitext(file_path)
 
-            # Determine the project root directory
+            # Define the local directory and file path for download
             project_root = Path(__file__).parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
-
-            # Ensure the directory exists before trying to download
             os.makedirs(tmp_dir_path, exist_ok=True)
 
-            # Download the file to the desired location with the extracted extension
-            download_path = tmp_dir_path / f'voice{file_extension}'
-            file.download(download_path)
+            # Define the local download path (including the filename and extension)
+            local_file_path = tmp_dir_path / f'voice{Path(file_path).suffix}'
+
+            # Download the file to the specified local path
+            await self.context.bot.download_file(file_path, str(local_file_path))
 
             message = "Voice processed successfully"
-            return True, message, download_path, amount
+            return True, message, local_file_path, amount
         except Exception as e:
+            # Exception handling
+            print(f"Error in handle_voice_message: {e}")
             raise
 
     def handle_video_message(self):

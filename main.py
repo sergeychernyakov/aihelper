@@ -120,7 +120,7 @@ async def message_handler(update, context):
                 else:
                     successful_interaction = transcriptor.transcript_video(file)
             elif update.message.voice:
-                success, message, file, amount =  message_handler.handle_voice_message()
+                success, message, file, amount = await message_handler.handle_voice_message()
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
@@ -149,7 +149,7 @@ async def message_handler(update, context):
                 print(f'---->>> Conversation balance decreased by: ${amount} for input text')
                 conversation.balance -= amount
 
-                runs_treads_handler.create_run()
+                await runs_treads_handler.create_run()
                 # Update the conversation's timestamp after a successful interaction
                 conversation.updated_at = datetime.utcnow()
                 session.commit() # Make sure to commit only once after all updates
@@ -255,7 +255,9 @@ async def start(update: Update, context: CallbackContext) -> None:
     # Initial part of the welcome message
     start_balance = Tokenizer.START_BALANCE
     initial_welcome_message = (
-        "Welcome to the AI Helper Bot! I can assist you with various tasks. Here's what you can do:\n\n"
+        "Welcome to the Russian-Ukrainian Translating AI Bot!"
+        "My name is Nova and I can assist you with various tasks. Here's what you can do:\n\n"
+        "Speak with me like with friend :)\n"
         "Translate various texts from/to Russian/Ukrainian\n"
         "Translate voice messages\n"
         "Translate audio/video files\n"
@@ -265,10 +267,10 @@ async def start(update: Update, context: CallbackContext) -> None:
         f"Balance:\n"
         f"Your start balance is ${start_balance:.2f} - we'll ask to refill the balance when you'll use it in full.\n\n"
         "Contacts:\n"
-        "- For advertising inquiries, contact @telegram\n"
-        "- For investment-related questions, contact [Investment Contact]\n"
-        "- For development of intelligent bots, write to [Development Contact]\n"
-        "- Support: [Support Contact]\n"
+        "- For advertising inquiries, contact @AIBotsAdv\n"
+        "- For investment-related questions, contact @AIBotsInvest\n"
+        "- For development of intelligent bots, write to @AIBotsTech\n"
+        "- Support: @AIBotsTech\n"
         "- Try our other bots: @phpgpt, @rubygpt, @pythongpt\n\n"
         "Available Actions:\n"
     )

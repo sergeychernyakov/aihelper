@@ -27,7 +27,7 @@ class RunsTreadsHandler:
         self.thread_recreation_interval = timedelta(hours=1)
 
     ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
-    def create_run(self):
+    async def create_run(self):
         """
         Create and manage a run for a specific thread in the OpenAI API.
 
@@ -77,14 +77,14 @@ class RunsTreadsHandler:
                 # Define a threshold for a short message
                 short_message_threshold = 100
                 if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
-                    self.answer.answer_with_voice(response_text)
+                    await self.answer.answer_with_voice(response_text)
 
                     # Update the balance for output voice
                     amount = self.tokenizer.tokens_to_money_to_voice(response_text)
                     print(f'---->>> Conversation balance decreased by: {amount} for output voice')
                     self.conversation.balance -= amount
                 else:
-                    self.answer.answer_with_text(response_text)
+                    await self.answer.answer_with_text(response_text)
 
                 # Check for annotations and send document if present
                 if 'annotations' in content.text:
@@ -94,7 +94,7 @@ class RunsTreadsHandler:
                     self.conversation.balance -= amount
 
                     annotation_data = content.text.annotations[0]
-                    self.answer.answer_with_annotation(annotation_data)
+                    await self.answer.answer_with_annotation(annotation_data)
 
             elif content.type == 'image_file':
                 # Decrease balance for output text
@@ -104,7 +104,7 @@ class RunsTreadsHandler:
 
                 # Send image if the content type is 'image_file'
                 file_id = content.image_file.file_id
-                self.answer.answer_with_image(file_id)
+                await self.answer.answer_with_image(file_id)
 
         return run.id
 
