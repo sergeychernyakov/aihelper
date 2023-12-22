@@ -234,7 +234,7 @@ class Transcriptor:
             return True, 'Video processed successfully'
         except Exception as e:
             print(f"Failed to transcribe video: {e}")
-            return False, f"Failed to transcribe video: {e}"
+            return False, f"Failed to transcribe video"
 
     # Private helper methods (these need to be implemented according to your specific requirements)
 

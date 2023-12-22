@@ -118,7 +118,9 @@ async def message_handler(update, context):
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
-                    successful_interaction = await transcriptor.transcript_video(file)
+                    successful_interaction, message = await transcriptor.transcript_video(file)
+                    if not successful_interaction:
+                        await context.bot.send_message(update.message.chat_id, message)
             elif update.message.voice:
                 success, message, file, amount = await message_handler.handle_voice_message()
                 if not success:
