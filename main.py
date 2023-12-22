@@ -108,30 +108,30 @@ async def message_handler(update, context):
                 if message_handler.handle_text_message(update.message.text):
                     successful_interaction = True
             elif update.message.photo:
-                success, message, file = message_handler.handle_photo_message()
+                success, message, file = await message_handler.handle_photo_message()
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
-                    successful_interaction = transcriptor.transcript_image(file)
+                    successful_interaction = await transcriptor.transcript_image(file)
             elif update.message.video:
-                success, message, file = message_handler.handle_video_message()
+                success, message, file = await message_handler.handle_video_message()
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
-                    successful_interaction = transcriptor.transcript_video(file)
+                    successful_interaction = await transcriptor.transcript_video(file)
             elif update.message.voice:
                 success, message, file, amount = await message_handler.handle_voice_message()
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
-                    successful_interaction = transcriptor.transcript_voice(file, amount)
+                    successful_interaction = await transcriptor.transcript_voice(file, amount)
             elif update.message.document:
                 transcriptor.assistant = assistant
-                success, message, file = message_handler.handle_document_message()
+                success, message, file = await message_handler.handle_document_message()
                 if not success:
                     await context.bot.send_message(update.message.chat_id, message)
                 else:
-                    transcriptor.transcript_document(file)
+                    await transcriptor.transcript_document(file)
                     # no need to run thread - already answered to the chat.
 
             if successful_interaction:

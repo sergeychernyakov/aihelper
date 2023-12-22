@@ -40,13 +40,13 @@ class Transcriptor:
         self.assistant = None
         self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
 
-    def __send_message(self, content):
+    async def __send_message(self, content):
         """
         Send a message to the Telegram chat.
 
         :param content: The content of the message to be sent.
         """
-        self.context.bot.send_message(self.update.message.chat_id, content)
+        await self.context.bot.send_message(self.update.message.chat_id, content)
 
     def __create_thread_message(self, content, file_ids=None):
         """
@@ -143,7 +143,7 @@ class Transcriptor:
             print(f"Failed to transcribe document: {e}")
             return False
 
-    def transcript_image(self, file):
+    async def transcript_image(self, file):
         """
         Transcribe an image file and create a corresponding thread message.
 
@@ -160,7 +160,7 @@ class Transcriptor:
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = "Insufficient balance to process the image."
                 print(message)
-                self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.context.bot.send_message(self.update.message.chat_id, message)
                 return False
 
             response = self.openai.chat.completions.create(
@@ -177,13 +177,13 @@ class Transcriptor:
             print(f'---->>> Conversation balance decreased by: ${amount} for image processing.')
             self.conversation.balance -= amount
 
-            self.__send_message(response.choices[0].message.content)
+            await self.__send_message(response.choices[0].message.content)
             self.__create_thread_message('Translate to Ukrainian: ' + response.choices[0].message.content)
             return True, 'Image processed successfully'
         except Exception as e:
             raise
 
-    def transcript_voice(self, file_path: str, amount: Decimal = Tokenizer.MINIMUM_COST):
+    async def transcript_voice(self, file_path: str, amount: Decimal = Tokenizer.MINIMUM_COST):
         """
         Transcribe a voice file and create a corresponding thread message.
 
@@ -193,7 +193,7 @@ class Transcriptor:
         """
         try:
             with open(file_path, "rb") as audio_file:
-                transcription = self.openai.audio.transcriptions.create(
+                transcription = await self.openai.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
                     response_format="text",
@@ -204,13 +204,13 @@ class Transcriptor:
                 print(f'---->>> Conversation balance decreased by: ${amount} for voice transcription.')
                 self.conversation.balance -= amount
 
-                self.__send_message(transcription)
+                await self.__send_message(transcription)
                 self.__create_thread_message('Translate to Ukrainian: ' + transcription)
             return True, 'Voice processed successfully'
         except Exception as e:
             return False, f"Failed to transcribe document: {e}"
 
-    def transcript_video(self, file_path: str):
+    async def transcript_video(self, file_path: str):
         """
         Transcribe a video file and create a corresponding thread message.
 
@@ -222,7 +222,7 @@ class Transcriptor:
             frames = self._extract_video_content(file_path)
 
             # Generate a video description using frames and audio transcription
-            description = self._generate_video_description(frames)
+            description = await self._generate_video_description(frames)
 
             print(f'AI transcripted video: {description}')
 
@@ -277,7 +277,7 @@ class Transcriptor:
         video.release()
         return base64_frames
 
-    def _generate_video_description(self, base64_frames):
+    async def _generate_video_description(self, base64_frames):
         """
         Generate a description for a video based on its frames.
 
