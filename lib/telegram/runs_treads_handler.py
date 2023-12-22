@@ -12,7 +12,7 @@ from decimal import Decimal
 
 class RunsTreadsHandler:
 
-    MAX_RUN_DURATION = 180 
+    MAX_RUN_DURATION = 60*60
 
     def __init__(self, openai_client, update, context, conversation, session, chat_id):
         self.openai = openai_client
@@ -50,7 +50,7 @@ class RunsTreadsHandler:
             )
 
             if run.status == 'requires_action':
-                self.submit_tool_outputs(run)
+                await self.submit_tool_outputs(run)
 
             # Check if the maximum run duration is exceeded
             if time.time() - start_time > self.MAX_RUN_DURATION:
@@ -136,7 +136,7 @@ class RunsTreadsHandler:
             # Handle the case where thread_id or run_id is missing
             print("Cannot cancel run: Missing thread_id or run_id.")
 
-    def submit_tool_outputs(self, run):
+    async def submit_tool_outputs(self, run):
         tool_outputs = []
 
         for tool_call in run.required_action.submit_tool_outputs.tool_calls:
@@ -148,7 +148,7 @@ class RunsTreadsHandler:
             args = json.loads(arguments)
             # Handle different function calls
             if function_name == 'generateImage':
-                output = self._generate_image(tool_call_id, args)
+                output = await self._generate_image(tool_call_id, args)
             elif function_name == 'sendEmail':
                 output = self._send_email(tool_call_id, args)
             else:
@@ -180,14 +180,14 @@ class RunsTreadsHandler:
             "output": f'Letter successfully sent. There is no need to reply to the message.'
         }
 
-    def _generate_image(self, tool_call_id, args):
+    async def _generate_image(self, tool_call_id, args):
         # Check if the balance is sufficient
         amount = self.tokenizer.tokens_to_money_from_string(args['description'])
         amount += self.tokenizer.tokens_to_money_to_image()
         if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
             message = "Insufficient balance to process the generating image."
             print(message)
-            self.context.bot.send_message(self.update.message.chat_id, message)
+            await self.context.bot.send_message(self.update.message.chat_id, message)
             return False, message
 
         # Assuming Image class has a generateImage method
@@ -199,7 +199,7 @@ class RunsTreadsHandler:
         print(f'---->>> Conversation balance decreased by: ${amount} for generating image.')
         self.conversation.balance -= amount
 
-        self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
+        await self.context.bot.send_photo(self.update.message.chat_id, image_url) # in some cases AI answers with wrong image url without params
         return {
             "tool_call_id": tool_call_id,
             "output": f'{image_url} - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message.'

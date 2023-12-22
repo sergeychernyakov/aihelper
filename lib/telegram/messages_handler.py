@@ -62,15 +62,19 @@ class MessagesHandler:
             # Define local file path for the voice message
             project_root = Path(__file__).parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
+            
             os.makedirs(tmp_dir_path, exist_ok=True)
             local_file_path = tmp_dir_path / f'voice{Path(file_info.file_path).suffix}'
 
             # Download the voice message file using HTTP GET
-            file_url = f'https://api.telegram.org/file/bot{self.context.bot.token}/{file_info.file_path}'
-            response = requests.get(file_url)
+            response = requests.get(file_info.file_path)
             if response.status_code == 200:
                 with open(str(local_file_path), 'wb') as f:
                     f.write(response.content)
+            else:
+                failed_message = 'Failed to load the voice message'
+                print(failed_message)
+                return False, failed_message, None, None
 
             success_message = "Voice processed successfully"
             return True, success_message, local_file_path, amount

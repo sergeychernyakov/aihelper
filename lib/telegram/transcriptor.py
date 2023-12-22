@@ -193,7 +193,7 @@ class Transcriptor:
         """
         try:
             with open(file_path, "rb") as audio_file:
-                transcription = await self.openai.audio.transcriptions.create(
+                transcription = self.openai.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
                     response_format="text",
@@ -206,9 +206,11 @@ class Transcriptor:
 
                 await self.__send_message(transcription)
                 self.__create_thread_message('Translate to Ukrainian: ' + transcription)
+
             return True, 'Voice processed successfully'
         except Exception as e:
-            return False, f"Failed to transcribe document: {e}"
+            print(f"Failed to transcribe the voice message: {e}")
+            return False, "Failed to transcribe the voice message."
 
     async def transcript_video(self, file_path: str):
         """
