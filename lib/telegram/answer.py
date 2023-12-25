@@ -98,7 +98,7 @@ class Answer:
         with open(file_path, "rb") as document_file:
             return self.context.bot.send_document(self.chat_id, document_file)
 
-    def answer_with_document(self, text: str):
+    async def answer_with_document(self, text: str):
         """
         Send a document to the Telegram chat.
 
@@ -124,4 +124,4 @@ class Answer:
 
         # Send the document to the Telegram chat
         with open(document_path, "rb") as file_to_send:
-            return self.context.bot.send_document(self.chat_id, file_to_send)
+            await self.context.bot.send_document(self.chat_id, file_to_send)

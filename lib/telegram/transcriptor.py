@@ -93,7 +93,7 @@ class Transcriptor:
             print(f"Failed to generate non-thread message: {e}")
             return "Error: Unable to process the request.", 0
 
-    def transcript_document(self, file_path: str):
+    async def transcript_document(self, file_path: str):
         """
         Transcribe a document file, split the extracted text into pieces, translate each piece,
         combine them, and send the full translated text as a document.
@@ -102,7 +102,7 @@ class Transcriptor:
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
         try:
-            extracted_text = TextExtractor.extract_text(file_path)
+            extracted_text = TextExtractor.extract_text(str(file_path))
             caption = self.update.message.caption or "Translate the text to Ukrainian: "
 
             # Check if the balance is sufficient
@@ -111,7 +111,7 @@ class Transcriptor:
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = "Insufficient balance to process the document."
                 print(message)
-                self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.context.bot.send_message(self.update.message.chat_id, message)
                 return False
 
             # Split the extracted text into smaller pieces and translate each piece
@@ -132,13 +132,13 @@ class Transcriptor:
 
             # Truncate the text for Telegram message and send a notification about the full text
             truncated_text = (full_translated_text[:200] + '... (truncated)') if len(full_translated_text) > 200 else full_translated_text
-            self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
+            await self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
 
             # Send the full translated text as a document
-            self.answer.answer_with_document(full_translated_text)
+            await self.answer.answer_with_document(full_translated_text)
 
             return True
-        
+
         except Exception as e:
             print(f"Failed to transcribe document: {e}")
             return False

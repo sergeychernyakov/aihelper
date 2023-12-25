@@ -125,32 +125,35 @@ class MessagesHandler:
             print(f"Error in handle_video_message: {e}")
             raise
 
-    def handle_document_message(self):
+    async def handle_document_message(self):
         try:
             document = self.update.message.document
-            file = self.context.bot.get_file(document.file_id)
+            file_info = await self.context.bot.get_file(document.file_id)
 
-            print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent document: "{file.file_path}" {file.file_size}')
+            print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent document: "{file_info.file_path}" {file_info.file_size}')
 
-            success, message = ConstraintsChecker.check_document_constraints(file)
+            success, message = ConstraintsChecker.check_document_constraints(file_info)
             if not success:
                 return False, message, None
 
-            # Extract file extension
-            _, file_extension = os.path.splitext(file.file_path)
-
-            # Determine the project root directory
+            # Define local file path for the document
             project_root = Path(__file__).parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
-
-            # Ensure the directory exists before trying to download
+            
             os.makedirs(tmp_dir_path, exist_ok=True)
+            local_file_path = tmp_dir_path / f'document{Path(file_info.file_path).suffix}'
 
-            # Download the file to the desired location with the extracted extension
-            download_path = tmp_dir_path / f'document{file_extension}'
-            file.download(download_path)
+            # Download the document file using HTTP GET
+            response = requests.get(file_info.file_path)
+            if response.status_code == 200:
+                with open(str(local_file_path), 'wb') as f:
+                    f.write(response.content)
+            else:
+                failed_message = 'Failed to load the document'
+                print(failed_message)
+                return False, failed_message, None
 
-            message = "Document processed successfully"
-            return True, message, download_path
+            return True, "Document processed successfully", local_file_path
         except Exception as e:
+            print(f"Error in handle_document_message: {e}")
             raise
