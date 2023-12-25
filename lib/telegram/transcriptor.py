@@ -8,7 +8,7 @@ from lib.telegram.answer import Answer
 from decimal import Decimal
 class Transcriptor:
 
-    MAX_MESSAGE_LENGTH = 3000 
+    MAX_MESSAGE_LENGTH = 3000
 
     """
     The Transcriptor class handles the transcription of different types of media (documents, images, and voice recordings)

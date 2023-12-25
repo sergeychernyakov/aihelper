@@ -67,10 +67,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 
 ### Plan
-  - fix _extract_from_doc
-  - check pdf, .tex, .docx, .html, .pdf, .pptx, .rtf, .rtfd, .tar, .zip
-  - fix tests
-
   - optimize answer_with_voice, answer_with_annotation and answer_with_document like answer_with_image to not use file saving
   - fix tests
   - supress error message
