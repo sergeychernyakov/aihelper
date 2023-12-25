@@ -2,20 +2,19 @@ import os
 import docx
 from bs4 import BeautifulSoup
 from pptx import Presentation
-# from textract import process
+from textract import process
 from striprtf.striprtf import rtf_to_text
 import zipfile
 import tarfile
 import shutil
 import pdfplumber
+from lib.telegram.constraints_checker import ConstraintsChecker
 
 class TextExtractor:
     """
     A class to extract text from various file formats.
     Supported formats include txt, tex, docx, html, pdf, pptx, doc, rtfd, rtf, tar, zip.
     """
-    ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.doc', '.rtfd', '.rtf', '.tar', '.zip'}
-
     @staticmethod
     def extract_text(file_path):
         """
@@ -27,7 +26,7 @@ class TextExtractor:
         """
         ext = os.path.splitext(file_path)[1].lower()
 
-        if ext in TextExtractor.ALLOWED_FILE_EXTENSIONS:
+        if ext in ConstraintsChecker.ALLOWED_FILE_EXTENSIONS:
             if ext in ['.txt', '.tex']:
                 return TextExtractor._read_plain_text(file_path)
             elif ext == '.docx':
@@ -149,6 +148,7 @@ class TextExtractor:
         try:
             return process(file_path).decode('utf-8')
         except Exception as e:
+            print(f"Error extracting text from .doc: {e}")
             return f"Error extracting text from .doc: {e}"
 
     @staticmethod
@@ -220,7 +220,7 @@ class TextExtractor:
 
                     file_path_within_tar = os.path.join(root, file)
                     ext = os.path.splitext(file_path_within_tar)[1].lower()
-                    if ext in TextExtractor.ALLOWED_FILE_EXTENSIONS:
+                    if ext in ConstraintsChecker.ALLOWED_FILE_EXTENSIONS:
                         extracted_text.append(TextExtractor.extract_text(file_path_within_tar))
 
             return '\n'.join(extracted_text)
@@ -247,7 +247,7 @@ class TextExtractor:
 
                     file_path_within_zip = os.path.join(root, file)
                     ext = os.path.splitext(file_path_within_zip)[1].lower()
-                    if ext in TextExtractor.ALLOWED_FILE_EXTENSIONS:
+                    if ext in ConstraintsChecker.ALLOWED_FILE_EXTENSIONS:
                         file_text = TextExtractor.extract_text(file_path_within_zip)
                         if file_text:
                             extracted_text.append(file_text)
@@ -265,7 +265,7 @@ class TextExtractor:
 # {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.doc', '.rtfd', '.rtf', '.tar', '.zip'}
 
 # from lib.telegram.text_extractor import TextExtractor
-# # Define a list of file paths with different extensions
+# # # Define a list of file paths with different extensions
 # file_paths = [
 # 'tmp/document.txt',
 # 'tmp/document.tex',
@@ -280,8 +280,8 @@ class TextExtractor:
 # 'tmp/document.zip',
 # ]
 
-# # # Loop through each file path, extract text, and print it
+# # # # Loop through each file path, extract text, and print it
 # for file_path in file_paths:
 #     print(f"\nExtracting text from {file_path}:")
 #     extracted_text = TextExtractor.extract_text(file_path)
-#     print(extracted_text[:1000])
+#     print(extracted_text[:100])

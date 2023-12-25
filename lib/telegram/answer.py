@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from docx import Document
+import aiohttp
+from io import BytesIO
 
 class Answer:
     def __init__(self, openai_client, context, chat_id, thread_id):
@@ -50,27 +52,28 @@ class Answer:
         voice_file = open(voice_answer_path, "rb")
         return self.context.bot.send_document(self.chat_id, voice_file)
 
-    def answer_with_image(self, file_id):
+    async def answer_with_image(self, file_id):
         """
         Send an image to the Telegram chat.
 
-        This method fetches an image from the OpenAI API using a file ID,
-        saves it to a temporary directory, and then sends it to the chat.
+        This method fetches an image from the OpenAI API using a file ID and
+        sends it to the chat without saving it to a temporary directory.
 
         :param file_id: The ID of the file to fetch and send as an image.
         """
-        tmp_folder = Path(__file__).parent.parent.parent / 'tmp'
-        os.makedirs(tmp_folder, exist_ok=True)
+        async with self.openai.files.content(file_id) as response:
+            if response.status == 200:
+                image_data_bytes = await response.read()
 
-        image_data = self.openai.files.content(file_id)
-        image_data_bytes = image_data.read()
+                # Use BytesIO to create a file-like object from the bytes, which can be sent directly
+                image_file = BytesIO(image_data_bytes)
+                image_file.name = f"{file_id}.png"  # Set a name for the file to be sent
 
-        image_path = tmp_folder / f"{file_id}.png"
-        with open(image_path, "wb") as file:
-            file.write(image_data_bytes)
-
-        with open(image_path, "rb") as image_file:
-            return self.context.bot.send_photo(self.chat_id, image_file)
+                await self.context.bot.send_photo(self.chat_id, photo=image_file)
+            else:
+                # Handle error in fetching the image
+                error_message = f"Failed to fetch image with file_id {file_id}."
+                await self.context.bot.send_message(self.chat_id, error_message)
 
     def answer_with_annotation(self, annotation_data):
         """

@@ -4,7 +4,7 @@ class ConstraintsChecker:
     MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
     ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
     ALLOWED_VOICE_EXTENSIONS = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.oga'} 
-    ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.txt', '.tar', '.zip'}
+    ALLOWED_FILE_EXTENSIONS = {'.txt', '.tex', '.docx', '.doc', '.html', '.rtf', '.rtfd', '.pdf', '.pptx', '.txt', '.tar', '.zip'}
     MAX_DIMENSION_SIZE = 2000  # Max pixels for the longest side of the photo
 
     # New allowed video extensions and max file size
