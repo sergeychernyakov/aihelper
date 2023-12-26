@@ -78,7 +78,7 @@ class RunsTreadsHandler:
 
                 # Define a threshold for a short message
                 short_message_threshold = 100
-                if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
+                if len(response_text) <= short_message_threshold: #and random.randint(1, 10) == 1:
                     await self.answer.answer_with_voice(response_text)
 
                     # Update the balance for output voice

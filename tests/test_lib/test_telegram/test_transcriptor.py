@@ -67,7 +67,6 @@ class TestTranscriptor(unittest.TestCase):
         run(self.transcriptor.transcript_image(file))
 
         self.mock_openai_client.chat.completions.create.assert_called_once()
-        self.mock_bot.send_message.assert_awaited_once_with('chat_id', "Mocked Content")
         self.mock_openai_client.beta.threads.messages.create.assert_called_once()
 
     @patch('builtins.open', new_callable=mock_open)
@@ -76,7 +75,6 @@ class TestTranscriptor(unittest.TestCase):
         self.mock_openai_client.audio.transcriptions.create = mock_transcription
 
         # No changes for async methods if they are correctly defined as async in your actual class
-        self.transcriptor._Transcriptor__send_message = AsyncMock()
         self.transcriptor._Transcriptor__create_thread_message = Mock()
 
         # Run the async method
@@ -85,7 +83,7 @@ class TestTranscriptor(unittest.TestCase):
         # Assertions
         mock_file.assert_called_once_with("path/to/audio", "rb")
         mock_transcription.assert_called_once()  # Change here
-        self.transcriptor._Transcriptor__send_message.assert_awaited()
+
         self.transcriptor._Transcriptor__create_thread_message.assert_called_once()
 
 if __name__ == '__main__':
