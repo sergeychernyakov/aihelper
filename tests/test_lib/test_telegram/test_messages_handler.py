@@ -33,7 +33,7 @@ class TestMessagesHandler(unittest.TestCase):
             thread_id='thread_id', role="user", content=message)
 
     @patch('lib.telegram.constraints_checker.ConstraintsChecker.check_photo_constraints')
-    def test_handle_photo_message(self, mock_check_constraints):
+    async def test_handle_photo_message(self, mock_check_constraints):
         mock_check_constraints.return_value = (True, "Success")
         self.mock_update.message.photo = [Mock(), Mock(width=512, height=512, file_id='file_id')]
 
@@ -50,7 +50,7 @@ class TestMessagesHandler(unittest.TestCase):
     @patch('requests.get')
     @patch('os.makedirs')
     @patch('lib.telegram.constraints_checker.ConstraintsChecker.check_voice_constraints')
-    def test_handle_voice_message(self, mock_check_constraints, mock_makedirs, mock_requests_get, mock_open):
+    async def test_handle_voice_message(self, mock_check_constraints, mock_makedirs, mock_requests_get, mock_open):
 
         mock_check_constraints.return_value = (True, "Success")
         voice_duration = 10
@@ -89,7 +89,7 @@ class TestMessagesHandler(unittest.TestCase):
     @patch('requests.get')
     @patch('os.makedirs')
     @patch('lib.telegram.constraints_checker.ConstraintsChecker.check_document_constraints')
-    def test_handle_document_message(self, mock_check_constraints, mock_makedirs, mock_requests_get, mock_open):
+    async def test_handle_document_message(self, mock_check_constraints, mock_makedirs, mock_requests_get, mock_open):
         mock_check_constraints.return_value = (True, "Success")
         document_extension = ".pdf"
         self.mock_update.message.document = Mock(file_id='document_file_id')

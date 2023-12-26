@@ -7,7 +7,6 @@ warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 import os
 import logging
 from datetime import datetime
-import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, CallbackContext, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler
 from dotenv import load_dotenv
@@ -86,92 +85,92 @@ async def message_handler(update, context):
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file, video or voice."}')
 
-        try:
+        # try:
             # Check for existing conversation or create a new one
-            conversation = session.query(Conversation).filter_by(
-                user_id=update.message.from_user.id,
-                assistant_id=ASSISTANT_ID
-            ).first() or _create_conversation(session, update)
-            
-            print(f"Updated at: {conversation.updated_at}, Current time: {datetime.utcnow()}")
+        conversation = session.query(Conversation).filter_by(
+            user_id=update.message.from_user.id,
+            assistant_id=ASSISTANT_ID
+        ).first() or _create_conversation(session, update)
+        
+        print(f"Updated at: {conversation.updated_at}, Current time: {datetime.utcnow()}")
 
-            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, update.message.chat_id)
-            if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
-                # Recreate thread if interval has passed
-                runs_treads_handler.recreate_thread(session, conversation)
+        runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, update.message.chat_id)
+        if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
+            # Recreate thread if interval has passed
+            runs_treads_handler.recreate_thread(session, conversation)
 
-            message_handler = MessagesHandler(openai, update, context, conversation)
-            transcriptor = Transcriptor(openai, update, context, conversation)
+        message_handler = MessagesHandler(openai, update, context, conversation)
+        transcriptor = Transcriptor(openai, update, context, conversation)
 
-            # Handle different types of messages
-            if update.message.text:
-                if message_handler.handle_text_message(update.message.text):
-                    successful_interaction = True
-            elif update.message.photo:
-                success, message, file = await message_handler.handle_photo_message()
-                if not success:
-                    await context.bot.send_message(update.message.chat_id, message)
-                else:
-                    successful_interaction = await transcriptor.transcript_image(file)
-            elif update.message.video:
-                success, message, file = await message_handler.handle_video_message()
-                if not success:
-                    await context.bot.send_message(update.message.chat_id, message)
-                else:
-                    successful_interaction, message = await transcriptor.transcript_video(file)
-                    if not successful_interaction:
-                        await context.bot.send_message(update.message.chat_id, message)
-            elif update.message.voice:
-                success, message, file, amount = await message_handler.handle_voice_message()
-                if not success:
-                    await context.bot.send_message(update.message.chat_id, message)
-                else:
-                    successful_interaction, message = await transcriptor.transcript_voice(file, amount)
-                    if not successful_interaction:
-                        await context.bot.send_message(update.message.chat_id, message)
-            elif update.message.document:
-                transcriptor.assistant = assistant
-                success, message, file = await message_handler.handle_document_message()
-                if not success:
-                    await context.bot.send_message(update.message.chat_id, message)
-                else:
-                    await transcriptor.transcript_document(file)
-                    # no need to run thread - already answered to the chat.
-
-            if successful_interaction:
-                tokenizer = Tokenizer()
-                messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id, limit=100)
-                amount = tokenizer.calculate_thread_total_amount(messages)
-
-                # Check if the balance is sufficient
-                if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
-                    print("Insufficient balance.")
-                    await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
-                    return False
-
-                # Update the balance
-                print(f'---->>> Conversation balance decreased by: ${amount} for input text')
-                conversation.balance -= amount
-
-                await runs_treads_handler.create_run()
-                # Update the conversation's timestamp after a successful interaction
-                conversation.updated_at = datetime.utcnow()
-                session.commit() # Make sure to commit only once after all updates
-
-            Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
-
-        except Exception as e:
-            error_message = str(e)
-            print(f"Error: {e}")
-            if "Error code: 404" in error_message and "No thread found with id" in error_message:
-                runs_treads_handler.create_thread(session, conversation)
-            elif "Failed to index file: Unsupported file" in error_message:
-                runs_treads_handler.recreate_thread(session, conversation)
-            elif "Can't add messages to thread_" in error_message:
-                thread_id, run_id = Helpers.get_thread_id_and_run_id_from_string(error_message)
-                runs_treads_handler.cancel_run(thread_id, run_id)
+        # Handle different types of messages
+        if update.message.text:
+            if message_handler.handle_text_message(update.message.text):
+                successful_interaction = True
+        elif update.message.photo:
+            success, message, file = await message_handler.handle_photo_message()
+            if not success:
+                await context.bot.send_message(update.message.chat_id, message)
             else:
-                raise
+                successful_interaction = await transcriptor.transcript_image(file)
+        elif update.message.video:
+            success, message, file = await message_handler.handle_video_message()
+            if not success:
+                await context.bot.send_message(update.message.chat_id, message)
+            else:
+                successful_interaction, message = await transcriptor.transcript_video(file)
+                if not successful_interaction:
+                    await context.bot.send_message(update.message.chat_id, message)
+        elif update.message.voice:
+            success, message, file, amount = await message_handler.handle_voice_message()
+            if not success:
+                await context.bot.send_message(update.message.chat_id, message)
+            else:
+                successful_interaction, message = await transcriptor.transcript_voice(file, amount)
+                if not successful_interaction:
+                    await context.bot.send_message(update.message.chat_id, message)
+        elif update.message.document:
+            transcriptor.assistant = assistant
+            success, message, file = await message_handler.handle_document_message()
+            if not success:
+                await context.bot.send_message(update.message.chat_id, message)
+            else:
+                await transcriptor.transcript_document(file)
+                # no need to run thread - already answered to the chat.
+
+        if successful_interaction:
+            tokenizer = Tokenizer()
+            messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id, limit=100)
+            amount = tokenizer.calculate_thread_total_amount(messages)
+
+            # Check if the balance is sufficient
+            if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
+                print("Insufficient balance.")
+                await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                return False
+
+            # Update the balance
+            print(f'---->>> Conversation balance decreased by: ${amount} for input text')
+            conversation.balance -= amount
+
+            await runs_treads_handler.create_run()
+            # Update the conversation's timestamp after a successful interaction
+            conversation.updated_at = datetime.utcnow()
+            session.commit() # Make sure to commit only once after all updates
+
+        Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
+
+        # except Exception as e:
+        #     error_message = str(e)
+        #     print(f"Error: {e}")
+        #     if "Error code: 404" in error_message and "No thread found with id" in error_message:
+        #         runs_treads_handler.create_thread(session, conversation)
+        #     elif "Failed to index file: Unsupported file" in error_message:
+        #         runs_treads_handler.recreate_thread(session, conversation)
+        #     elif "Can't add messages to thread_" in error_message:
+        #         thread_id, run_id = Helpers.get_thread_id_and_run_id_from_string(error_message)
+        #         runs_treads_handler.cancel_run(thread_id, run_id)
+        #     else:
+        #         raise
 
 async def ping(update: Update, context: CallbackContext) -> None:
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent ping.')

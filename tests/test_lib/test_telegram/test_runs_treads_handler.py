@@ -39,7 +39,7 @@ class TestRunsTreadsHandler(unittest.TestCase):
     @patch('lib.telegram.helpers.Helpers.cleanup_folder')
     @patch('builtins.open', new_callable=mock_open, create=True)
     @patch('random.randint', return_value=1)  # Mock random.randint
-    def test_create_run(self, mock_randint, mock_file_open, mock_cleanup_folder, mock_answer):
+    async def test_create_run(self, mock_randint, mock_file_open, mock_cleanup_folder, mock_answer):
         # Mock setup...
         mock_run_in_progress = Mock(status='in-progress', id='run_id')
         mock_run_completed = Mock(status='completed', id='run_id')
@@ -50,13 +50,12 @@ class TestRunsTreadsHandler(unittest.TestCase):
         mock_messages = Mock(data=[Mock(content=[Mock(text=Mock(value=short_response_text))])])
         self.mock_openai_client.beta.threads.messages.list.return_value = mock_messages
 
-        self.handler.create_run()
+        await self.handler.create_run()
 
         # Assertions...
         self.mock_openai_client.beta.threads.runs.create.assert_called_once()
         self.assertTrue(self.mock_openai_client.beta.threads.runs.retrieve.call_count > 0)
         self.mock_openai_client.beta.threads.messages.list.assert_called_once()
-
 
     def test_create_thread(self):
         self.mock_conversation.id = 'conversation_id'
@@ -99,9 +98,8 @@ class TestRunsTreadsHandler(unittest.TestCase):
             self.handler.cancel_run('valid_thread_id', 'valid_run_id')
             self.assertIn("Error occurred while cancelling the run: Test Exception", fake_output.getvalue())
 
-
     @patch('lib.telegram.runs_treads_handler.Image')
-    def test_submit_tool_outputs_with_generateImage(self, mock_image_class):
+    async def test_submit_tool_outputs_with_generateImage(self, mock_image_class):
         # Create a mock instance of the Image class
         mock_image_instance = mock_image_class.return_value
         # Mock the return value of the generate method
@@ -127,7 +125,7 @@ class TestRunsTreadsHandler(unittest.TestCase):
         )
 
         # Executing the method
-        self.handler.submit_tool_outputs(mock_run)
+        await self.handler.submit_tool_outputs(mock_run)
 
         # Define the expected output string
         expected_output = 'image_url - this picture has already been sent to the user in the Telegram chat. There is no need to reply to the message.'

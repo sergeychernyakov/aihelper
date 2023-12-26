@@ -1,10 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, AsyncMock, patch
 from main import message_handler, main, ping, TELEGRAM_BOT_TOKEN
 from telegram import Update, User, Message
 from db.models.conversation import Conversation
 from datetime import datetime, timedelta
 from decimal import Decimal
+import asyncio
 
 class TestMain(unittest.TestCase):
 
@@ -13,14 +14,14 @@ class TestMain(unittest.TestCase):
     @patch('main.Transcriptor')
     @patch('main.RunsTreadsHandler')
     @patch('main.session_scope')
-    def test_message_handler_text(self, mock_session_scope, mock_runs_treads_handler,
-                                  mock_transcriptor, mock_messages_handler, mock_openai_global):
+    @patch('main.CallbackContext')
+    async def test_message_handler_text(self, mock_context, mock_session_scope, mock_runs_treads_handler, mock_transcriptor, mock_messages_handler, mock_openai_global):
 
         # Mock dependencies
         mock_update = Mock(spec=Update)
         mock_context = Mock()
         mock_session = Mock()
-        mock_session_scope.return_value.__enter__.return_value = mock_session
+        #  mock_session_scope.return_value.__enter__.return_value = mock_session
         mock_user = User(123, 'TestUser', False)
         mock_chat = Mock()  # Mock the chat object
         mock_chat.id = 456  # Assign a mock chat ID
@@ -45,7 +46,7 @@ class TestMain(unittest.TestCase):
         # Mock the tokenizer to return a Decimal amount
         with patch('main.Tokenizer.calculate_thread_total_amount', return_value=Decimal('1.0')):
             # Call the function
-            message_handler(mock_update, mock_context)
+            await message_handler(mock_update, mock_context)
 
         # Assertions for MessagesHandler
         mock_messages_handler.assert_called_once_with(
@@ -59,33 +60,27 @@ class TestMain(unittest.TestCase):
         mock_session.query.assert_called()
         self.assertGreaterEqual(mock_session.query().filter_by().first.call_count, 1)
 
-    @patch('main.Updater')
-    @patch('main.MessageHandler')
-    @patch('main.Filters')
-    def test_main(self, mock_Filters, mock_MessageHandler, mock_Updater):
-        # Mock the bot and dispatcher
-        mock_bot = Mock()
-        mock_dispatcher = Mock()
-        mock_Updater.return_value = Mock(bot=mock_bot, dispatcher=mock_dispatcher, start_polling=Mock(), idle=Mock())
+    @patch('main.Application')
+    def test_main_initialization(self, mock_Application):
+        # Mock the builder and its methods
+        mock_builder = Mock()
+        mock_Application.builder.return_value = mock_builder
+        mock_builder.token.return_value = mock_builder
+        mock_builder.build.return_value.run_polling = Mock()
 
-        # Run the main method
+        # Run the main function
         main()
 
-        # Assert Updater is called with the correct token
-        mock_Updater.assert_called_with(TELEGRAM_BOT_TOKEN, use_context=True)
+        # Assert the builder pattern is used correctly
+        mock_Application.builder.assert_called()
+        mock_builder.token.assert_called_with(TELEGRAM_BOT_TOKEN)
+        mock_builder.build.assert_called()
 
-        # Assert that a MessageHandler is created
-        mock_MessageHandler.assert_called()
-
-        # Assert the handler is added to the dispatcher
-        mock_dispatcher.add_handler.assert_called()
-
-        # Assert that start_polling and idle methods are called
-        mock_Updater.return_value.start_polling.assert_called_once()
-        mock_Updater.return_value.idle.assert_called_once() 
+        # Assert run_polling is called
+        mock_builder.build.return_value.run_polling.assert_called()
 
     @patch('main.CallbackContext')
-    def test_ping(self, mock_context):
+    async def test_ping(self, mock_context):
         # Mocking the Update and User objects
         mock_update = Mock()
         mock_user = Mock()
@@ -94,11 +89,16 @@ class TestMain(unittest.TestCase):
         mock_user.id = 12345  # mock user ID
         mock_update.message = Mock(from_user=mock_user)
 
-        # Call the ping function with the mock objects
-        ping(mock_update, mock_context)
+        # Use AsyncMock for the asynchronous method
+        mock_context.bot.send_message = AsyncMock()
+
+        # Create an event loop and run the ping coroutine within it
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(ping(mock_update, mock_context))
 
         # Assert that send_message is called with correct arguments
-        mock_context.bot.send_message.assert_called_with(mock_user.id, 'pong')
+        mock_context.bot.send_message.assert_awaited_with(mock_user.id, 'pong')
+
 
 if __name__ == '__main__':
     unittest.main()

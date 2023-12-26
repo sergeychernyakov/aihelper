@@ -1,11 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, AsyncMock, patch, mock_open
 import tempfile
 import shutil  # Import shutil module
 import os
 from lib.telegram.answer import Answer
 
-class TestAnswer(unittest.TestCase):
+class TestAnswer(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         # Mock the dependencies
@@ -13,15 +13,14 @@ class TestAnswer(unittest.TestCase):
         self.mock_context = Mock()
         self.mock_bot = Mock()
         self.mock_context.bot = self.mock_bot
-        # Setup for Answer instance
         self.answer = Answer(self.mock_openai_client, self.mock_context, 'chat_id', 'thread_id')
-        # Initialize a variable to store the temporary directory path
         self.temp_dir = None
+        self.mock_bot.send_message = AsyncMock()
 
-    def test_answer_with_text(self):
+    async def test_answer_with_text(self):
         message = "Hello, world!"
-        self.answer.answer_with_text(message)
-        self.mock_bot.send_message.assert_called_once_with('chat_id', message)
+        await self.answer.answer_with_text(message)
+        self.mock_bot.send_message.assert_awaited_once_with('chat_id', message)
 
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.makedirs')
