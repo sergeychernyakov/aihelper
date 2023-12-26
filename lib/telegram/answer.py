@@ -75,56 +75,52 @@ class Answer:
                 error_message = f"Failed to fetch image with file_id {file_id}."
                 await self.context.bot.send_message(self.chat_id, error_message)
 
-    def answer_with_annotation(self, annotation_data):
+    async def answer_with_annotation(self, annotation_data):
         """
         Send a document to the Telegram chat.
 
         This method fetches a document from the OpenAI API using annotation data,
-        which includes the file ID and the file path with the extension.
-        It then saves the document to a temporary directory and sends it to the chat.
+        creates a file-like object in memory using BytesIO, and sends it to the chat
+        without saving it to a temporary directory.
 
         :param annotation_data: A dictionary containing the file ID and the file path.
         """
-        tmp_folder = Path(__file__).parent.parent.parent / 'tmp'
-        os.makedirs(tmp_folder, exist_ok=True)
-
         file_id = annotation_data['file_path']['file_id']
         file_extension = os.path.splitext(annotation_data['text'])[1]
 
-        file_data = self.openai.files.content(file_id)
-        file_data_bytes = file_data.read()
+        # Fetch the file content from the OpenAI API
+        async with self.openai.files.content(file_id) as response:
+            if response.status == 200:
+                file_data_bytes = await response.read()
 
-        file_path = tmp_folder / f"{file_id}{file_extension}"
-        with open(file_path, "wb") as file:
-            file.write(file_data_bytes)
+                # Use BytesIO to create a file-like object from the bytes
+                document_file = BytesIO(file_data_bytes)
+                document_file.name = f"{file_id}{file_extension}"  # Set a name for the file to be sent
 
-        with open(file_path, "rb") as document_file:
-            return self.context.bot.send_document(self.chat_id, document_file)
+                # Send the document to the Telegram chat
+                await self.context.bot.send_document(self.chat_id, document_file)
+            else:
+                # Handle error in fetching the file
+                print(f"Failed to fetch document with file_id {file_id}.")
 
     async def answer_with_document(self, text: str):
         """
         Send a document to the Telegram chat.
 
-        This method creates a .docx document file with the given text, 
-        saves it to a temporary directory specific to the thread ID, 
-        and then sends it to the chat.
+        This method creates a .docx document file with the given text and sends it directly
+        to the chat using a BytesIO object, without saving it to a temporary directory.
 
         :param text: The text content to be written to the document.
         """
-        # Define the temporary directory for this thread
-        tmp_folder = Path(__file__).parent.parent.parent / 'tmp' / self.thread_id
-        os.makedirs(tmp_folder, exist_ok=True)
-
-        # Define the file path for the new document
-        document_path = tmp_folder / "output_document.docx"
-
-        # Create a new Document
+        # Create a new Document in memory
         doc = Document()
         doc.add_paragraph(text)
 
-        # Save the document
-        doc.save(document_path)
+        # Use BytesIO to create a file-like object
+        doc_file = BytesIO()
+        doc.save(doc_file)
+        doc_file.name = "translated_document.docx"  # Set a name for the file to be sent
+        doc_file.seek(0)  # Reset the pointer to the beginning of the BytesIO object
 
         # Send the document to the Telegram chat
-        with open(document_path, "rb") as file_to_send:
-            await self.context.bot.send_document(self.chat_id, file_to_send)
+        await self.context.bot.send_document(self.chat_id, doc_file)
