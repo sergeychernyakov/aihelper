@@ -6,6 +6,8 @@ from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.text_extractor import TextExtractor
 from lib.telegram.answer import Answer
 from decimal import Decimal
+from lib.telegram.payment import Payment
+
 class Transcriptor:
 
     MAX_MESSAGE_LENGTH = 3000
@@ -39,6 +41,7 @@ class Transcriptor:
         self.tokenizer = Tokenizer()
         self.assistant = None
         self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
+        self.payment = Payment()
 
     async def __send_message(self, content):
         """
@@ -112,6 +115,7 @@ class Transcriptor:
                 message = "Insufficient balance to process the document."
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.payment.send_invoice(self.update, self.context, False)
                 return False
 
             # Split the extracted text into smaller pieces and translate each piece
@@ -141,6 +145,7 @@ class Transcriptor:
 
         except Exception as e:
             print(f"Failed to transcribe document: {e}")
+            await self.context.bot.send_message(self.update.message.chat_id, 'Failed to transcribe document.')
             return False
 
     async def transcript_image(self, file):
@@ -161,6 +166,7 @@ class Transcriptor:
                 message = "Insufficient balance to process the image."
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.payment.send_invoice(self.update, self.context, False)
                 return False
 
             response = self.openai.chat.completions.create(
@@ -177,8 +183,8 @@ class Transcriptor:
             print(f'---->>> Conversation balance decreased by: ${amount} for image processing.')
             self.conversation.balance -= amount
 
-            await self.__send_message(response.choices[0].message.content)
-            self.__create_thread_message('Translate to Ukrainian: ' + response.choices[0].message.content)
+            # await self.__send_message(response.choices[0].message.content)
+            self.__create_thread_message('Translate: ' + response.choices[0].message.content)
             return True, 'Image processed successfully'
         except Exception as e:
             raise
@@ -204,8 +210,8 @@ class Transcriptor:
                 print(f'---->>> Conversation balance decreased by: ${amount} for voice transcription.')
                 self.conversation.balance -= amount
 
-                await self.__send_message(transcription)
-                self.__create_thread_message('Translate to Ukrainian: ' + transcription)
+                # await self.__send_message(transcription)
+                self.__create_thread_message(transcription)
 
             return True, 'Voice processed successfully'
         except Exception as e:
@@ -229,7 +235,7 @@ class Transcriptor:
             print(f'AI transcripted video: {description}')
 
             # Create a thread message with the description
-            self.__create_thread_message('Translate to Ukrainian: ' + description)
+            self.__create_thread_message('Translate: ' + description)
 
             return True, 'Video processed successfully'
         except Exception as e:

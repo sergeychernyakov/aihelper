@@ -48,7 +48,8 @@ class TextExtractor:
             elif ext == '.zip':
                 return TextExtractor._extract_from_zip(file_path)
         else:
-            return "Unsupported file format"
+            raise Exception("Unsupported file format.")
+
     @staticmethod
     def _read_plain_text(file_path):
         """
@@ -145,11 +146,7 @@ class TextExtractor:
         :return: str
             Text content of the DOC file.
         """
-        try:
-            return process(file_path).decode('utf-8')
-        except Exception as e:
-            print(f"Error extracting text from .doc: {e}")
-            return f"Error extracting text from .doc: {e}"
+        return process(file_path).decode('utf-8')
 
     @staticmethod
     def _extract_from_rtf(file_path):
@@ -160,12 +157,9 @@ class TextExtractor:
         :return: str
             Text content of the RTF file.
         """
-        try:
-            with open(file_path, 'r') as file:
-                rtf_content = file.read()
-            return rtf_to_text(rtf_content)
-        except Exception as e:
-            return f"Error extracting text from .rtf: {e}"
+        with open(file_path, 'r') as file:
+            rtf_content = file.read()
+        return rtf_to_text(rtf_content)
 
     @staticmethod
     def _extract_from_rtfd(file_path):
@@ -197,7 +191,8 @@ class TextExtractor:
 
             return "No RTF file found in RTFD package"
         except Exception as e:
-            return f"Error extracting text from RTFD: {e}"
+            print(f"Error extracting text from RTFD: {e}")
+            raise
         finally:
             # Clean up the temporary directory
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -225,7 +220,8 @@ class TextExtractor:
 
             return '\n'.join(extracted_text)
         except Exception as e:
-            return f"Error extracting text from .tar: {e}"
+            print(f"Error extracting text from .tar: {e}")
+            raise
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -254,7 +250,8 @@ class TextExtractor:
 
             return '\n'.join(extracted_text)
         except Exception as e:
-            return f"Error extracting text from .zip: {e}"
+            print(f"Error extracting text from .zip: {e}")
+            raise
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 

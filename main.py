@@ -27,6 +27,8 @@ load_dotenv()
 # Initialize the Assistant
 assistant = Assistant()
 
+payment = Payment()
+
 # Get OpenAI client and Assistant ID from the Assistant instance
 openai = assistant.get_openai_client()
 
@@ -84,93 +86,98 @@ async def message_handler(update, context):
 
     with session_scope() as session:
         print(f'{update.message.from_user.first_name}({update.message.from_user.username}) said: {update.message.text or "sent a photo, file, video or voice."}')
-
-        # try:
+        try:
             # Check for existing conversation or create a new one
-        conversation = session.query(Conversation).filter_by(
-            user_id=update.message.from_user.id,
-            assistant_id=ASSISTANT_ID
-        ).first() or _create_conversation(session, update)
-        
-        print(f"Updated at: {conversation.updated_at}, Current time: {datetime.utcnow()}")
-
-        runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, update.message.chat_id)
-        if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
-            # Recreate thread if interval has passed
-            runs_treads_handler.recreate_thread(session, conversation)
-
-        message_handler = MessagesHandler(openai, update, context, conversation)
-        transcriptor = Transcriptor(openai, update, context, conversation)
-
-        # Handle different types of messages
-        if update.message.text:
-            if message_handler.handle_text_message(update.message.text):
-                successful_interaction = True
-        elif update.message.photo:
-            success, message, file = await message_handler.handle_photo_message()
-            if not success:
-                await context.bot.send_message(update.message.chat_id, message)
-            else:
-                successful_interaction = await transcriptor.transcript_image(file)
-        elif update.message.video:
-            success, message, file = await message_handler.handle_video_message()
-            if not success:
-                await context.bot.send_message(update.message.chat_id, message)
-            else:
-                successful_interaction, message = await transcriptor.transcript_video(file)
-                if not successful_interaction:
-                    await context.bot.send_message(update.message.chat_id, message)
-        elif update.message.voice:
-            success, message, file, amount = await message_handler.handle_voice_message()
-            if not success:
-                await context.bot.send_message(update.message.chat_id, message)
-            else:
-                successful_interaction, message = await transcriptor.transcript_voice(file, amount)
-                if not successful_interaction:
-                    await context.bot.send_message(update.message.chat_id, message)
-        elif update.message.document:
-            transcriptor.assistant = assistant
-            success, message, file = await message_handler.handle_document_message()
-            if not success:
-                await context.bot.send_message(update.message.chat_id, message)
-            else:
-                await transcriptor.transcript_document(file)
-                # no need to run thread - already answered to the chat.
-
-        if successful_interaction:
-            tokenizer = Tokenizer()
-            messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id, limit=100)
-            amount = tokenizer.calculate_thread_total_amount(messages)
-
-            # Check if the balance is sufficient
-            if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
+            conversation = session.query(Conversation).filter_by(
+                user_id=update.message.from_user.id,
+                assistant_id=ASSISTANT_ID
+            ).first() or _create_conversation(session, update)
+            
+            # Check if the balance is 0 or less
+            if conversation.balance <= 0:
                 print("Insufficient balance.")
-                await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                await context.bot.send_message(update.message.chat_id, "Insufficient balance to use the service.")
+                await payment.send_invoice(update, context, False)
                 return False
 
-            # Update the balance
-            print(f'---->>> Conversation balance decreased by: ${amount} for input text')
-            conversation.balance -= amount
+            runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, update.message.chat_id)
+            if datetime.utcnow() - conversation.updated_at >= runs_treads_handler.thread_recreation_interval:
+                # Recreate thread if interval has passed
+                runs_treads_handler.recreate_thread(session, conversation)
 
-            await runs_treads_handler.create_run()
-            # Update the conversation's timestamp after a successful interaction
-            conversation.updated_at = datetime.utcnow()
-            session.commit() # Make sure to commit only once after all updates
+            message_handler = MessagesHandler(openai, update, context, conversation)
+            transcriptor = Transcriptor(openai, update, context, conversation)
 
-        Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
+            # Handle different types of messages
+            if update.message.text:
+                if message_handler.handle_text_message(update.message.text):
+                    successful_interaction = True
+            elif update.message.photo:
+                success, message, file = await message_handler.handle_photo_message()
+                if not success:
+                    await context.bot.send_message(update.message.chat_id, message)
+                else:
+                    successful_interaction = await transcriptor.transcript_image(file)
+            elif update.message.video:
+                success, message, file = await message_handler.handle_video_message()
+                if not success:
+                    await context.bot.send_message(update.message.chat_id, message)
+                else:
+                    successful_interaction, message = await transcriptor.transcript_video(file)
+                    if not successful_interaction:
+                        await context.bot.send_message(update.message.chat_id, message)
+            elif update.message.voice:
+                success, message, file, amount = await message_handler.handle_voice_message()
+                if not success:
+                    await context.bot.send_message(update.message.chat_id, message)
+                else:
+                    successful_interaction, message = await transcriptor.transcript_voice(file, amount)
+                    if not successful_interaction:
+                        await context.bot.send_message(update.message.chat_id, message)
+            elif update.message.document:
+                transcriptor.assistant = assistant
+                success, message, file = await message_handler.handle_document_message()
+                if not success:
+                    await context.bot.send_message(update.message.chat_id, message)
+                else:
+                    await transcriptor.transcript_document(file)
+                    # no need to run thread - already answered to the chat.
 
-        # except Exception as e:
-        #     error_message = str(e)
-        #     print(f"Error: {e}")
-        #     if "Error code: 404" in error_message and "No thread found with id" in error_message:
-        #         runs_treads_handler.create_thread(session, conversation)
-        #     elif "Failed to index file: Unsupported file" in error_message:
-        #         runs_treads_handler.recreate_thread(session, conversation)
-        #     elif "Can't add messages to thread_" in error_message:
-        #         thread_id, run_id = Helpers.get_thread_id_and_run_id_from_string(error_message)
-        #         runs_treads_handler.cancel_run(thread_id, run_id)
-        #     else:
-        #         raise
+            if successful_interaction:
+                tokenizer = Tokenizer()
+                messages = openai.beta.threads.messages.list(thread_id=conversation.thread_id, limit=100)
+                amount = tokenizer.calculate_thread_total_amount(messages)
+
+                # Check if the balance is sufficient
+                if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
+                    print("Insufficient balance.")
+                    await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                    await payment.send_invoice(update, context, False)
+                    return False
+
+                # Update the balance
+                print(f'---->>> Conversation balance decreased by: ${amount} for input text')
+                conversation.balance -= amount
+
+                await runs_treads_handler.create_run()
+                # Update the conversation's timestamp after a successful interaction
+                conversation.updated_at = datetime.utcnow()
+                session.commit() # Make sure to commit only once after all updates
+
+            Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
+
+        except Exception as e:
+            error_message = str(e)
+            print(f"Error: {e}")
+            if "Error code: 404" in error_message and "No thread found with id" in error_message:
+                runs_treads_handler.create_thread(session, conversation)
+            elif "Failed to index file: Unsupported file" in error_message:
+                runs_treads_handler.recreate_thread(session, conversation)
+            elif "Can't add messages to thread_" in error_message:
+                thread_id, run_id = Helpers.get_thread_id_and_run_id_from_string(error_message)
+                runs_treads_handler.cancel_run(thread_id, run_id)
+            else:
+                raise
 
 async def ping(update: Update, context: CallbackContext) -> None:
     print(f'{update.message.from_user.first_name}({update.message.from_user.username}) sent ping.')
@@ -251,14 +258,17 @@ async def start(update: Update, context: CallbackContext) -> None:
             assistant_id=ASSISTANT_ID
         ).first()
 
-    if not conversation:
-        conversation = _create_conversation(session, update)
-        print(f"New conversation created with ID: {conversation.id}")
+        if not conversation:
+            conversation = _create_conversation(session, update)
+            print(f"New conversation created with ID: {conversation.id}")
+
+        # Access conversation.balance here while the session is still open
+        current_balance = conversation.balance
 
     # Initial part of the welcome message
     start_balance = Tokenizer.START_BALANCE
     initial_welcome_message = (
-        "Welcome to the Russian-Ukrainian Translating AI Bot!"
+        "Welcome to the Russian-Ukrainian AI Translator! "
         "My name is Nova and I can assist you with various tasks. Here's what you can do:\n\n"
         "Speak with me like with friend :)\n"
         "Translate various texts from/to Russian/Ukrainian\n"
@@ -268,7 +278,8 @@ async def start(update: Update, context: CallbackContext) -> None:
         "Generate images\n"
         "We speak your language\n\n"
         f"Balance:\n"
-        f"Your start balance is ${start_balance:.2f} - we'll ask to refill the balance when you'll use it in full.\n\n"
+        f"Your start balance is ${start_balance:.2f} - we'll ask to refill the balance when you'll use it in full.\n"
+        f"Your current balance is ${current_balance:.2f}.\n\n"
         "Contacts:\n"
         "- For advertising inquiries, contact @AIBotsAdv\n"
         "- For investment-related questions, contact @AIBotsInvest\n"
@@ -280,7 +291,7 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     # Buttons and the remaining part of the welcome message
     keyboard = [
-        [InlineKeyboardButton("Check Balance", callback_data='balance'), InlineKeyboardButton("Finish Session", callback_data='finish')]
+        [InlineKeyboardButton("Check Balance", callback_data='balance'), InlineKeyboardButton("Top Up Balance", callback_data='invoice'), InlineKeyboardButton("Finish Session", callback_data='finish')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -289,9 +300,10 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     remaining_welcome_message = (
         "/balance - Check your current balance\n"
+        "/invoice - Top up your balance\n"
         "/start - Show welcome message again\n"
         "/finish - Finish your current session\n\n"
-        "Enjoy your experience with our AI Helper Bot!\n"
+        "Enjoy your experience with our service!\n"
         "Check our video tutorial."
     )
 
@@ -312,12 +324,15 @@ async def button(update: Update, context: CallbackContext):
 
     if callback_data == 'balance':
         await balance(update, context, from_button=True)
+    elif callback_data == 'invoice':
+        await payment.send_invoice(update, context, from_button=True)
     elif callback_data == 'finish':
         await finish(update, context, from_button=True)
 
-def main() -> None:
-    payment = Payment()
+async def send_invoice(update: Update, context: CallbackContext):
+    await payment.send_invoice(update, context, from_button=False)
 
+def main() -> None:
     # Create an instance of the Application
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -329,8 +344,7 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
 
     # Payments handling
-    payment = Payment()
-    application.add_handler(CommandHandler('invoice', payment.send_invoice))
+    application.add_handler(CommandHandler('invoice', send_invoice))
     application.add_handler(PreCheckoutQueryHandler(payment.precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, payment.successful_payment_callback))
 

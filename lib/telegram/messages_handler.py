@@ -3,6 +3,7 @@ import requests
 from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
 from lib.telegram.tokenizer import Tokenizer
+from lib.telegram.payment import Payment
 
 class MessagesHandler:
     def __init__(self, openai_client, update, context, conversation):
@@ -12,6 +13,7 @@ class MessagesHandler:
         self.conversation = conversation
         self.thread_id = conversation.thread_id
         self.tokenizer = Tokenizer()
+        self.payment = Payment()
 
     def handle_text_message(self, message):
         try:
@@ -57,6 +59,7 @@ class MessagesHandler:
                 insufficient_balance_message = "Insufficient balance to process the voice message."
                 print(insufficient_balance_message)
                 await self.context.bot.send_message(self.update.message.chat_id, insufficient_balance_message)
+                await self.payment.send_invoice(self.update, self.context, False)
                 return False, insufficient_balance_message, None, amount
 
             # Define local file path for the voice message
@@ -94,12 +97,15 @@ class MessagesHandler:
                 return False, message, None
 
             # Check if the balance is sufficient
-            amount = self.tokenizer.tokens_to_money_from_string(self.update.message.caption)
-            amount += self.tokenizer.tokens_to_money_from_video(video.duration)
+            amount = self.tokenizer.tokens_to_money_from_video(video.duration)
+            if self.update.message.caption:
+                amount += self.tokenizer.tokens_to_money_from_string(self.update.message.caption)
+
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = "Insufficient balance to process the video message."
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.payment.send_invoice(self.update, self.context, False)
                 return False, message, None
 
             # Define local file path for the video message

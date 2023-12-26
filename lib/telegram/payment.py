@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 from telegram import LabeledPrice, Update
 from telegram.ext import CallbackContext
+from db.engine import SessionLocal
+from db.models.conversation import Conversation
+from lib.telegram.assistant import Assistant
+from decimal import Decimal
 
 # Load environment variables
 load_dotenv()
@@ -32,25 +36,33 @@ class Payment:
     STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
     # Constant payload used for validating payment callbacks
     PAYLOAD = "Custom-Payload"
+    
+    assistant = Assistant()
+    ASSISTANT_ID = assistant.get_assistant_id()
 
     @staticmethod
-    async def send_invoice(update: Update, context: CallbackContext) -> None:
+    async def send_invoice(update: Update, context: CallbackContext, from_button: False) -> None:
         """
         Sends an invoice to a user for payment.
 
         Parameters:
         update (Update): The update instance containing message details.
         context (CallbackContext): Context object passed by the Telegram bot framework.
+        from_button (Bool): Indicates if this function is called from a button press.
 
         This method constructs an invoice with a predefined title, description, and price,
         then sends it to the user using the bot's context.
         """
-        chat_id = update.message.chat_id
-        title = "Payment Example"
-        description = "Payment Example using python-telegram-bot"
+            # Determine the chat_id and user_id based on how the function was called
+        if from_button:
+            chat_id = update.callback_query.message.chat_id
+        else:
+            chat_id = update.message.chat_id
+
+        title = "Пополнение баланса"
+        description = "Пополнение баланса переводчика."
         currency = "USD"
-        price = 1  # price in dollars
-        prices = [LabeledPrice("Test", price * 100)]
+        prices = [LabeledPrice("Пополненить баланс", 1*100)]
 
         await context.bot.send_invoice(
             chat_id, title, description, Payment.PAYLOAD, Payment.STRIPE_API_TOKEN, currency, prices
@@ -77,13 +89,37 @@ class Payment:
     @staticmethod
     async def successful_payment_callback(update: Update, context: CallbackContext) -> None:
         """
-        Confirms the successful completion of a payment.
+        Confirms the successful completion of a payment and updates the user's conversation balance.
 
         Parameters:
         update (Update): The update instance containing successful payment details.
         context (CallbackContext): Context object passed by the Telegram bot framework.
-
-        This method is triggered after a successful payment, and it can be used to
-        acknowledge the payment and perform any post-payment processing.
         """
-        await update.message.reply_text("Thank you for your payment!")
+        # Extract payment amount from the successful payment update
+        payment_amount = Decimal(update.message.successful_payment.total_amount) / 100  # Assuming amount is in cents
+
+        # Create a new database session
+        session = SessionLocal()
+        try:
+            user_id = update.message.from_user.id
+            # Query for the conversation
+            conversation = session.query(Conversation).filter_by(
+                user_id=update.message.from_user.id,
+                assistant_id=Payment.ASSISTANT_ID
+            ).first()
+
+            if conversation:
+                # Update the conversation balance
+                conversation.balance += payment_amount
+                session.commit()  # Commit the transaction
+                await update.message.reply_text(f"Thank you for your payment! Your balance has been updated by ${payment_amount:.2f}.")
+            else:
+                # Handle case where conversation does not exist
+                await update.message.reply_text("Error: No active conversation found for payment update.")
+
+        except Exception as e:
+            # Handle any exceptions that occur during the database operation
+            session.rollback()  # Rollback the transaction in case of error
+            raise e
+        finally:
+            session.close()  # Ensure the session is closed

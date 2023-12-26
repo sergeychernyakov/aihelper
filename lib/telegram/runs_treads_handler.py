@@ -9,6 +9,7 @@ from lib.telegram.email_sender import EmailSender
 from lib.telegram.tokenizer import Tokenizer
 from datetime import timedelta
 from decimal import Decimal
+from lib.telegram.payment import Payment
 
 class RunsTreadsHandler:
 
@@ -25,6 +26,7 @@ class RunsTreadsHandler:
         self.answer = Answer(openai_client, context, chat_id, self.thread_id)
         self.tokenizer = Tokenizer()
         self.thread_recreation_interval = timedelta(hours=1)
+        self.payment = Payment()
 
     ######## Work with OpenAI threads, runs #########   class RunsTreadsHandler
     async def create_run(self):
@@ -188,6 +190,7 @@ class RunsTreadsHandler:
             message = "Insufficient balance to process the generating image."
             print(message)
             await self.context.bot.send_message(self.update.message.chat_id, message)
+            await self.payment.send_invoice(self.update, self.context, False)
             return False, message
 
         # Assuming Image class has a generateImage method

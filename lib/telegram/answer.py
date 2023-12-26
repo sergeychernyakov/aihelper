@@ -27,30 +27,30 @@ class Answer:
         """
         await self.context.bot.send_message(self.chat_id, message)
 
-    def answer_with_voice(self, message):
+    async def answer_with_voice(self, message):
         """
         Send a voice message to the Telegram chat.
 
-        This method generates a voice message using the OpenAI API,
-        saves it to a temporary directory, and then sends it to the chat.
+        This method generates a voice message using the OpenAI API
+        and sends it directly to the chat without saving it to a temporary directory.
 
         :param message: The text content to be converted into a voice message.
         """
-        voice_answer_folder = Path(__file__).parent.parent.parent / 'tmp' / self.thread_id
-        voice_answer_path = voice_answer_folder / "voice_answer.mp3"
-
-        os.makedirs(voice_answer_folder, exist_ok=True)
-
+        # Generate a voice message using the OpenAI API
         response = self.openai.audio.speech.create(
-            model="tts-1",  # tts-1-hd
+            model="tts-1",
             voice="nova",
             input=message
         )
 
-        response.stream_to_file(voice_answer_path)
+        # Stream the audio data to a BytesIO object
+        voice_data_bytes = response.read()
+        voice_file = BytesIO(voice_data_bytes)
+        voice_file.name = "voice_answer.mp3" # Set a name for the file to be sent
+        voice_file.seek(0) # Reset the pointer to the beginning of the BytesIO object
 
-        voice_file = open(voice_answer_path, "rb")
-        return self.context.bot.send_document(self.chat_id, voice_file)
+        # Send the voice message to the Telegram chat
+        await self.context.bot.send_voice(self.chat_id, voice=voice_file)
 
     async def answer_with_image(self, file_id):
         """

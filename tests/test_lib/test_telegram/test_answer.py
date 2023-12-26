@@ -22,22 +22,41 @@ class TestAnswer(unittest.IsolatedAsyncioTestCase):
         await self.answer.answer_with_text(message)
         self.mock_bot.send_message.assert_awaited_once_with('chat_id', message)
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('os.makedirs')
-    def test_answer_with_voice(self, mock_makedirs, mock_file):
+    # @patch('builtins.open', new_callable=mock_open)
+    # @patch('os.makedirs')
+    # def test_answer_with_voice(self, mock_makedirs, mock_file):
+    #     message = "Hello, world!"
+    #     # Simulate a response from openai_client
+    #     self.mock_openai_client.audio.speech.create.return_value = Mock(stream_to_file=Mock())
+
+    #     # Use a temporary directory and store its path
+    #     self.temp_dir = tempfile.mkdtemp()
+    #     with patch('lib.telegram.answer.__file__', new=os.path.join(self.temp_dir, 'answer.py')):
+    #         result = self.answer.answer_with_voice(message)
+
+    #     self.mock_openai_client.audio.speech.create.assert_called_once_with(model="tts-1", voice="nova", input=message)
+    #     self.mock_bot.send_document.assert_called_once()
+    #     mock_makedirs.assert_called_once()
+    #     mock_file.assert_called_once()
+
+    @patch('aiohttp.ClientSession.get')
+    async def test_answer_with_voice(self, mock_get):
         message = "Hello, world!"
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.read = AsyncMock(return_value=b'Some audio bytes')
+        mock_get.return_value.__aenter__.return_value = mock_response
+
         # Simulate a response from openai_client
-        self.mock_openai_client.audio.speech.create.return_value = Mock(stream_to_file=Mock())
+        self.mock_openai_client.audio.speech.create.return_value = AsyncMock()
 
-        # Use a temporary directory and store its path
-        self.temp_dir = tempfile.mkdtemp()
-        with patch('lib.telegram.answer.__file__', new=os.path.join(self.temp_dir, 'answer.py')):
-            result = self.answer.answer_with_voice(message)
+        # Call the async method
+        await self.answer.answer_with_voice(message)
 
+        # Check if the OpenAI API was called correctly
         self.mock_openai_client.audio.speech.create.assert_called_once_with(model="tts-1", voice="nova", input=message)
-        self.mock_bot.send_document.assert_called_once()
-        mock_makedirs.assert_called_once()
-        mock_file.assert_called_once()
+        # Check if the bot sent a voice message
+        self.mock_bot.send_voice.assert_called_once()
 
     def tearDown(self):
         # Cleanup code to delete the test folder
