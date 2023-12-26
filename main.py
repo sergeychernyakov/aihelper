@@ -1,9 +1,3 @@
-import warnings
-from urllib3.exceptions import InsecureRequestWarning
-
-# Suppress only the single InsecureRequestWarning from urllib3
-warnings.filterwarnings('ignore', category=InsecureRequestWarning)
-
 import os
 import logging
 from datetime import datetime
