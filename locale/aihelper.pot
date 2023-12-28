@@ -1,0 +1,253 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-28 10:03+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: lib/telegram/answer.py:76
+msgid "Failed to fetch image with file."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:98
+msgid "Error: Unable to process the request."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:116
+msgid "Insufficient balance to process the document."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:139
+msgid ""
+"... (truncated)\n"
+"\n"
+msgstr ""
+
+#: lib/telegram/transcriptor.py:140
+msgid "Full translated text has been sent as a document."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:149
+msgid "Failed to transcribe document."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:167
+msgid "Insufficient balance to process the image."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:189 lib/telegram/messages_handler.py:41
+msgid "Image processed successfully"
+msgstr ""
+
+#: lib/telegram/transcriptor.py:217 lib/telegram/messages_handler.py:83
+msgid "Voice processed successfully"
+msgstr ""
+
+#: lib/telegram/transcriptor.py:220
+msgid "Failed to transcribe the voice message."
+msgstr ""
+
+#: lib/telegram/transcriptor.py:241 lib/telegram/messages_handler.py:129
+msgid "Video processed successfully"
+msgstr ""
+
+#: lib/telegram/transcriptor.py:244
+msgid "Failed to transcribe video"
+msgstr ""
+
+#: lib/telegram/runs_treads_handler.py:180
+msgid "Letter successfully sent."
+msgstr ""
+
+#: lib/telegram/runs_treads_handler.py:183
+msgid "Letter successfully sent. There is no need to reply to the message."
+msgstr ""
+
+#: lib/telegram/runs_treads_handler.py:191
+msgid "Insufficient balance to process the generating image."
+msgstr ""
+
+#: lib/telegram/messages_handler.py:23
+msgid "Message processed successfully."
+msgstr ""
+
+#: lib/telegram/messages_handler.py:60
+msgid "Insufficient balance to process the voice message."
+msgstr ""
+
+#: lib/telegram/messages_handler.py:79
+msgid "Failed to load the voice message"
+msgstr ""
+
+#: lib/telegram/messages_handler.py:106
+msgid "Insufficient balance to process the video message."
+msgstr ""
+
+#: lib/telegram/messages_handler.py:125
+msgid "Failed to load the video message"
+msgstr ""
+
+#: lib/telegram/messages_handler.py:159
+msgid "Failed to load the document"
+msgstr ""
+
+#: lib/telegram/messages_handler.py:163
+msgid "Document processed successfully"
+msgstr ""
+
+#: lib/telegram/email_sender.py:40
+msgid "Error in attaching file."
+msgstr ""
+
+#: lib/telegram/email_sender.py:47
+msgid "Email successfully sent!"
+msgstr ""
+
+#: lib/telegram/email_sender.py:50
+msgid "Error in sending email."
+msgstr ""
+
+#: lib/telegram/constraints_checker.py:26
+msgid "Image dimensions are too large."
+msgstr ""
+
+#: lib/telegram/constraints_checker.py:62
+#, python-brace-format
+msgid ""
+"The video file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB."
+msgstr ""
+
+#: lib/telegram/constraints_checker.py:70
+#, python-brace-format
+msgid "Unsupported file type. Allowed types: {0}."
+msgstr ""
+
+#: lib/telegram/constraints_checker.py:78
+#, python-brace-format
+msgid "The file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB."
+msgstr ""
+
+#: lib/telegram/image.py:21
+msgid "No image generated"
+msgstr ""
+
+#: lib/telegram/image.py:24
+msgid "Error in generating image."
+msgstr ""
+
+#: lib/telegram/payment.py:63
+msgid "Пополнение баланса"
+msgstr ""
+
+#: lib/telegram/payment.py:64
+msgid "Пополнение баланса переводчика."
+msgstr ""
+
+#: lib/telegram/payment.py:66
+msgid "Пополненить баланс"
+msgstr ""
+
+#: lib/telegram/payment.py:86
+msgid "Something went wrong..."
+msgstr ""
+
+#: lib/telegram/payment.py:116
+#, python-brace-format
+msgid "Thank you for your payment! Your balance has been updated by ${0:.2f}."
+msgstr ""
+
+#: lib/telegram/payment.py:119
+msgid "Error: No active conversation found for payment update."
+msgstr ""
+
+#: main.py:95
+msgid "Insufficient balance to use the service."
+msgstr ""
+
+#: main.py:150
+msgid "Insufficient balance to process the message."
+msgstr ""
+
+#: main.py:205
+msgid "Goodbye! If you need assistance again, just send me a message."
+msgstr ""
+
+#: main.py:216
+msgid "An error occurred while processing your request."
+msgstr ""
+
+#: main.py:244
+#, python-brace-format
+msgid "Your current balance is: ${0:.2f}"
+msgstr ""
+
+#: main.py:267
+msgid ""
+"Welcome to the Russian-Ukrainian AI Translator! My name is Nova and I can "
+"assist you with various tasks. Here's what you can do:\n"
+"\n"
+"Speak with me like with friend :)\n"
+"Translate various texts from/to Russian/Ukrainian\n"
+"Translate voice messages\n"
+"Translate audio/video files\n"
+"Translate text, pdf and other documents\n"
+"Generate images\n"
+"I speak your language\n"
+"\n"
+msgstr ""
+
+#: main.py:278
+#, python-brace-format
+msgid ""
+"Balance:\n"
+"Your start balance is ${0:.2f} - we'll ask to refill the balance when you'll "
+"use it in full.\n"
+"Your current balance is ${1:.2f}.\n"
+"\n"
+msgstr ""
+
+#: main.py:283
+msgid ""
+"Contacts:\n"
+"- For advertising inquiries, contact @AIBotsAdv\n"
+"- For investment-related questions, contact @AIBotsInvest\n"
+"- For development of intelligent bots, write to @AIBotsTech\n"
+"- Support: @AIBotsTech\n"
+"\n"
+"Available Actions:\n"
+msgstr ""
+
+#: main.py:294
+msgid "Check Balance"
+msgstr ""
+
+#: main.py:294
+msgid "Top Up Balance"
+msgstr ""
+
+#: main.py:294
+msgid "Finish Session"
+msgstr ""
+
+#: main.py:302
+msgid ""
+"/balance - Check your current balance\n"
+"/invoice - Top up your balance\n"
+"/start - Show welcome message again\n"
+"/finish - Finish your current session\n"
+"\n"
+"Enjoy your experience with our service!\n"
+"Check our video tutorial."
+msgstr ""

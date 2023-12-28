@@ -6,6 +6,7 @@ from db.engine import SessionLocal
 from db.models.conversation import Conversation
 from lib.telegram.assistant import Assistant
 from decimal import Decimal
+from lib.localization import _
 
 # Load environment variables
 load_dotenv()
@@ -59,10 +60,10 @@ class Payment:
         else:
             chat_id = update.message.chat_id
 
-        title = "Пополнение баланса"
-        description = "Пополнение баланса переводчика."
+        title = _("Пополнение баланса")
+        description = _("Пополнение баланса переводчика.")
         currency = "USD"
-        prices = [LabeledPrice("Пополненить баланс", 1*100)]
+        prices = [LabeledPrice(_("Пополненить баланс"), 1*100)]
 
         await context.bot.send_invoice(
             chat_id, title, description, Payment.PAYLOAD, Payment.STRIPE_API_TOKEN, currency, prices
@@ -82,7 +83,7 @@ class Payment:
         """
         query = update.pre_checkout_query
         if query.invoice_payload != Payment.PAYLOAD:
-            await query.answer(ok=False, error_message="Something went wrong...")
+            await query.answer(ok=False, error_message=_("Something went wrong..."))
         else:
             await query.answer(ok=True)
 
@@ -112,10 +113,10 @@ class Payment:
                 # Update the conversation balance
                 conversation.balance += payment_amount
                 session.commit()  # Commit the transaction
-                await update.message.reply_text(f"Thank you for your payment! Your balance has been updated by ${payment_amount:.2f}.")
+                await update.message.reply_text(_("Thank you for your payment! Your balance has been updated by ${0:.2f}.").format(payment_amount))
             else:
                 # Handle case where conversation does not exist
-                await update.message.reply_text("Error: No active conversation found for payment update.")
+                await update.message.reply_text(_("Error: No active conversation found for payment update."))
 
         except Exception as e:
             # Handle any exceptions that occur during the database operation

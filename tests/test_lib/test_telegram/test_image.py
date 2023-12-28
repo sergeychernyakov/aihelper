@@ -33,7 +33,7 @@ class TestImageClass(unittest.TestCase):
         # Mocking an exception
         self.mock_openai.images.generate.side_effect = Exception("Test Exception")
         response, revised_prompt = self.image.generate('test description')
-        self.assertTrue("Error in generating image: Test Exception" in response)
+        self.assertTrue("Error in generating image." in response)
         self.assertEqual(revised_prompt, '')
 
 # Add more tests as necessary

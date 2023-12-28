@@ -4,6 +4,7 @@ from pathlib import Path
 from lib.telegram.constraints_checker import ConstraintsChecker
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.payment import Payment
+from lib.localization import _
 
 class MessagesHandler:
     def __init__(self, openai_client, update, context, conversation):
@@ -19,7 +20,7 @@ class MessagesHandler:
         try:
             # Process the message
             self.openai.beta.threads.messages.create(thread_id=self.thread_id, role="user", content=message)
-            return True, "Message processed successfully."
+            return True, _("Message processed successfully.")
         except Exception as e:
             print(f"Error in handle_text_message: {e}")
             raise
@@ -37,7 +38,7 @@ class MessagesHandler:
 
             print(f'{self.update.message.from_user.first_name}({self.update.message.from_user.username}) sent image: "{file.file_path}" {file.file_size} {photo.width}x{photo.height} "{self.update.message.caption}"')
 
-            message = "Image processed successfully"
+            message = _("Image processed successfully")
             return True, message, file
         except Exception as e:
             raise
@@ -56,7 +57,7 @@ class MessagesHandler:
             # Calculate the cost of processing the voice message
             amount = self.tokenizer.tokens_to_money_from_voice(voice.duration)
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                insufficient_balance_message = "Insufficient balance to process the voice message."
+                insufficient_balance_message = _("Insufficient balance to process the voice message.")
                 print(insufficient_balance_message)
                 await self.context.bot.send_message(self.update.message.chat_id, insufficient_balance_message)
                 await self.payment.send_invoice(self.update, self.context, False)
@@ -75,11 +76,11 @@ class MessagesHandler:
                 with open(str(local_file_path), 'wb') as f:
                     f.write(response.content)
             else:
-                failed_message = 'Failed to load the voice message'
+                failed_message = _('Failed to load the voice message')
                 print(failed_message)
                 return False, failed_message, None, None
 
-            success_message = "Voice processed successfully"
+            success_message = _("Voice processed successfully")
             return True, success_message, local_file_path, amount
         except Exception as e:
             print(f"Error in handle_voice_message: {e}")
@@ -102,7 +103,7 @@ class MessagesHandler:
                 amount += self.tokenizer.tokens_to_money_from_string(self.update.message.caption)
 
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = "Insufficient balance to process the video message."
+                message = _("Insufficient balance to process the video message.")
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
                 await self.payment.send_invoice(self.update, self.context, False)
@@ -121,11 +122,11 @@ class MessagesHandler:
                 with open(str(local_file_path), 'wb') as f:
                     f.write(response.content)
             else:
-                failed_message = 'Failed to load the video message'
+                failed_message = _('Failed to load the video message')
                 print(failed_message)
                 return False, failed_message, None
 
-            success_message = "Video processed successfully"
+            success_message = _("Video processed successfully")
             return True, success_message, local_file_path
         except Exception as e:
             print(f"Error in handle_video_message: {e}")
@@ -155,11 +156,11 @@ class MessagesHandler:
                 with open(str(local_file_path), 'wb') as f:
                     f.write(response.content)
             else:
-                failed_message = 'Failed to load the document'
+                failed_message = _('Failed to load the document')
                 print(failed_message)
                 return False, failed_message, None
 
-            return True, "Document processed successfully", local_file_path
+            return True, _("Document processed successfully"), local_file_path
         except Exception as e:
             print(f"Error in handle_document_message: {e}")
             raise

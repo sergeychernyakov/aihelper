@@ -1,5 +1,6 @@
 import os
 import logging
+import gettext
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, CallbackContext, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler
@@ -15,6 +16,7 @@ from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.assistant import Assistant
 from lib.telegram.payment import Payment
+from lib.localization import _
 
 load_dotenv()
 
@@ -90,7 +92,7 @@ async def message_handler(update, context):
             # Check if the balance is 0 or less
             if conversation.balance <= 0:
                 print("Insufficient balance.")
-                await context.bot.send_message(update.message.chat_id, "Insufficient balance to use the service.")
+                await context.bot.send_message(update.message.chat_id, _("Insufficient balance to use the service."))
                 await payment.send_invoice(update, context, False)
                 return False
 
@@ -145,7 +147,7 @@ async def message_handler(update, context):
                 # Check if the balance is sufficient
                 if not tokenizer.has_sufficient_balance_for_amount(amount, conversation.balance):
                     print("Insufficient balance.")
-                    await context.bot.send_message(update.message.chat_id, "Insufficient balance to process the message.")
+                    await context.bot.send_message(update.message.chat_id, _("Insufficient balance to process the message."))
                     await payment.send_invoice(update, context, False)
                     return False
 
@@ -200,18 +202,18 @@ async def finish(update: Update, context: CallbackContext, from_button=False) ->
             ).first()
 
             if conversation:
-                await context.bot.send_message(chat_id, 'Goodbye! If you need assistance again, just send me a message.')
+                await context.bot.send_message(chat_id, _('Goodbye! If you need assistance again, just send me a message.'))
 
                 # Create the RunsTreadsHandler using the correct chat_id
                 runs_treads_handler = RunsTreadsHandler(openai, update, context, conversation, session, chat_id)
 
                 runs_treads_handler.recreate_thread(session, conversation)
             else:
-                await context.bot.send_message(chat_id, 'No active conversation found.')
+                print(f'No active conversation found, chat_id: {chat_id}')
 
         except SQLAlchemyError as e:
             print(f"An error occurred: {e}")
-            await context.bot.send_message(chat_id, 'An error occurred while processing your request.')
+            await context.bot.send_message(chat_id, _('An error occurred while processing your request.'))
 
 async def balance(update: Update, context: CallbackContext, from_button=False) -> None:
     """
@@ -239,9 +241,9 @@ async def balance(update: Update, context: CallbackContext, from_button=False) -
         # Existing logic to send balance information
         if conversation:
             balance_amount = conversation.balance
-            await context.bot.send_message(chat_id, f'Your current balance is: ${balance_amount:.2f}')
+            await context.bot.send_message(chat_id, _("Your current balance is: ${0:.2f}").format(balance_amount))
         else:
-            await context.bot.send_message(chat_id, 'No active conversation found.')
+            print(f'No active conversation found, chat_id: {chat_id}')
 
 async def start(update: Update, context: CallbackContext) -> None:    
     with session_scope() as session:
@@ -261,7 +263,7 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     # Initial part of the welcome message
     start_balance = Tokenizer.START_BALANCE
-    initial_welcome_message = (
+    initial_welcome_message = _(
         "Welcome to the Russian-Ukrainian AI Translator! "
         "My name is Nova and I can assist you with various tasks. Here's what you can do:\n\n"
         "Speak with me like with friend :)\n"
@@ -270,29 +272,33 @@ async def start(update: Update, context: CallbackContext) -> None:
         "Translate audio/video files\n"
         "Translate text, pdf and other documents\n"
         "Generate images\n"
-        "We speak your language\n\n"
-        f"Balance:\n"
-        f"Your start balance is ${start_balance:.2f} - we'll ask to refill the balance when you'll use it in full.\n"
-        f"Your current balance is ${current_balance:.2f}.\n\n"
+        "I speak your language\n\n"
+    )
+    initial_welcome_message += _(
+        "Balance:\n"
+        "Your start balance is ${0:.2f} - we'll ask to refill the balance when you'll use it in full.\n"
+        "Your current balance is ${1:.2f}.\n\n"
+    ).format(start_balance, current_balance)
+    initial_welcome_message += _(
         "Contacts:\n"
         "- For advertising inquiries, contact @AIBotsAdv\n"
         "- For investment-related questions, contact @AIBotsInvest\n"
         "- For development of intelligent bots, write to @AIBotsTech\n"
-        "- Support: @AIBotsTech\n"
-        "- Try our other bots: @phpgpt, @rubygpt, @pythongpt\n\n"
+        "- Support: @AIBotsTech\n\n"
+        # "- Try our other bots: @phpgpt, @rubygpt, @pythongpt\n\n"
         "Available Actions:\n"
     )
 
     # Buttons and the remaining part of the welcome message
     keyboard = [
-        [InlineKeyboardButton("Check Balance", callback_data='balance'), InlineKeyboardButton("Top Up Balance", callback_data='invoice'), InlineKeyboardButton("Finish Session", callback_data='finish')]
+        [InlineKeyboardButton(_("Check Balance"), callback_data='balance'), InlineKeyboardButton(_("Top Up Balance"), callback_data='invoice'), InlineKeyboardButton(_("Finish Session"), callback_data='finish')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Send the initial part of the welcome message
     await context.bot.send_message(update.message.chat_id, initial_welcome_message, reply_markup=reply_markup)
 
-    remaining_welcome_message = (
+    remaining_welcome_message = _(
         "/balance - Check your current balance\n"
         "/invoice - Top up your balance\n"
         "/start - Show welcome message again\n"

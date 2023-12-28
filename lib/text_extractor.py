@@ -261,7 +261,7 @@ class TextExtractor:
 
 # {'.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.doc', '.rtfd', '.rtf', '.tar', '.zip'}
 
-# from lib.telegram.text_extractor import TextExtractor
+# from lib.text_extractor import TextExtractor
 # # # Define a list of file paths with different extensions
 # file_paths = [
 # 'tmp/document.txt',

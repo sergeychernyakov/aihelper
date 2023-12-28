@@ -3,6 +3,7 @@ from pathlib import Path
 from docx import Document
 import aiohttp
 from io import BytesIO
+from lib.localization import _
 
 class Answer:
     def __init__(self, openai_client, context, chat_id, thread_id):
@@ -72,8 +73,7 @@ class Answer:
                 await self.context.bot.send_photo(self.chat_id, photo=image_file)
             else:
                 # Handle error in fetching the image
-                error_message = f"Failed to fetch image with file_id {file_id}."
-                await self.context.bot.send_message(self.chat_id, error_message)
+                await self.context.bot.send_message(self.chat_id, _("Failed to fetch image with file."))
 
     async def answer_with_annotation(self, annotation_data):
         """

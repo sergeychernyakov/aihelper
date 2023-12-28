@@ -31,7 +31,7 @@ class TestTranscriptor(unittest.TestCase):
         self.transcriptor.assistant = self.mock_assistant  # Use the mocked assistant
         self.transcriptor.context.bot.send_message = AsyncMock()
 
-    @patch('lib.telegram.text_extractor.TextExtractor.extract_text')
+    @patch('lib.text_extractor.TextExtractor.extract_text')
     @patch('lib.telegram.transcriptor.Answer.__init__', return_value=None)
     def test_transcript_document(self, mock_answer_init, mock_extract_text):
         mock_extract_text.return_value = "Mocked extracted text"

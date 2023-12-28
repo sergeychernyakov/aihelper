@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import patch, mock_open, MagicMock
-from lib.telegram.text_extractor import TextExtractor
+from lib.text_extractor import TextExtractor
 
 class TestTextExtractor(unittest.TestCase):
 
@@ -29,7 +29,7 @@ class TestTextExtractor(unittest.TestCase):
             expected_result = "First paragraph.\nSecond paragraph."
             self.assertEqual(result, expected_result)
 
-    @patch('lib.telegram.text_extractor.Presentation')
+    @patch('lib.text_extractor.Presentation')
     def test_extract_from_pptx(self, mock_presentation):
         # Mock data
         slide_texts = ["First slide text.", "Second slide text."]
@@ -46,7 +46,7 @@ class TestTextExtractor(unittest.TestCase):
         self.assertEqual(result, expected_text)
 
 
-    @patch('lib.telegram.text_extractor.process')
+    @patch('lib.text_extractor.process')
     def test_extract_from_doc(self, mock_process):
         # Mock data
         mock_extracted_text = b"Sample text content from a DOC file"
@@ -63,10 +63,10 @@ class TestTextExtractor(unittest.TestCase):
         self.assertEqual(result, expected_text)
 
 
-    @patch('lib.telegram.text_extractor.shutil.copytree')
-    @patch('lib.telegram.text_extractor.os.walk')
-    @patch('lib.telegram.text_extractor.open', new_callable=unittest.mock.mock_open, read_data="Extracted RTF content")
-    @patch('lib.telegram.text_extractor.os.makedirs')
+    @patch('lib.text_extractor.shutil.copytree')
+    @patch('lib.text_extractor.os.walk')
+    @patch('lib.text_extractor.open', new_callable=unittest.mock.mock_open, read_data="Extracted RTF content")
+    @patch('lib.text_extractor.os.makedirs')
     def test_extract_from_rtfd(self, mock_makedirs, mock_open, mock_walk, mock_copytree):
         # Setup mocks
         mock_walk.return_value = [('root', [], ['sample.rtf'])]
@@ -88,11 +88,11 @@ class TestTextExtractor(unittest.TestCase):
         mock_open.assert_called_once_with(os.path.join('root', 'sample.rtf'), 'r')
 
 
-    @patch('lib.telegram.text_extractor.shutil.rmtree')
-    @patch('lib.telegram.text_extractor.TextExtractor.extract_text')
-    @patch('lib.telegram.text_extractor.tarfile.open')
-    @patch('lib.telegram.text_extractor.os.walk')
-    @patch('lib.telegram.text_extractor.os.makedirs')
+    @patch('lib.text_extractor.shutil.rmtree')
+    @patch('lib.text_extractor.TextExtractor.extract_text')
+    @patch('lib.text_extractor.tarfile.open')
+    @patch('lib.text_extractor.os.walk')
+    @patch('lib.text_extractor.os.makedirs')
     def test_extract_from_tar(self, mock_makedirs, mock_walk, mock_tar_open, mock_extract_text, mock_rmtree):
         # Mock data setup
         mock_extract_text.side_effect = lambda file_path: f"Extracted text from {os.path.basename(file_path)}"
@@ -121,11 +121,11 @@ class TestTextExtractor(unittest.TestCase):
         mock_rmtree.assert_called_once_with('tmp/tar_extraction', ignore_errors=True)
 
 
-    @patch('lib.telegram.text_extractor.shutil.rmtree')
-    @patch('lib.telegram.text_extractor.TextExtractor.extract_text')
-    @patch('lib.telegram.text_extractor.zipfile.ZipFile')
-    @patch('lib.telegram.text_extractor.os.walk')
-    @patch('lib.telegram.text_extractor.os.makedirs')
+    @patch('lib.text_extractor.shutil.rmtree')
+    @patch('lib.text_extractor.TextExtractor.extract_text')
+    @patch('lib.text_extractor.zipfile.ZipFile')
+    @patch('lib.text_extractor.os.walk')
+    @patch('lib.text_extractor.os.makedirs')
     def test_extract_from_zip(self, mock_makedirs, mock_walk, mock_zipfile, mock_extract_text, mock_rmtree):
         # Mock data setup
         mock_extract_text.side_effect = lambda file_path: f"Extracted text from {os.path.basename(file_path)}"

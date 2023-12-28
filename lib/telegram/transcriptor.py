@@ -3,10 +3,11 @@ import base64
 import os
 from pathlib import Path
 from lib.telegram.tokenizer import Tokenizer
-from lib.telegram.text_extractor import TextExtractor
+from lib.text_extractor import TextExtractor
 from lib.telegram.answer import Answer
 from decimal import Decimal
 from lib.telegram.payment import Payment
+from lib.localization import _
 
 class Transcriptor:
 
@@ -94,7 +95,7 @@ class Transcriptor:
 
         except Exception as e:
             print(f"Failed to generate non-thread message: {e}")
-            return "Error: Unable to process the request.", 0
+            return _("Error: Unable to process the request."), 0
 
     async def transcript_document(self, file_path: str):
         """
@@ -112,7 +113,7 @@ class Transcriptor:
             amount = self.tokenizer.tokens_to_money_from_string(caption)
             amount += self.tokenizer.tokens_to_money_from_string(extracted_text)
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = "Insufficient balance to process the document."
+                message = _("Insufficient balance to process the document.")
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
                 await self.payment.send_invoice(self.update, self.context, False)
@@ -135,8 +136,8 @@ class Transcriptor:
                 self.conversation.balance -= amount
 
             # Truncate the text for Telegram message and send a notification about the full text
-            truncated_text = (full_translated_text[:200] + '... (truncated)') if len(full_translated_text) > 200 else full_translated_text
-            await self.context.bot.send_message(self.update.message.chat_id, truncated_text + "\n\nFull translated text has been sent as a document.")
+            truncated_text = (full_translated_text[:200] + _("... (truncated)\n\n")) if len(full_translated_text) > 200 else full_translated_text
+            await self.context.bot.send_message(self.update.message.chat_id, truncated_text + _("Full translated text has been sent as a document."))
 
             # Send the full translated text as a document
             await self.answer.answer_with_document(full_translated_text)
@@ -145,7 +146,7 @@ class Transcriptor:
 
         except Exception as e:
             print(f"Failed to transcribe document: {e}")
-            await self.context.bot.send_message(self.update.message.chat_id, 'Failed to transcribe document.')
+            await self.context.bot.send_message(self.update.message.chat_id, _('Failed to transcribe document.'))
             return False
 
     async def transcript_image(self, file):
@@ -163,7 +164,7 @@ class Transcriptor:
             amount += self.tokenizer.tokens_to_money_from_image()
             # Check if the balance is sufficient
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = "Insufficient balance to process the image."
+                message = _("Insufficient balance to process the image.")
                 print(message)
                 await self.context.bot.send_message(self.update.message.chat_id, message)
                 await self.payment.send_invoice(self.update, self.context, False)
@@ -185,7 +186,7 @@ class Transcriptor:
 
             # await self.__send_message(response.choices[0].message.content)
             self.__create_thread_message('Translate: ' + response.choices[0].message.content)
-            return True, 'Image processed successfully'
+            return True, _('Image processed successfully')
         except Exception as e:
             raise
 
@@ -213,10 +214,10 @@ class Transcriptor:
                 # await self.__send_message(transcription)
                 self.__create_thread_message(transcription)
 
-            return True, 'Voice processed successfully'
+            return True, _('Voice processed successfully')
         except Exception as e:
             print(f"Failed to transcribe the voice message: {e}")
-            return False, "Failed to transcribe the voice message."
+            return False, _("Failed to transcribe the voice message.")
 
     async def transcript_video(self, file_path: str):
         """
@@ -237,10 +238,10 @@ class Transcriptor:
             # Create a thread message with the description
             self.__create_thread_message('Translate: ' + description)
 
-            return True, 'Video processed successfully'
+            return True, _('Video processed successfully')
         except Exception as e:
             print(f"Failed to transcribe video: {e}")
-            return False, f"Failed to transcribe video"
+            return False, _("Failed to transcribe video")
 
     # Private helper methods (these need to be implemented according to your specific requirements)
 

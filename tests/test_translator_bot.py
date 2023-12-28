@@ -1,20 +1,20 @@
 import unittest
 from unittest.mock import Mock, AsyncMock, patch
-from main import message_handler, main, ping, TELEGRAM_BOT_TOKEN
+from translator_bot import message_handler, main, ping, TELEGRAM_BOT_TOKEN
 from telegram import Update, User, Message
 from db.models.conversation import Conversation
 from datetime import datetime, timedelta
 from decimal import Decimal
 import asyncio
 
-class TestMain(unittest.TestCase):
+class TestTranslatorBot(unittest.TestCase):
 
-    @patch('main.openai', new_callable=Mock)
-    @patch('main.MessagesHandler')
-    @patch('main.Transcriptor')
-    @patch('main.RunsTreadsHandler')
-    @patch('main.session_scope')
-    @patch('main.CallbackContext')
+    @patch('translator_bot.openai', new_callable=Mock)
+    @patch('translator_bot.MessagesHandler')
+    @patch('translator_bot.Transcriptor')
+    @patch('translator_bot.RunsTreadsHandler')
+    @patch('translator_bot.session_scope')
+    @patch('translator_bot.CallbackContext')
     async def test_message_handler_text(self, mock_context, mock_session_scope, mock_runs_treads_handler, mock_transcriptor, mock_messages_handler, mock_openai_global):
 
         # Mock dependencies
@@ -60,7 +60,7 @@ class TestMain(unittest.TestCase):
         mock_session.query.assert_called()
         self.assertGreaterEqual(mock_session.query().filter_by().first.call_count, 1)
 
-    @patch('main.Application')
+    @patch('translator_bot.Application')
     def test_main_initialization(self, mock_Application):
         # Mock the builder and its methods
         mock_builder = Mock()
@@ -79,7 +79,7 @@ class TestMain(unittest.TestCase):
         # Assert run_polling is called
         mock_builder.build.return_value.run_polling.assert_called()
 
-    @patch('main.CallbackContext')
+    @patch('translator_bot.CallbackContext')
     async def test_ping(self, mock_context):
         # Mocking the Update and User objects
         mock_update = Mock()

@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+from lib.localization import _
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,16 +36,18 @@ class EmailSender:
                 )
                 message.attach(part)
             except Exception as e:
-                return f"Error in attaching file: {e}", ''
+                print(f"Error in attaching file: {e}")
+                return _("Error in attaching file."), ''
 
         # Sending the email
         try:
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
                 smtp_server.login(self.sender_email, self.password)
                 smtp_server.sendmail(self.sender_email, recipient_email, message.as_string())
-            return "Email successfully sent!", ''
+            return _("Email successfully sent!"), ''
         except Exception as e:
-            return f"Error in sending email: {e}", ''
+            print(f"Error in sending email: {e}")
+            return _("Error in sending email."), ''
 
 # Example of usage:
 # sender = EmailSender()

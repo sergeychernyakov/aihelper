@@ -1,3 +1,5 @@
+from lib.localization import _
+
 class Image:
     def __init__(self, openai):
         self.openai = openai
@@ -16,9 +18,10 @@ class Image:
             if hasattr(response, 'data') and response.data:
                 return response.data[0].url, response.data[0].revised_prompt  # Accessing URL using proper object notation
             else:
-                return "No image generated",''
+                return _("No image generated"),''
         except Exception as e:
-            return f"Error in generating image: {e}",''
+            print(f"Error in generating image: {e}")
+            return _("Error in generating image."),''
 
 # Example of usage:
 

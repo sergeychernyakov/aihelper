@@ -35,7 +35,7 @@ pip3 install secure-smtplib
 ### Testing
 python3 -m unittest discover -s tests
 # run one test
-python3 -m unittest tests.test_main
+python3 -m unittest tests.test_translator_bot
 python3 -m unittest tests/test_lib/test_telegram/test_runs_treads_handler.py
 
 # Text Extraction
@@ -43,6 +43,16 @@ pip install python-docx PyPDF2 python-pptx beautifulsoup4 lxml textract striprtf
 
 # Video Extraction
 pip install opencv-python
+
+### Localization
+# xgettext -o locale/aihelper.pot main.py
+
+find . -name '*.py' -not -path './myenv/*' -not -path '*/myenv/*' | xgettext -o locale/aihelper.pot -f -
+mkdir -p locale/ru/LC_MESSAGES
+msginit -i locale/aihelper.pot -o locale/ru/LC_MESSAGES/aihelper.po --locale=ru
+msgfmt -o locale/ru/LC_MESSAGES/aihelper.mo locale/ru/LC_MESSAGES/aihelper.po
+
+
 
 ### Prompt
 Hello! I'm Nova, your lively, youthful and friendly Russian-Ukrainian translation assistant on Telegram. 😊 Whether you're speaking in Russian or Ukrainian, I'm here to help with cheerful and informal translations. Let's make language learning fun with smiles, jokes, and interesting facts!
@@ -65,11 +75,22 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
-
 ### Plan
-  - fix tests
-  - supress error message
+  - локализация -  отвечать на языке устройства, сообщения об ошибках
+    - установить язык по-умолчанию
+
+  - make $0.3 по умолчанию
+
   - видеоролик
   - робокасса
 
-  - локализация - язык по-умолчанию, отвечать на языке устройства, сообщения об ошибках
+
+-----
+- купить домен
+- сделать страничку
+- выложить робота на хостинг
+
+
+
+current_dir = '/Users/sergeychernyakov/www/aihelper'
+locale_path = os.path.join(current_dir, 'locale')

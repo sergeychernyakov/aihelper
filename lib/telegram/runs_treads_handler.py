@@ -10,6 +10,7 @@ from lib.telegram.tokenizer import Tokenizer
 from datetime import timedelta
 from decimal import Decimal
 from lib.telegram.payment import Payment
+from lib.localization import _
 
 class RunsTreadsHandler:
 
@@ -176,10 +177,10 @@ class RunsTreadsHandler:
         sender = EmailSender(self.openai)
         attachment = 'attachment'
         sender.send_email(args['email'], args['text'], attachment)
-        self.context.bot.send_message(self.update.message.chat_id, 'Letter successfully sent.')
+        self.context.bot.send_message(self.update.message.chat_id, _('Letter successfully sent.'))
         return {
             "tool_call_id": tool_call_id,
-            "output": f'Letter successfully sent. There is no need to reply to the message.'
+            "output": _('Letter successfully sent. There is no need to reply to the message.')
         }
 
     async def _generate_image(self, tool_call_id, args):
@@ -187,7 +188,7 @@ class RunsTreadsHandler:
         amount = self.tokenizer.tokens_to_money_from_string(args['description'])
         amount += self.tokenizer.tokens_to_money_to_image()
         if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-            message = "Insufficient balance to process the generating image."
+            message = _("Insufficient balance to process the generating image.")
             print(message)
             await self.context.bot.send_message(self.update.message.chat_id, message)
             await self.payment.send_invoice(self.update, self.context, False)

@@ -1,4 +1,5 @@
 import os
+from lib.localization import _
 
 class ConstraintsChecker:
     MAX_FILE_SIZE = 5.0 * 1024 * 1024  # 5 MB in bytes
@@ -22,7 +23,7 @@ class ConstraintsChecker:
             return size_check
 
         if photo.width > cls.MAX_DIMENSION_SIZE or photo.height > cls.MAX_DIMENSION_SIZE:
-            return False, "Image dimensions are too large."
+            return False, _("Image dimensions are too large.")
         return True, ""
 
     @classmethod
@@ -41,7 +42,7 @@ class ConstraintsChecker:
 
         return cls._check_file_size(file.file_size)
 
-   # New method for checking video constraints
+    # New method for checking video constraints
     @classmethod
     def check_video_constraints(cls, file):
         extension_check = cls._check_file_extension(os.path.splitext(file.file_path)[1].lower(), cls.ALLOWED_VIDEO_EXTENSIONS)
@@ -58,14 +59,15 @@ class ConstraintsChecker:
         if file_size > cls.MAX_VIDEO_FILE_SIZE:
             max_size_mb = cls.MAX_VIDEO_FILE_SIZE / (1024 * 1024)
             file_size_mb = file_size / (1024 * 1024)
-            return False, f'The video file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+            return False, _('The video file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB.').format(file_size_mb, max_size_mb)
+
         return True, ""
 
     @classmethod
     def _check_file_extension(cls, file_extension, allowed_extensions):
         if file_extension not in allowed_extensions:
             allowed_extensions_str = ", ".join(allowed_extensions)
-            return False, f"Unsupported file type. Allowed types: {allowed_extensions_str}."
+            return False, _("Unsupported file type. Allowed types: {0}.").format(allowed_extensions_str)
         return True, ""
 
     @classmethod
@@ -73,5 +75,5 @@ class ConstraintsChecker:
         if file_size > cls.MAX_FILE_SIZE:
             max_size_mb = cls.MAX_FILE_SIZE / (1024 * 1024)
             file_size_mb = file_size / (1024 * 1024)
-            return False, f'The file size is too large: {file_size_mb:.2f} MB. Max allowed is {max_size_mb:.2f} MB.'
+            return False, _('The file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB.').format(file_size_mb, max_size_mb)
         return True, ""
