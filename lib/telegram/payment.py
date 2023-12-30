@@ -6,7 +6,7 @@ from db.engine import SessionLocal
 from db.models.conversation import Conversation
 from lib.telegram.assistant import Assistant
 from decimal import Decimal
-from lib.localization import _
+from lib.localization import _, change_language
 
 # Load environment variables
 load_dotenv()
@@ -108,6 +108,9 @@ class Payment:
                 user_id=update.message.from_user.id,
                 assistant_id=Payment.ASSISTANT_ID
             ).first()
+            
+            # initiate default language
+            change_language(conversation.language_code)
 
             if conversation:
                 # Update the conversation balance

@@ -6,7 +6,7 @@ class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096
     PROFIT_MARGIN = Decimal('0.31') # 16% profit margin
     MINIMUM_COST = Decimal('0.003')
-    START_BALANCE = Decimal('1.0')
+    START_BALANCE = Decimal('0.3')
 
     # Prices within the class
     PRICES = {

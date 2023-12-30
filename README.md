@@ -76,21 +76,10 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - локализация -  отвечать на языке устройства, сообщения об ошибках
-    - установить язык по-умолчанию
-
-  - make $0.3 по умолчанию
-
   - видеоролик
   - робокасса
-
+  - выложить робота на хостинг
 
 -----
 - купить домен
 - сделать страничку
-- выложить робота на хостинг
-
-
-
-current_dir = '/Users/sergeychernyakov/www/aihelper'
-locale_path = os.path.join(current_dir, 'locale')

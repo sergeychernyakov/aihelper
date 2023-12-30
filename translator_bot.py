@@ -1,6 +1,5 @@
 import os
 import logging
-import gettext
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, CallbackContext, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler
@@ -16,7 +15,7 @@ from lib.telegram.helpers import Helpers
 from lib.telegram.tokenizer import Tokenizer
 from lib.telegram.assistant import Assistant
 from lib.telegram.payment import Payment
-from lib.localization import _
+from lib.localization import _, change_language
 
 load_dotenv()
 
@@ -89,6 +88,9 @@ async def message_handler(update, context):
                 assistant_id=ASSISTANT_ID
             ).first() or _create_conversation(session, update)
             
+            # initiate default language
+            change_language(conversation.language_code)
+
             # Check if the balance is 0 or less
             if conversation.balance <= 0:
                 print("Insufficient balance.")
@@ -202,6 +204,9 @@ async def finish(update: Update, context: CallbackContext, from_button=False) ->
             ).first()
 
             if conversation:
+                # initiate conversation language
+                change_language(conversation.language_code)
+
                 await context.bot.send_message(chat_id, _('Goodbye! If you need assistance again, just send me a message.'))
 
                 # Create the RunsTreadsHandler using the correct chat_id
@@ -240,6 +245,9 @@ async def balance(update: Update, context: CallbackContext, from_button=False) -
 
         # Existing logic to send balance information
         if conversation:
+            # initiate conversation language
+            change_language(conversation.language_code)
+
             balance_amount = conversation.balance
             await context.bot.send_message(chat_id, _("Your current balance is: ${0:.2f}").format(balance_amount))
         else:
@@ -257,6 +265,10 @@ async def start(update: Update, context: CallbackContext) -> None:
         if not conversation:
             conversation = _create_conversation(session, update)
             print(f"New conversation created with ID: {conversation.id}")
+
+        if conversation:
+            # initiate conversation language
+            change_language(conversation.language_code)
 
         # Access conversation.balance here while the session is still open
         current_balance = conversation.balance
@@ -309,12 +321,12 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     # Send the remaining part of the welcome message with buttons
     await context.bot.send_message(update.message.chat_id, remaining_welcome_message)
+    await context.bot.send_message(update.message.chat_id, 'https://youtu.be/aEeFlZYFSlI')
 
-    # Send a welcome video
-    video_path = 'welcome_video.mov'
-    with open(video_path, 'rb') as video:
-        await context.bot.send_video(update.message.chat_id, video)
-
+    # # Send a welcome video
+    # video_path = 'welcome_video.mov'
+    # with open(video_path, 'rb') as video:
+    #     await context.bot.send_video(update.message.chat_id, video)
 
 async def button(update: Update, context: CallbackContext):
     query = update.callback_query
