@@ -150,15 +150,15 @@ msgid "Error in generating image."
 msgstr "Ошибка в создании изображения."
 
 #: lib/telegram/payment.py:63
-msgid "Пополнение баланса"
+msgid "Top Up Balance"
 msgstr "Пополнение баланса"
 
 #: lib/telegram/payment.py:64
-msgid "Пополнение баланса переводчика."
+msgid "Top Up the Balance of the Translator."
 msgstr "Пополнение баланса переводчика."
 
 #: lib/telegram/payment.py:66
-msgid "Пополненить баланс"
+msgid "Top Up the Balance"
 msgstr "Пополнить баланс"
 
 #: lib/telegram/payment.py:86
@@ -257,10 +257,6 @@ msgstr ""
 #: main.py:294
 msgid "Check Balance"
 msgstr "Проверить баланс"
-
-#: main.py:294
-msgid "Top Up Balance"
-msgstr "Пополнить баланс"
 
 #: main.py:294
 msgid "Finish Session"

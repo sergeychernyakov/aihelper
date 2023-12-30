@@ -13,14 +13,14 @@ load_dotenv()
 
 class Payment:
     """
-    Handles payment processing through Telegram using Stripe.
+    Handles payment processing through Telegram using YOOKASSA.
 
     This class provides methods to send invoices, handle pre-checkout, and confirm successful payments
     in a Telegram bot context. It uses Stripe for payment processing and requires a valid Stripe API token.
     The class methods are designed to be integrated with the python-telegram-bot framework.
 
     Attributes:
-    STRIPE_API_TOKEN (str): Class-level attribute that stores the Stripe API token.
+    YOOKASSA_API_TOKEN (str): Class-level attribute that stores the Stripe API token.
     PAYLOAD (str): Constant payload string used to validate payment callbacks.
 
     Methods:
@@ -29,12 +29,13 @@ class Payment:
     successful_payment_callback: Confirms and responds to a successful payment.
 
     Note:
-    Ensure that the STRIPE_API_TOKEN environment variable is set correctly for payment processing.
+    Ensure that the YOOKASSA_API_TOKEN environment variable is set correctly for payment processing.
     This class assumes that the python-telegram-bot framework is used for the bot implementation.
     """
 
     # Class-level constant for Stripe API token
-    STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
+    # STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
+    YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
     # Constant payload used for validating payment callbacks
     PAYLOAD = "Custom-Payload"
     
@@ -60,13 +61,13 @@ class Payment:
         else:
             chat_id = update.message.chat_id
 
-        title = _("Пополнение баланса")
-        description = _("Пополнение баланса переводчика.")
-        currency = "USD"
-        prices = [LabeledPrice(_("Пополненить баланс"), 1*100)]
+        title = _("Top Up Balance")
+        description = _("Top Up the Balance of the Translator.")
+        currency = "RUB"
+        prices = [LabeledPrice(_("Top Up the Balance"), 100*100)]
 
         await context.bot.send_invoice(
-            chat_id, title, description, Payment.PAYLOAD, Payment.STRIPE_API_TOKEN, currency, prices
+            chat_id, title, description, Payment.PAYLOAD, Payment.YOOKASSA_API_TOKEN, currency, prices
         )
 
     @staticmethod
@@ -97,7 +98,7 @@ class Payment:
         context (CallbackContext): Context object passed by the Telegram bot framework.
         """
         # Extract payment amount from the successful payment update
-        payment_amount = Decimal(update.message.successful_payment.total_amount) / 100  # Assuming amount is in cents
+        payment_amount = Decimal(update.message.successful_payment.total_amount) / 10000  # Assuming amount is in cents
 
         # Create a new database session
         session = SessionLocal()

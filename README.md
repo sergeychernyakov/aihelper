@@ -52,6 +52,10 @@ mkdir -p locale/ru/LC_MESSAGES
 msginit -i locale/aihelper.pot -o locale/ru/LC_MESSAGES/aihelper.po --locale=ru
 msgfmt -o locale/ru/LC_MESSAGES/aihelper.mo locale/ru/LC_MESSAGES/aihelper.po
 
+### Yookassa
+1111 1111 1111 1026, 12/22, CVC 000.
+shopId 506751
+shopArticleId 538350
 
 
 ### Prompt
@@ -76,7 +80,6 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - видеоролик
   - робокасса
   - выложить робота на хостинг
 

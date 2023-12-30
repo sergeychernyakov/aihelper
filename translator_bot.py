@@ -321,12 +321,8 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     # Send the remaining part of the welcome message with buttons
     await context.bot.send_message(update.message.chat_id, remaining_welcome_message)
-    await context.bot.send_message(update.message.chat_id, 'https://youtu.be/aEeFlZYFSlI')
+    await context.bot.send_message(update.message.chat_id, 'https://youtu.be/_L1mFH_V-0o')
 
-    # # Send a welcome video
-    # video_path = 'welcome_video.mov'
-    # with open(video_path, 'rb') as video:
-    #     await context.bot.send_video(update.message.chat_id, video)
 
 async def button(update: Update, context: CallbackContext):
     query = update.callback_query
