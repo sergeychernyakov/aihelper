@@ -1,8 +1,10 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .base import Base  # Make sure this is an absolute import
 
-DATABASE_URI = 'sqlite:///db/aihelper.db'
+db_path = os.path.join(os.path.dirname(__file__), 'aihelper.db')
+DATABASE_URI = 'sqlite:///' + db_path
 
 engine = create_engine(DATABASE_URI, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

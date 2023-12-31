@@ -41,8 +41,7 @@ _ = _Localization.get_text
 
 
 # Example usage
-# import os
-# from lib.localization import _
-# os.environ['LANGUAGE'] = 'ru'
-
+# from lib._localization import _, change_language
+# print(_("Top Up Balance"))
+# change_language(ru)
 # print(_("Top Up Balance"))

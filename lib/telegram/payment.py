@@ -7,6 +7,7 @@ from db.models.conversation import Conversation
 from lib.telegram.assistant import Assistant
 from decimal import Decimal
 from lib.localization import _, change_language
+from lib.currency_converter import CurrencyConverter
 
 # Load environment variables
 load_dotenv()
@@ -14,10 +15,6 @@ load_dotenv()
 class Payment:
     """
     Handles payment processing through Telegram using YOOKASSA.
-
-    This class provides methods to send invoices, handle pre-checkout, and confirm successful payments
-    in a Telegram bot context. It uses Stripe for payment processing and requires a valid Stripe API token.
-    The class methods are designed to be integrated with the python-telegram-bot framework.
 
     Attributes:
     YOOKASSA_API_TOKEN (str): Class-level attribute that stores the Stripe API token.
@@ -33,10 +30,7 @@ class Payment:
     This class assumes that the python-telegram-bot framework is used for the bot implementation.
     """
 
-    # Class-level constant for Stripe API token
-    # STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
     YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
-    # Constant payload used for validating payment callbacks
     PAYLOAD = "Custom-Payload"
     
     assistant = Assistant()
@@ -44,18 +38,6 @@ class Payment:
 
     @staticmethod
     async def send_invoice(update: Update, context: CallbackContext, from_button: False) -> None:
-        """
-        Sends an invoice to a user for payment.
-
-        Parameters:
-        update (Update): The update instance containing message details.
-        context (CallbackContext): Context object passed by the Telegram bot framework.
-        from_button (Bool): Indicates if this function is called from a button press.
-
-        This method constructs an invoice with a predefined title, description, and price,
-        then sends it to the user using the bot's context.
-        """
-            # Determine the chat_id and user_id based on how the function was called
         if from_button:
             chat_id = update.callback_query.message.chat_id
         else:
@@ -72,16 +54,6 @@ class Payment:
 
     @staticmethod
     async def precheckout_callback(update: Update, context: CallbackContext) -> None:
-        """
-        Handles the pre-checkout process of a payment.
-
-        Parameters:
-        update (Update): The update instance containing pre-checkout query details.
-        context (CallbackContext): Context object passed by the Telegram bot framework.
-
-        This method validates the pre-checkout query to ensure it matches the expected payload.
-        If the validation fails, it responds with an error message.
-        """
         query = update.pre_checkout_query
         if query.invoice_payload != Payment.PAYLOAD:
             await query.answer(ok=False, error_message=_("Something went wrong..."))
@@ -90,41 +62,37 @@ class Payment:
 
     @staticmethod
     async def successful_payment_callback(update: Update, context: CallbackContext) -> None:
-        """
-        Confirms the successful completion of a payment and updates the user's conversation balance.
+        payment_amount_rub = Decimal(update.message.successful_payment.total_amount) / 100
 
-        Parameters:
-        update (Update): The update instance containing successful payment details.
-        context (CallbackContext): Context object passed by the Telegram bot framework.
-        """
-        # Extract payment amount from the successful payment update
-        payment_amount = Decimal(update.message.successful_payment.total_amount) / 10000  # Assuming amount is in cents
-
-        # Create a new database session
         session = SessionLocal()
         try:
-            user_id = update.message.from_user.id
-            # Query for the conversation
             conversation = session.query(Conversation).filter_by(
                 user_id=update.message.from_user.id,
                 assistant_id=Payment.ASSISTANT_ID
             ).first()
-            
-            # initiate default language
-            change_language(conversation.language_code)
 
             if conversation:
-                # Update the conversation balance
-                conversation.balance += payment_amount
-                session.commit()  # Commit the transaction
-                await update.message.reply_text(_("Thank you for your payment! Your balance has been updated by ${0:.2f}.").format(payment_amount))
+                change_language(conversation.language_code)
+
+                payment_amount_usd = payment_amount_rub
+                if conversation.language_code == 'ru':
+                    conversion_rate = CurrencyConverter.get_conversion_rate('RUB', 'USD')
+                    if conversion_rate is not None:
+                        payment_amount_usd = payment_amount_rub * conversion_rate
+                elif conversation.language_code == 'ua':
+                    conversion_rate = CurrencyConverter.get_conversion_rate('UAH', 'USD')
+                    if conversion_rate is not None:
+                        # Convert your amount from UAH to USD here
+                        pass
+
+                conversation.balance += payment_amount_usd
+                session.commit()
+                await update.message.reply_text(_("Thank you for your payment! Your balance has been updated by ${0:.2f} USD.").format(payment_amount_usd))
             else:
-                # Handle case where conversation does not exist
                 await update.message.reply_text(_("Error: No active conversation found for payment update."))
 
         except Exception as e:
-            # Handle any exceptions that occur during the database operation
-            session.rollback()  # Rollback the transaction in case of error
+            session.rollback()
             raise e
         finally:
-            session.close()  # Ensure the session is closed
+            session.close()

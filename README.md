@@ -80,11 +80,12 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - выложить робота на хостинг
-  - запустить бота
-  - робокасса реальный платеж
   - конвертировать рубли в доллары при платеже, счет в валюте пользователя
+  - перевести на украинский
+  - робокасса реальный платеж
 
 -----
 - купить домен
 - сделать страничку по разработке телеграм ботов
+- сделать бота BotFatherDevelopment
+
