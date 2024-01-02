@@ -135,5 +135,75 @@ class TestTokenizer(unittest.TestCase):
                 result = self.tokenizer.has_sufficient_balance_for_message(message, balance, token_type)
                 self.assertEqual(result, expected_result)
 
+    def test_has_sufficient_balance_for_amount(self):
+        test_cases = [
+            # Test case format: (amount, balance, expected_result)
+            (Decimal('0.50'), Decimal('1.00'), True),  # Balance is greater than amount
+            (Decimal('1.00'), Decimal('0.50'), False), # Balance is less than amount
+            (Decimal('0.75'), Decimal('0.75'), True),  # Balance equals amount
+            (Decimal('0.00'), Decimal('0.00'), True),  # Zero amount with zero balance
+            # Add more test cases as needed
+        ]
+        for amount, balance, expected_result in test_cases:
+            with self.subTest(amount=amount, balance=balance):
+                result = self.tokenizer.has_sufficient_balance_for_amount(amount, balance)
+                self.assertEqual(result, expected_result)
+
+    def test_calculate_thread_tokens(self):
+        test_cases = [
+            # Test case format: (messages, expected_total_tokens)
+            ([{'content': [{'type': 'text', 'text': {'value': 'Hello'}}]}, 
+              {'content': [{'type': 'text', 'text': {'value': 'World'}}]}], 10),  # Two messages with 5 tokens each
+            ([], 0),  # Empty thread
+            ([{'content': [{'type': 'text', 'text': {'value': 'A longer sentence here'}}]}], 22),  # One longer message
+            # Add more test cases as needed
+        ]
+        for messages, expected_total_tokens in test_cases:
+            with self.subTest(messages=messages):
+                # Create mock messages with the proper structure
+                adjusted_messages = []
+                for message in messages:
+                    mock_message = MagicMock()
+                    mock_message.content = []
+                    for item in message['content']:
+                        mock_content_item = MagicMock()
+                        mock_content_item.type = item['type']
+                        mock_content_item.text = MagicMock(value=item['text']['value'])
+                        mock_message.content.append(mock_content_item)
+                    adjusted_messages.append(mock_message)
+
+                total_tokens = self.tokenizer.calculate_thread_tokens(adjusted_messages)
+                self.assertEqual(total_tokens, expected_total_tokens)
+
+    @patch('lib.telegram.tokenizer.Assistant')
+    def test_calculate_assistant_prompt_tokens(self, mock_assistant):
+        test_cases = [
+            ("Short prompt", 12),  # Assuming "Short prompt" is 12 tokens
+            ("", 0),  # Empty prompt
+            ("A longer prompt sentence for testing.", 37),  # Longer prompt
+        ]
+        for prompt_text, expected_token_count in test_cases:
+            with self.subTest(prompt_text=prompt_text):
+                mock_assistant.return_value.prompt.return_value = prompt_text
+                actual_token_count = self.tokenizer.calculate_assistant_prompt_tokens()
+                self.assertEqual(actual_token_count, expected_token_count)
+
+    @patch('lib.telegram.tokenizer.Tokenizer.calculate_thread_tokens')
+    @patch('lib.telegram.tokenizer.Tokenizer.calculate_assistant_prompt_tokens')
+    def test_calculate_thread_total_amount(self, mock_calculate_prompt_tokens, mock_calculate_thread_tokens):
+        test_cases = [
+            # Test case format: (thread_tokens, prompt_tokens, expected_total_cost)
+            (12344, 50, Decimal('0.02')),  # Assuming specific costs based on token counts
+            (0, 0, Decimal('0.003')),    # Empty thread and prompt with minimum cost
+            (1500, 1200, Decimal('0.003537')), # More tokens
+            # Add more test cases as needed
+        ]
+        for thread_tokens, prompt_tokens, expected_total_cost in test_cases:
+            with self.subTest(thread_tokens=thread_tokens, prompt_tokens=prompt_tokens):
+                mock_calculate_thread_tokens.return_value = thread_tokens
+                mock_calculate_prompt_tokens.return_value = prompt_tokens
+                actual_total_cost = self.tokenizer.calculate_thread_total_amount([])
+                self.assertEqual(actual_total_cost, expected_total_cost)
+
 if __name__ == '__main__':
     unittest.main()
