@@ -167,8 +167,8 @@ msgstr "Что-то пошло не так..."
 
 #: lib/telegram/payment.py:116
 #, python-brace-format
-msgid "Thank you for your payment! Your balance has been updated by ${0:.2f}."
-msgstr "Спасибо за ваш платеж! Ваш баланс пополнен на ${0:.2f}."
+msgid "Thank you for your payment! Your balance has been updated by {0:.2f} {1}."
+msgstr "Спасибо за ваш платеж! Ваш баланс пополнен на {0:.2f} {1}."
 
 #: lib/telegram/payment.py:119
 msgid "Error: No active conversation found for payment update."

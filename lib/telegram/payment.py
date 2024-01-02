@@ -62,7 +62,10 @@ class Payment:
 
     @staticmethod
     async def successful_payment_callback(update: Update, context: CallbackContext) -> None:
-        payment_amount_rub = Decimal(update.message.successful_payment.total_amount) / 100
+        currency = update.message.successful_payment.currency
+        payment_amount = Decimal(update.message.successful_payment.total_amount) / 100
+        
+        print()
 
         session = SessionLocal()
         try:
@@ -74,20 +77,11 @@ class Payment:
             if conversation:
                 change_language(conversation.language_code)
 
-                payment_amount_usd = payment_amount_rub
-                if conversation.language_code == 'ru':
-                    conversion_rate = CurrencyConverter.get_conversion_rate('RUB', 'USD')
-                    if conversion_rate is not None:
-                        payment_amount_usd = payment_amount_rub * conversion_rate
-                elif conversation.language_code == 'ua':
-                    conversion_rate = CurrencyConverter.get_conversion_rate('UAH', 'USD')
-                    if conversion_rate is not None:
-                        # Convert your amount from UAH to USD here
-                        pass
-
-                conversation.balance += payment_amount_usd
+                conversion_rate = CurrencyConverter.get_conversion_rate(currency, 'USD')
+                conversation.balance += payment_amount * conversion_rate
                 session.commit()
-                await update.message.reply_text(_("Thank you for your payment! Your balance has been updated by ${0:.2f} USD.").format(payment_amount_usd))
+                await update.message.reply_text(_("Thank you for your payment! Your balance has been updated by {0:.2f} {1}.").format(payment_amount, currency))
+                await update.message.reply_text(_("Your current balance is: ${0:.2f}").format(conversation.balance))
             else:
                 await update.message.reply_text(_("Error: No active conversation found for payment update."))
 

@@ -21,6 +21,10 @@ class CurrencyConverter:
 
     @classmethod
     def get_conversion_rate(cls, from_currency: str, to_currency: str) -> Decimal:
+        # Check if the from and to currencies are the same, return 1 if so
+        if from_currency == to_currency:
+            return Decimal(1)
+
         cache_key = f"{from_currency}-{to_currency}"
 
         if not cls._is_cache_expired(cache_key):
