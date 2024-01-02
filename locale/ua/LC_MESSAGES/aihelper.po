@@ -1,0 +1,281 @@
+# Language ua translations for PACKAGE package.
+# Copyright (C) 2024 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Sergey Chernyakov <chernyakov.sergey@gmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-02 13:09+0200\n"
+"PO-Revision-Date: 2024-01-02 13:10+0200\n"
+"Last-Translator: Sergey Chernyakov <chernyakov.sergey@gmail.com>\n"
+"Language-Team: Language ua\n"
+"Language: ua\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: translator_bot.py:97
+msgid "Insufficient balance to use the service."
+msgstr "Недостатньо коштів для використання сервісу."
+
+#: translator_bot.py:152
+msgid "Insufficient balance to process the message."
+msgstr "Недостатньо коштів для обробки повідомлення."
+
+#: translator_bot.py:210
+msgid "Goodbye! If you need assistance again, just send me a message."
+msgstr "До побачення! Якщо вам знову знадобиться допомога, просто напишіть мені."
+
+#: translator_bot.py:221
+msgid "An error occurred while processing your request."
+msgstr "Виникла помилка під час обробки вашого запиту."
+
+#: translator_bot.py:252 lib/telegram/payment.py:84
+#, python-brace-format
+msgid "Your current balance is: ${0:.2f}"
+msgstr "Ваш поточний баланс: ${0:.2f}"
+
+#: translator_bot.py:279
+msgid ""
+"Welcome to the Russian-Ukrainian AI Translator! My name is Nova and I can "
+"assist you with various tasks. Here's what you can do:\n"
+"\n"
+"Speak with me like with friend :)\n"
+"Translate various texts from/to Russian/Ukrainian\n"
+"Translate voice messages\n"
+"Translate audio/video files\n"
+"Translate text, pdf and other documents\n"
+"Generate images\n"
+"I speak your language\n"
+"\n"
+msgstr ""
+"Ласкаво просимо до російсько-українського перекладача з штучним інтелектом! Мене звати Нова, і я можу допомогти вам з різними завданнями. Ось що ви можете робити:\n"
+"\n"
+"Розмовляйте зі мною, як з другом :)\n"
+"Перекладайте різні тексти з російської на українську та навпаки\n"
+"Перекладайте голосові повідомлення\n"
+"Перекладайте аудіо/відеофайли\n"
+"Перекладайте текст, pdf та інші документи\n"
+"Генеруйте зображення\n"
+"Я розмовляю вашою мовою\n"
+"\n"
+
+#: translator_bot.py:290
+#, python-brace-format
+msgid ""
+"Balance:\n"
+"Your start balance is ${0:.2f} - we'll ask to refill the balance when you'll "
+"use it in full.\n"
+"Your current balance is ${1:.2f}.\n"
+"\n"
+msgstr ""
+"Баланс:\n"
+"Ваш початковий баланс ${0:.2f} - ми попросимо поповнити баланс, коли ви його використаєте повністю.\n"
+"Ваш поточний баланс ${1:.2f}.\n"
+"\n"
+
+#: translator_bot.py:295
+msgid ""
+"Contacts:\n"
+"- For advertising inquiries, contact @AIBotsAdv\n"
+"- For investment-related questions, contact @AIBotsInvest\n"
+"- For development of intelligent bots, write to @AIBotsTech\n"
+"- Support: @AIBotsTech\n"
+"\n"
+"Available Actions:\n"
+msgstr ""
+"Контакти:\n"
+"- Для рекламних запитів звертайтеся до @AIBotsAdv\n"
+"- Для питань, пов'язаних з інвестиціями, звертайтеся до @AIBotsInvest\n"
+"- Для розробки інтелектуальних ботів пишіть до @AIBotsTech\n"
+"- Підтримка: @AIBotsTech\n"
+"\n"
+"Доступні дії:\n"
+
+#: translator_bot.py:306
+msgid "Check Balance"
+msgstr "Перевірити баланс"
+
+#: translator_bot.py:306 lib/telegram/payment.py:46
+msgid "Top Up Balance"
+msgstr "Поповнити баланс"
+
+#: translator_bot.py:306
+msgid "Finish Session"
+msgstr "Закінчити сесію"
+
+#: translator_bot.py:314
+msgid ""
+"/balance - Check your current balance\n"
+"/invoice - Top up your balance\n"
+"/start - Show welcome message again\n"
+"/finish - Finish your current session\n"
+"\n"
+"Enjoy your experience with our service!\n"
+"Check our video tutorial."
+msgstr ""
+"/balance - Перевірте ваш поточний баланс\n"
+"/invoice - Поповніть ваш баланс\n"
+"/start - Показати повідомлення з вітанням знову\n"
+"/finish - Закінчити поточну сесію\n"
+"\n"
+"Насолоджуйтеся користуванням нашим сервісом!\n"
+"Перегляньте наш відеоурок."
+
+#: lib/telegram/answer.py:76
+msgid "Failed to fetch image with file."
+msgstr "Не вдалося отримати зображення з файлу."
+
+#: lib/telegram/transcriptor.py:98
+msgid "Error: Unable to process the request."
+msgstr "Помилка: Неможливо обробити запит."
+
+#: lib/telegram/transcriptor.py:116
+msgid "Insufficient balance to process the document."
+msgstr "Недостатньо коштів для обробки документу."
+
+#: lib/telegram/transcriptor.py:139
+msgid ""
+"... (truncated)\n"
+"\n"
+msgstr ""
+"... (усічено)\n"
+"\n"
+
+#: lib/telegram/transcriptor.py:140
+msgid "Full translated text has been sent as a document."
+msgstr "Повний перекладений текст було відправлено як документ."
+
+#: lib/telegram/transcriptor.py:149
+msgid "Failed to transcribe document."
+msgstr "Не вдалося транскрибувати документ."
+
+#: lib/telegram/transcriptor.py:167
+msgid "Insufficient balance to process the image."
+msgstr "Недостатньо коштів для обробки зображення."
+
+#: lib/telegram/transcriptor.py:189 lib/telegram/messages_handler.py:41
+msgid "Image processed successfully"
+msgstr "Зображення успішно оброблено"
+
+#: lib/telegram/transcriptor.py:217 lib/telegram/messages_handler.py:83
+msgid "Voice processed successfully"
+msgstr "Голос успішно оброблено"
+
+#: lib/telegram/transcriptor.py:220
+msgid "Failed to transcribe the voice message."
+msgstr "Не вдалося транскрибувати голосове повідомлення."
+
+#: lib/telegram/transcriptor.py:241 lib/telegram/messages_handler.py:129
+msgid "Video processed successfully"
+msgstr "Відео успішно оброблено"
+
+#: lib/telegram/transcriptor.py:244
+msgid "Failed to transcribe video"
+msgstr "Не вдалося транскрибувати відео"
+
+#: lib/telegram/runs_treads_handler.py:180
+msgid "Letter successfully sent."
+msgstr "Листа успішно відправлено."
+
+#: lib/telegram/runs_treads_handler.py:183
+msgid "Letter successfully sent. There is no need to reply to the message."
+msgstr "Листа успішно відправлено. Немає необхідності відповідати на повідомлення."
+
+#: lib/telegram/runs_treads_handler.py:191
+msgid "Insufficient balance to process the generating image."
+msgstr "Недостатньо коштів для обробки зображення."
+
+#: lib/telegram/messages_handler.py:23
+msgid "Message processed successfully."
+msgstr "Повідомлення успішно оброблено."
+
+#: lib/telegram/messages_handler.py:60
+msgid "Insufficient balance to process the voice message."
+msgstr "Недостатньо коштів для обробки голосового повідомлення."
+
+#: lib/telegram/messages_handler.py:79
+msgid "Failed to load the voice message"
+msgstr "Не вдалося завантажити голосове повідомлення"
+
+#: lib/telegram/messages_handler.py:106
+msgid "Insufficient balance to process the video message."
+msgstr "Недостатньо коштів для обробки відеоповідомлення."
+
+#: lib/telegram/messages_handler.py:125
+msgid "Failed to load the video message"
+msgstr "Не вдалося завантажити відеоповідомлення"
+
+#: lib/telegram/messages_handler.py:159
+msgid "Failed to load the document"
+msgstr "Не вдалося завантажити документ"
+
+#: lib/telegram/messages_handler.py:163
+msgid "Document processed successfully"
+msgstr "Документ успішно оброблено"
+
+#: lib/telegram/email_sender.py:40
+msgid "Error in attaching file."
+msgstr "Помилка при додаванні файлу."
+
+#: lib/telegram/email_sender.py:47
+msgid "Email successfully sent!"
+msgstr "Електронний лист успішно відправлено!"
+
+#: lib/telegram/email_sender.py:50
+msgid "Error in sending email."
+msgstr "Помилка при відправці електронного листа."
+
+#: lib/telegram/constraints_checker.py:26
+msgid "Image dimensions are too large."
+msgstr "Розміри зображення занадто великі."
+
+#: lib/telegram/constraints_checker.py:62
+#, python-brace-format
+msgid ""
+"The video file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB."
+msgstr ""
+"Розмір відеофайлу занадто великий: {0:.2f} МБ. Максимально допустимий {1:.2f} МБ."
+
+#: lib/telegram/constraints_checker.py:70
+#, python-brace-format
+msgid "Unsupported file type. Allowed types: {0}."
+msgstr "Непідтримуваний тип файлу. Дозволені типи: {0}."
+
+#: lib/telegram/constraints_checker.py:78
+#, python-brace-format
+msgid "The file size is too large: {0:.2f} MB. Max allowed is {1:.2f} MB."
+msgstr "Розмір файлу занадто великий: {0:.2f} МБ. Максимально допустимий {1:.2f} МБ."
+
+#: lib/telegram/image.py:21
+msgid "No image generated"
+msgstr "Зображення не створено"
+
+#: lib/telegram/image.py:24
+msgid "Error in generating image."
+msgstr "Помилка при створенні зображення."
+
+#: lib/telegram/payment.py:47
+msgid "Top Up the Balance of the Translator."
+msgstr "Поповніть баланс перекладача."
+
+#: lib/telegram/payment.py:49
+msgid "Top Up the Balance"
+msgstr "Поповнити баланс"
+
+#: lib/telegram/payment.py:59
+msgid "Something went wrong..."
+msgstr "Щось пішло не так..."
+
+#: lib/telegram/payment.py:83
+#, python-brace-format
+msgid ""
+"Thank you for your payment! Your balance has been updated by {0:.2f} {1}."
+msgstr ""
+"Дякуємо за вашу оплату! Ваш баланс було поповнено на {0:.2f} {1}."
+
+#: lib/telegram/payment.py:86
+msgid "Error: No active conversation found for payment update."
+msgstr "Помилка: не знайдено активної розмови для оновлення платежу."

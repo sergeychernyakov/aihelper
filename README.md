@@ -80,9 +80,15 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - конвертировать рубли в доллары при платеже, счет в валюте пользователя
   - перевести на украинский
+  - написать больше тестов
+  - рефактор 1 класса
   - робокасса реальный платеж
+
+----- Diet bot
+----- Python bot
+----- Ruby bot
+
 
 -----
 - купить домен
