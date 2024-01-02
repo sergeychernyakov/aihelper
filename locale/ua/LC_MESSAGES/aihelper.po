@@ -150,7 +150,7 @@ msgstr "Повний перекладений текст було відправ
 
 #: lib/telegram/transcriptor.py:149
 msgid "Failed to transcribe document."
-msgstr "Не вдалося транскрибувати документ."
+msgstr "Не вдалося роспознати документ."
 
 #: lib/telegram/transcriptor.py:167
 msgid "Insufficient balance to process the image."
@@ -162,11 +162,11 @@ msgstr "Зображення успішно оброблено"
 
 #: lib/telegram/transcriptor.py:217 lib/telegram/messages_handler.py:83
 msgid "Voice processed successfully"
-msgstr "Голос успішно оброблено"
+msgstr "Голосове повідомлення успішно оброблено"
 
 #: lib/telegram/transcriptor.py:220
 msgid "Failed to transcribe the voice message."
-msgstr "Не вдалося транскрибувати голосове повідомлення."
+msgstr "Не вдалося роспознати голосове повідомлення."
 
 #: lib/telegram/transcriptor.py:241 lib/telegram/messages_handler.py:129
 msgid "Video processed successfully"
@@ -174,7 +174,7 @@ msgstr "Відео успішно оброблено"
 
 #: lib/telegram/transcriptor.py:244
 msgid "Failed to transcribe video"
-msgstr "Не вдалося транскрибувати відео"
+msgstr "Не вдалося роспознати відео"
 
 #: lib/telegram/runs_treads_handler.py:180
 msgid "Letter successfully sent."
