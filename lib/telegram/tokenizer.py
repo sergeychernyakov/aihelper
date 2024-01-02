@@ -4,11 +4,11 @@ from lib.telegram.assistant import Assistant
 
 class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096
-    PROFIT_MARGIN = Decimal('0.31') # 16% profit margin
+    PROFIT_MARGIN = Decimal('0.31') # 31% profit margin
     MINIMUM_COST = Decimal('0.003')
     START_BALANCE = Decimal('0.3')
 
-    # Prices within the class
+    # Prices within the class for 1000 tokens
     PRICES = {
         "gpt-4-1106-preview": {"input": 0.01, "output": 0.03},
         "gpt-4-1106-vision-preview": {"input": 0.01, "output": 0.03, "image": 0.00085},
@@ -60,9 +60,12 @@ class Tokenizer:
         price_per_token = Decimal(str(self.PRICES.get(self.model, {}).get(token_type, 0))) / Decimal('1000')
         total_cost = Decimal(str(tokens)) * price_per_token
 
-        # Add the profit to the total cost
-        profit = total_cost * Tokenizer.PROFIT_MARGIN
-        total_cost_with_profit = total_cost + profit
+        # Apply the profit margin
+        total_cost_with_profit = total_cost + (total_cost * self.PROFIT_MARGIN)
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < self.MINIMUM_COST:
+            return self.MINIMUM_COST
 
         # Adjust the formatting based on the cost
         if total_cost_with_profit < Decimal('0.01'):
@@ -96,8 +99,13 @@ class Tokenizer:
         cost = (Decimal(num_chars) / Decimal('1000')) * tts_cost_per_1k_chars
 
         # Add the profit to the total cost
-        profit = cost * Tokenizer.PROFIT_MARGIN
+        profit = cost * self.PROFIT_MARGIN
         total_cost_with_profit = cost + profit
+
+        # Ensure the total cost is not less than the minimum cost
+        if total_cost_with_profit < self.MINIMUM_COST:
+            return self.MINIMUM_COST
+
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
     def tokens_to_money_from_voice(self, seconds: int) -> Decimal:

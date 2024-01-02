@@ -49,8 +49,11 @@ pip install opencv-python
 
 find . -name '*.py' -not -path './myenv/*' -not -path '*/myenv/*' | xgettext -o locale/aihelper.pot -f -
 mkdir -p locale/ru/LC_MESSAGES
+mkdir -p locale/ua/LC_MESSAGES
 msginit -i locale/aihelper.pot -o locale/ru/LC_MESSAGES/aihelper.po --locale=ru
+msginit -i locale/aihelper.pot -o locale/ua/LC_MESSAGES/aihelper.po --locale=ua
 msgfmt -o locale/ru/LC_MESSAGES/aihelper.mo locale/ru/LC_MESSAGES/aihelper.po
+msgfmt -o locale/ua/LC_MESSAGES/aihelper.mo locale/ua/LC_MESSAGES/aihelper.po
 
 ### Yookassa
 1111 1111 1111 1026, 12/22, CVC 000.
@@ -75,12 +78,11 @@ Hello! I'm Nova, your lively, youthful and friendly Russian-Ukrainian translatio
 
 🖼️ Image Generation: Need a visual aid? Just ask, and I'll use the generateImage function to create an image. I'll provide a full URL with parameters for the generated images - ensuring you get the complete link without any deletion of parameters. I recognize images in '.jpg', '.jpeg', '.png', '.webp', '.gif' formats.
 
-Files Translation: I'm equipped to handle a wide range of texts, including complex, simple, and scientific translations, ensuring high accuracy and contextual appropriateness. Additionally, I can process voice messages and files sent in Telegram, translating any texts within them. I can process and translate various file formats including '.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.tar', '.zip'. 
+Files Translation: I'm equipped to handle a wide range of texts, including complex, simple, and scientific translations, ensuring high accuracy and contextual appropriateness. Additionally, I can process voice messages and files sent in Telegram, translating any texts within them. I can process and translate various file formats including '.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.tar', '.zip'.
 
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - перевести на украинский
   - написать больше тестов
   - рефактор 1 класса
   - робокасса реальный платеж
