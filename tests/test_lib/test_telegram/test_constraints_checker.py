@@ -1,5 +1,6 @@
 import unittest
 from lib.telegram.constraints_checker import ConstraintsChecker
+from lib.localization import Localization
 
 class MockFile:
     def __init__(self, file_path, file_size, width=None, height=None):
@@ -9,6 +10,9 @@ class MockFile:
         self.height = height
 
 class TestConstraintsChecker(unittest.TestCase):
+
+    def setUp(self):
+        Localization._translator = None
 
     ### check_photo_constraints
     def test_photo_extension_valid(self):
@@ -89,6 +93,28 @@ class TestConstraintsChecker(unittest.TestCase):
         result, message = ConstraintsChecker.check_document_constraints(file)
         self.assertFalse(result)
         self.assertIn("The file size is too large", message)
+
+    def test_video_extension_valid(self):
+        file = MockFile(file_path="video.mp4", file_size=1024)
+        result, message = ConstraintsChecker.check_video_constraints(file)
+        self.assertTrue(result)
+
+    def test_video_extension_invalid(self):
+        file = MockFile(file_path="video.mkv", file_size=1024)
+        result, message = ConstraintsChecker.check_video_constraints(file)
+        self.assertFalse(result)
+        self.assertIn("Unsupported file type", message)
+
+    def test_video_size_valid(self):
+        file = MockFile(file_path="video.mp4", file_size=1024)
+        result, message = ConstraintsChecker.check_video_constraints(file)
+        self.assertTrue(result)
+
+    def test_video_size_exceeding(self):
+        file = MockFile(file_path="video.mp4", file_size=ConstraintsChecker.MAX_VIDEO_FILE_SIZE + 1)
+        result, message = ConstraintsChecker.check_video_constraints(file)
+        self.assertFalse(result)
+        self.assertIn("The video file size is too large", message)
 
 if __name__ == '__main__':
     unittest.main()
