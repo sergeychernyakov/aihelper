@@ -90,5 +90,50 @@ class TestTokenizer(unittest.TestCase):
                 actual_cost = self.tokenizer.tokens_to_money_to_voice(text)
                 self.assertEqual(actual_cost, expected_cost)
 
+    def test_tokens_to_money_from_voice(self):
+        test_cases = [
+            (0, Decimal('0.003')),  # Cost for 1 minute
+            (60, Decimal('0.007860')),  # Cost for 1 minute
+            (30, Decimal('0.003930')),  # Cost for 30 seconds, assuming minimum cost applies
+            (120, Decimal('0.015720')), # Cost for 2 minutes
+        ]
+        for seconds, expected_cost in test_cases:
+            with self.subTest(seconds=seconds):
+                actual_cost = self.tokenizer.tokens_to_money_from_voice(seconds)
+                self.assertEqual(actual_cost, expected_cost)
+
+    def test_tokens_to_money_from_image(self):
+        expected_cost = Decimal('0.003000')
+        actual_cost = self.tokenizer.tokens_to_money_from_image()
+        self.assertEqual(actual_cost, expected_cost)
+
+    def test_tokens_to_money_from_video(self):
+        test_cases = [
+            # Test case format: (seconds, frame_interval, expected_cost)
+            (0, 60, Decimal('0.003')),  # 1 frame in 60 seconds
+            (120, 60, Decimal('0.003000')), # 2 frames in 120 seconds
+            (4800, 10, Decimal('0.534480')),  # 2 frames in 60 seconds
+            # Add more test cases as needed
+        ]
+        for seconds, frame_interval, expected_cost in test_cases:
+            with self.subTest(seconds=seconds, frame_interval=frame_interval):
+                actual_cost = self.tokenizer.tokens_to_money_from_video(seconds, frame_interval)
+                self.assertEqual(actual_cost, expected_cost)
+
+    def test_has_sufficient_balance_for_message(self):
+        test_cases = [
+            # Test case format: (message, balance, token_type, expected_result)
+            ("Short message", Decimal('1.00'), 'input', True),  # Assuming the cost is less than the balance
+            ("Long message that requires more tokens" * 300, Decimal('0.01'), 'input', False),  # Cost exceeds balance
+            ("Long message that requires more tokens" * 300, Decimal('1.00'), 'input', True),  # Cost exceeds balance
+            ("Short message", Decimal('0.001'), 'output', False),  # Insufficient balance for output tokens
+            ("", Decimal('0.04'), 'input', True),  # Empty message with minimum balance
+            # Add more test cases as needed
+        ]
+        for message, balance, token_type, expected_result in test_cases:
+            with self.subTest(message=message, balance=balance, token_type=token_type):
+                result = self.tokenizer.has_sufficient_balance_for_message(message, balance, token_type)
+                self.assertEqual(result, expected_result)
+
 if __name__ == '__main__':
     unittest.main()

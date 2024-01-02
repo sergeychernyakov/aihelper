@@ -120,12 +120,12 @@ class Tokenizer:
         cost = minutes * whisper_cost_per_minute
 
         # Add the profit to the total cost
-        profit = cost * Tokenizer.PROFIT_MARGIN
+        profit = cost * self.PROFIT_MARGIN
         total_cost_with_profit = cost + profit
 
         # Ensure the total cost is not less than the minimum cost
-        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
-            total_cost_with_profit = Tokenizer.MINIMUM_COST
+        if total_cost_with_profit < self.MINIMUM_COST:
+            total_cost_with_profit = self.MINIMUM_COST
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
@@ -138,8 +138,12 @@ class Tokenizer:
         image_cost = Decimal(str(self.PRICES.get("gpt-4-1106-vision-preview", {}).get("image", 0)))
 
         # Add the profit to the total cost
-        profit = image_cost * Tokenizer.PROFIT_MARGIN
+        profit = image_cost * self.PROFIT_MARGIN
         total_cost_with_profit = image_cost + profit
+        
+        if total_cost_with_profit < self.MINIMUM_COST:
+            total_cost_with_profit = self.MINIMUM_COST
+        
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
     def tokens_to_money_to_image(self) -> Decimal:
@@ -151,12 +155,12 @@ class Tokenizer:
         dall_e_image_cost = Decimal(str(self.PRICES.get("dall-e-3", 0)))
 
         # Add the profit to the total cost
-        profit = dall_e_image_cost * Tokenizer.PROFIT_MARGIN
+        profit = dall_e_image_cost * self.PROFIT_MARGIN
         total_cost_with_profit = dall_e_image_cost + profit
 
         # Ensure the total cost is not less than the minimum cost
-        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
-            total_cost_with_profit = Tokenizer.MINIMUM_COST
+        if total_cost_with_profit < self.MINIMUM_COST:
+            total_cost_with_profit = self.MINIMUM_COST
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
@@ -174,12 +178,12 @@ class Tokenizer:
         cost = (Decimal(file_size) / bytes_per_gb) * retrieval_cost_per_gb
 
         # Add the profit to the total cost
-        profit = cost * Tokenizer.PROFIT_MARGIN
+        profit = cost * self.PROFIT_MARGIN
         total_cost_with_profit = cost + profit
 
         # Ensure the total cost is not less than the minimum cost
-        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
-            total_cost_with_profit = Tokenizer.MINIMUM_COST
+        if total_cost_with_profit < self.MINIMUM_COST:
+            total_cost_with_profit = self.MINIMUM_COST
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
@@ -201,12 +205,12 @@ class Tokenizer:
         total_cost = num_frames * image_cost
 
         # Add the profit to the total cost
-        profit = total_cost * Tokenizer.PROFIT_MARGIN
+        profit = total_cost * self.PROFIT_MARGIN
         total_cost_with_profit = total_cost + profit
 
         # Ensure the total cost is not less than the minimum cost
-        if total_cost_with_profit < Tokenizer.MINIMUM_COST:
-            total_cost_with_profit = Tokenizer.MINIMUM_COST
+        if total_cost_with_profit < self.MINIMUM_COST:
+            total_cost_with_profit = self.MINIMUM_COST
 
         return total_cost_with_profit.quantize(Decimal('0.000001'))
 
@@ -224,7 +228,7 @@ class Tokenizer:
         cost = self.tokens_to_money(tokens_required, token_type)
 
         if token_type == 'input':
-            output_cost = self.tokens_to_money(Tokenizer.MAX_OUTPUT_TOKENS, 'output')
+            output_cost = self.tokens_to_money(self.MAX_OUTPUT_TOKENS, 'output')
             total_cost = cost + output_cost
         else:
             total_cost = cost
