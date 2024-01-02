@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from lib.telegram.assistant import Assistant
-
-# Assuming your Assistant class is defined here or imported
+from lib.openai.assistant import Assistant
 
 class TestAssistantClass(unittest.TestCase):
     

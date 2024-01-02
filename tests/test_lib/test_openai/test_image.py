@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import MagicMock
-from lib.telegram.image import Image
+from lib.openai.image import Image
+from lib.localization import Localization
 
 class TestImageClass(unittest.TestCase):
     
     def setUp(self):
+        Localization._translator = None
         # Mocking OpenAI's API client
         self.mock_openai = MagicMock()
         self.image = Image(self.mock_openai)

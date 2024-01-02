@@ -1,12 +1,11 @@
 import time
-import random
 import json
 from lib.telegram.answer import Answer
 from lib.telegram.helpers import Helpers
 from db.models.conversation import Conversation
-from lib.telegram.image import Image
-from lib.telegram.email_sender import EmailSender
-from lib.telegram.tokenizer import Tokenizer
+from lib.openai.image import Image
+from lib.email_sender import EmailSender
+from lib.openai.tokenizer import Tokenizer
 from datetime import timedelta
 from decimal import Decimal
 from lib.telegram.payment import Payment

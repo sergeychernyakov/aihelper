@@ -1,6 +1,6 @@
 import tiktoken
 from decimal import Decimal
-from lib.telegram.assistant import Assistant
+from lib.openai.assistant import Assistant
 
 class Tokenizer:
     MAX_OUTPUT_TOKENS = 4096

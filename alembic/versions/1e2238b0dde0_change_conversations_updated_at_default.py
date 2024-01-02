@@ -1,7 +1,7 @@
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import func
-from lib.telegram.tokenizer import Tokenizer
+from lib.openai.tokenizer import Tokenizer
 
 # Revision identifiers
 revision = '1e2238b0dde0'

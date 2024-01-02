@@ -4,7 +4,7 @@ import json
 import shutil
 import os
 from unittest.mock import Mock, patch, mock_open  # Import mock_open here
-from lib.telegram.runs_treads_handler import RunsTreadsHandler
+from lib.openai.runs_treads_handler import RunsTreadsHandler
 from decimal import Decimal
 
 class TestRunsTreadsHandler(unittest.TestCase):

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Integer, String, DECIMAL
 from sqlalchemy.sql import func
-from lib.telegram.tokenizer import Tokenizer
+from lib.openai.tokenizer import Tokenizer
 from ..base import Base
 
 class Conversation(Base):

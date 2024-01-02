@@ -1,6 +1,5 @@
 import unittest
-from lib.telegram.constraints_checker import ConstraintsChecker
-from lib.localization import Localization
+from lib.constraints_checker import ConstraintsChecker
 
 class MockFile:
     def __init__(self, file_path, file_size, width=None, height=None):
@@ -10,9 +9,6 @@ class MockFile:
         self.height = height
 
 class TestConstraintsChecker(unittest.TestCase):
-
-    def setUp(self):
-        Localization._translator = None
 
     ### check_photo_constraints
     def test_photo_extension_valid(self):

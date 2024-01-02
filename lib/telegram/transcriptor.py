@@ -2,7 +2,7 @@ import cv2
 import base64
 import os
 from pathlib import Path
-from lib.telegram.tokenizer import Tokenizer
+from lib.openai.tokenizer import Tokenizer
 from lib.text_extractor import TextExtractor
 from lib.telegram.answer import Answer
 from decimal import Decimal

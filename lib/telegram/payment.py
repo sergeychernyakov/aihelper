@@ -4,7 +4,7 @@ from telegram import LabeledPrice, Update
 from telegram.ext import CallbackContext
 from db.engine import SessionLocal
 from db.models.conversation import Conversation
-from lib.telegram.assistant import Assistant
+from lib.openai.assistant import Assistant
 from decimal import Decimal
 from lib.localization import _, change_language
 from lib.currency_converter import CurrencyConverter

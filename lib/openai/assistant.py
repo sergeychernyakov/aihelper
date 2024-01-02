@@ -40,13 +40,13 @@ class Assistant:
             tools=[{
                 "type": "function",
                 "function": {
-                  "name": name,
-                  "description": description,
-                  "parameters": {
-                    "type": "object",
-                    "properties": properties,
-                    "required": required
-                  }
+                    "name": name,
+                    "description": description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": properties,
+                        "required": required
+                    }
                 }
             }]
         )

@@ -8,7 +8,7 @@ import zipfile
 import tarfile
 import shutil
 import pdfplumber
-from lib.telegram.constraints_checker import ConstraintsChecker
+from lib.constraints_checker import ConstraintsChecker
 
 class TextExtractor:
     """

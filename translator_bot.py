@@ -9,11 +9,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from db.engine import SessionLocal
 from db.models.conversation import Conversation
 from lib.telegram.messages_handler import MessagesHandler
-from lib.telegram.runs_treads_handler import RunsTreadsHandler
+from lib.openai.runs_treads_handler import RunsTreadsHandler
 from lib.telegram.transcriptor import Transcriptor
 from lib.telegram.helpers import Helpers
-from lib.telegram.tokenizer import Tokenizer
-from lib.telegram.assistant import Assistant
+from lib.openai.tokenizer import Tokenizer
+from lib.openai.assistant import Assistant
 from lib.telegram.payment import Payment
 from lib.localization import _, change_language
 

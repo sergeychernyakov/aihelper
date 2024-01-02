@@ -1,8 +1,8 @@
 import os
 import requests
 from pathlib import Path
-from lib.telegram.constraints_checker import ConstraintsChecker
-from lib.telegram.tokenizer import Tokenizer
+from lib.constraints_checker import ConstraintsChecker
+from lib.openai.tokenizer import Tokenizer
 from lib.telegram.payment import Payment
 from lib.localization import _
 

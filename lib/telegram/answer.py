@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from docx import Document
-import aiohttp
 from io import BytesIO
 from lib.localization import _
 

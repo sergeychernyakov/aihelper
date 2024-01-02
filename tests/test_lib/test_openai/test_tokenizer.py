@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from lib.telegram.tokenizer import Tokenizer
+from lib.openai.tokenizer import Tokenizer
 from decimal import Decimal
 
 class TestTokenizer(unittest.TestCase):
@@ -175,7 +175,7 @@ class TestTokenizer(unittest.TestCase):
                 total_tokens = self.tokenizer.calculate_thread_tokens(adjusted_messages)
                 self.assertEqual(total_tokens, expected_total_tokens)
 
-    @patch('lib.telegram.tokenizer.Assistant')
+    @patch('lib.openai.tokenizer.Assistant')
     def test_calculate_assistant_prompt_tokens(self, mock_assistant):
         test_cases = [
             ("Short prompt", 12),  # Assuming "Short prompt" is 12 tokens
@@ -188,8 +188,8 @@ class TestTokenizer(unittest.TestCase):
                 actual_token_count = self.tokenizer.calculate_assistant_prompt_tokens()
                 self.assertEqual(actual_token_count, expected_token_count)
 
-    @patch('lib.telegram.tokenizer.Tokenizer.calculate_thread_tokens')
-    @patch('lib.telegram.tokenizer.Tokenizer.calculate_assistant_prompt_tokens')
+    @patch('lib.openai.tokenizer.Tokenizer.calculate_thread_tokens')
+    @patch('lib.openai.tokenizer.Tokenizer.calculate_assistant_prompt_tokens')
     def test_calculate_thread_total_amount(self, mock_calculate_prompt_tokens, mock_calculate_thread_tokens):
         test_cases = [
             # Test case format: (thread_tokens, prompt_tokens, expected_total_cost)
