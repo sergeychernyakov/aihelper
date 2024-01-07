@@ -279,3 +279,23 @@ msgstr ""
 #: lib/telegram/payment.py:86
 msgid "Error: No active conversation found for payment update."
 msgstr "Помилка: не знайдено активної розмови для оновлення платежу."
+
+#: lib/telegram/transcriptor.py:160
+msgid "What's in this image? If there's text, extract it and translate."
+msgstr "Що на зображенні? Якщо є текст, витягни його і переклади."
+
+#: lib/telegram/transcriptor.py:188
+msgid "Translate: "
+msgstr "Переклади: "
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "The {file_type} you are trying to send is too large. The maximum allowed size is {size_limit:.2f} MB."
+msgstr "Файл {file_type}, який ви намагаєтеся відправити, занадто великий. Максимально дозволений розмір становить {size_limit:.2f} МБ."
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "file"
+msgstr "файл"
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "video file"
+msgstr "відеофайл"

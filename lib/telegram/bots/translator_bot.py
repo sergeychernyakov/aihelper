@@ -1,6 +1,7 @@
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
+from telegram.error import BadRequest
 from db.models.conversation import Conversation
 from lib.telegram.messages_handler import MessagesHandler
 from lib.openai.runs_treads_handler import RunsTreadsHandler
@@ -9,6 +10,7 @@ from lib.telegram.helpers import Helpers
 from lib.openai.tokenizer import Tokenizer
 from lib.localization import _, change_language
 from lib.telegram.bots.base_bot import BaseBot
+from lib.constraints_checker import ConstraintsChecker
 
 class TranslatorBot(BaseBot):
     def __init__(self):
@@ -93,6 +95,22 @@ class TranslatorBot(BaseBot):
                     session.commit()
 
                 Helpers.cleanup_folder(f'tmp/{conversation.thread_id}')
+
+            except BadRequest as e:
+                error_message = str(e)
+                if "File is too big" in error_message:
+                    file_size_limit = ConstraintsChecker.MAX_FILE_SIZE
+                    file_type_message = _("file")
+
+                    if update.message.video:
+                        file_size_limit = ConstraintsChecker.MAX_VIDEO_FILE_SIZE
+                        file_type_message = _("video file")
+                    
+                    file_size_limit_mb = file_size_limit / (1024 * 1024)  # Convert bytes to MB
+
+                    await context.bot.send_message(update.message.chat_id, _("The {file_type} you are trying to send is too large. The maximum allowed size is {size_limit:.2f} MB.").format(file_type=file_type_message, size_limit=file_size_limit_mb))
+                else:
+                    raise  # Re-raise the exception if it's not the specific 'File is too big' case
 
             except Exception as e:
                 error_message = str(e)

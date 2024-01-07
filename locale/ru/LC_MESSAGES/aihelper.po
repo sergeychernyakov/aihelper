@@ -279,3 +279,23 @@ msgstr ""
 "\n"
 "Наслаждайтесь работой с нашим сервисом!\n"
 "Посмотрите наш видеоурок."
+
+#: lib/telegram/transcriptor.py:160
+msgid "What's in this image? If there's text, extract it and translate."
+msgstr "Что на картинке? Если есть текст, извлеки его и переведи."
+
+#: lib/telegram/transcriptor.py:188
+msgid "Translate: "
+msgstr "Переведи: "
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "The {file_type} you are trying to send is too large. The maximum allowed size is {size_limit:.2f} MB."
+msgstr "Файл {file_type}, который вы пытаетесь отправить, слишком велик. Максимально допустимый размер составляет {size_limit:.2f} МБ."
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "file"
+msgstr "файл"
+
+#: lib/telegram/bots/translator_bot.py:100
+msgid "video file"
+msgstr "видеофайл"

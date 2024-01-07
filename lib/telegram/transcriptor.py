@@ -157,7 +157,7 @@ class Transcriptor:
         :return: Tuple (Boolean, Message) indicating success and response message.
         """
         try:
-            caption = self.update.message.caption or "What's in this image? If there's text, extract it."
+            caption = self.update.message.caption or _("What's in this image? If there's text, extract it and translate.")
 
             #calculate caption
             amount = self.tokenizer.tokens_to_money_from_string(caption)
@@ -185,7 +185,7 @@ class Transcriptor:
             self.conversation.balance -= amount
 
             # await self.__send_message(response.choices[0].message.content)
-            self.__create_thread_message('Translate: ' + response.choices[0].message.content)
+            self.__create_thread_message((self.update.message.caption or _('Translate: ')) + response.choices[0].message.content)
             return True, _('Image processed successfully')
         except Exception as e:
             raise
@@ -236,7 +236,7 @@ class Transcriptor:
             print(f'AI transcripted video: {description}')
 
             # Create a thread message with the description
-            self.__create_thread_message('Translate: ' + description)
+            self.__create_thread_message( _('Translate: ') + description)
 
             return True, _('Video processed successfully')
         except Exception as e:
