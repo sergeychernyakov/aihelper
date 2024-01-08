@@ -83,7 +83,7 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  - выложить на хостинг
+  - fix tests
   - робокасса реальный платеж
 
 ----- Diet bot

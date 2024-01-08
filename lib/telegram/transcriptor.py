@@ -115,7 +115,7 @@ class Transcriptor:
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = _("Insufficient balance to process the document.")
                 print(message)
-                await self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.__send_message(message)
                 await self.payment.send_invoice(self.update, self.context, False)
                 return False
 
@@ -137,8 +137,7 @@ class Transcriptor:
 
             # Truncate the text for Telegram message and send a notification about the full text
             truncated_text = (full_translated_text[:200] + _("... (truncated)\n\n")) if len(full_translated_text) > 200 else full_translated_text
-            await self.context.bot.send_message(self.update.message.chat_id, truncated_text + _("Full translated text has been sent as a document."))
-
+            await self.__send_message(truncated_text + _("Full translated text has been sent as a document."))
             # Send the full translated text as a document
             await self.answer.answer_with_document(full_translated_text)
 
@@ -146,7 +145,7 @@ class Transcriptor:
 
         except Exception as e:
             print(f"Failed to transcribe document: {e}")
-            await self.context.bot.send_message(self.update.message.chat_id, _('Failed to transcribe document.'))
+            await self.__send_message(_('Failed to transcribe document.'))
             return False
 
     async def transcript_image(self, file):
@@ -166,7 +165,7 @@ class Transcriptor:
             if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
                 message = _("Insufficient balance to process the image.")
                 print(message)
-                await self.context.bot.send_message(self.update.message.chat_id, message)
+                await self.__send_message(message)
                 await self.payment.send_invoice(self.update, self.context, False)
                 return False
 
@@ -184,7 +183,6 @@ class Transcriptor:
             print(f'---->>> Conversation balance decreased by: ${amount} for image processing.')
             self.conversation.balance -= amount
 
-            # await self.__send_message(response.choices[0].message.content)
             self.__create_thread_message((self.update.message.caption or _('Translate: ')) + response.choices[0].message.content)
             return True, _('Image processed successfully')
         except Exception as e:
@@ -211,7 +209,6 @@ class Transcriptor:
                 print(f'---->>> Conversation balance decreased by: ${amount} for voice transcription.')
                 self.conversation.balance -= amount
 
-                # await self.__send_message(transcription)
                 self.__create_thread_message(transcription)
 
             return True, _('Voice processed successfully')
