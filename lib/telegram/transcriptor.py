@@ -157,7 +157,6 @@ class Transcriptor:
         """
         try:
             caption = self.update.message.caption or _("What's in this image? If there's text, extract it and translate.")
-
             #calculate caption
             amount = self.tokenizer.tokens_to_money_from_string(caption)
             amount += self.tokenizer.tokens_to_money_from_image()
