@@ -1,7 +1,6 @@
 import time
 import json
 from lib.telegram.answer import Answer
-from lib.telegram.helpers import Helpers
 from db.models.conversation import Conversation
 from lib.openai.image import Image
 from lib.email_sender import EmailSender

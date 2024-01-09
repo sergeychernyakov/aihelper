@@ -54,7 +54,7 @@ class TestTranscriptor(unittest.TestCase):
         self.transcriptor.answer.answer_with_document.assert_awaited()
         self.assertTrue(success)  # Asserting the boolean return value
 
-    def test_transcript_image(self):
+    def test_transcript_photo(self):
         file = Mock(file_path="path/to/image")
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Mocked Content"))]
@@ -65,8 +65,8 @@ class TestTranscriptor(unittest.TestCase):
         # Set the mock_bot.send_message to be an AsyncMock
         self.mock_bot.send_message = AsyncMock()
 
-        # await self.transcriptor.transcript_image(file)
-        success = run(self.transcriptor.transcript_image(file))
+        # await self.transcriptor.transcript_photo(file)
+        success = run(self.transcriptor.transcript_photo(file))
 
         self.mock_openai_client.chat.completions.create.assert_called_once()
         self.mock_openai_client.beta.threads.messages.create.assert_called_once()

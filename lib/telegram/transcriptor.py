@@ -148,7 +148,7 @@ class Transcriptor:
             await self.__send_message(_('Failed to transcribe document.'))
             return False
 
-    async def transcript_image(self, file):
+    async def transcript_photo(self, file):
         """
         Transcribe an image file and create a corresponding thread message.
 
@@ -340,7 +340,7 @@ class Transcriptor:
 
 # # Scenario 2: Transcribing an image
 # image_file = update.message.photo[-1]  # Assuming the last photo in the array is the one you want to transcribe
-# transcriptor.transcript_image(image_file)
+# transcriptor.transcript_photo(image_file)
 
 # # Scenario 3: Transcribing a voice message
 # voice_file_path = "/path/to/voice_message.ogg"  # Replace with actual voice file path

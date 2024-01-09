@@ -1,4 +1,8 @@
+from lib.telegram.bots.diet_bot import DietBot
 
+def main():
+    bot = DietBot()
+    bot.run()
 
-make translator_bot class extending BaseBot class
-make DietBot class extending BaseBot class
+if __name__ == "__main__":
+    main()

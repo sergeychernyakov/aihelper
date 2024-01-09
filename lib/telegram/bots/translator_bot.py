@@ -14,8 +14,8 @@ from lib.constraints_checker import ConstraintsChecker
 
 class TranslatorBot(BaseBot):
     def __init__(self):
+        self.TELEGRAM_BOT_TOKEN = os.getenv('TRANSLATOR_BOT_TOKEN')
         super().__init__()
-        # additional init
 
     async def message_handler(self, update, context):
         successful_interaction = False
@@ -51,7 +51,7 @@ class TranslatorBot(BaseBot):
                     if not success:
                         await context.bot.send_message(update.message.chat_id, message)
                     else:
-                        successful_interaction = await transcriptor.transcript_image(file)
+                        successful_interaction = await transcriptor.transcript_photo(file)
                 elif update.message.video:
                     success, message, file = await message_handler.handle_video_message()
                     if not success:
