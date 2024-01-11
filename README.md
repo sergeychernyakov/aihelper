@@ -95,10 +95,6 @@ Remember, I'm here to assist with translations and to make your language learnin
   - cover with tests
 
 
-
-
-
-
   - робокасса внедрить реальный платеж
   - если язык текста украинский - переведи на русский и обратно
 

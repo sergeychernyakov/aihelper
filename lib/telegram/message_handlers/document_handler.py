@@ -1,6 +1,3 @@
-import os
-import requests
-from pathlib import Path
 from lib.telegram.message_handlers.base_handler import BaseHandler
 from lib.localization import _
 from lib.telegram.new_transcriptor import NewTranscriptor
@@ -18,7 +15,6 @@ class DocumentHandler(BaseHandler):
             start_index = i * NewTranscriptor.MAX_MESSAGE_LENGTH
             end_index = start_index + NewTranscriptor.MAX_MESSAGE_LENGTH
             text_piece = text[start_index:end_index]
-
             translated_text, total_tokens = self._create_openai_non_thread_message(f'{caption}: {text_piece}')
             translated_text += translated_text + "\n\n"
             total_tokens += total_tokens
@@ -46,11 +42,9 @@ class DocumentHandler(BaseHandler):
         local_file_path = await self._download_file(file_path)
         if not local_file_path:
             return False, _("Failed to download the document.")
-
         extracted_text = TextExtractor.extract_text(str(local_file_path)) 
         caption_amount = self.tokenizer.tokens_to_money_from_string(caption)
         amount = caption_amount + self.tokenizer.tokens_to_money_from_string(extracted_text)
-
         if not await self._check_sufficient_balance(amount):
             return False
 

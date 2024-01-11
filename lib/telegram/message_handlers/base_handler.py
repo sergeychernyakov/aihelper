@@ -57,7 +57,7 @@ class BaseHandler:
         """
         try:
             # Get the prompt from the Assistant class
-            assistant_prompt = self.assistant.prompt()
+            assistant_prompt = self.assistant.prompt() or ""
 
             # Prepare the messages for the AI
             messages = [
