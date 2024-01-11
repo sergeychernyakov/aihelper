@@ -6,15 +6,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Assistant:
-    def __init__(self, openai_client=None, assistant_id=None):
+    
+    ASSISTANT_ID = None
+
+    def __init__(self, openai_client=None):
         """
         Initializes the Assistant class with an OpenAI client and an assistant ID.
         If not provided, it initializes the OpenAI client and fetches the assistant ID from environment variables.
         """
         self.openai = openai_client if openai_client else OpenAI()
-        self.assistant_id = assistant_id if assistant_id else os.getenv('URT_ASSISTANT_ID')
 
-        if not self.assistant_id:
+        if not self.ASSISTANT_ID:
             raise ValueError("Assistant ID is not provided and not found in environment variables.")
 
     def get_openai_client(self):
@@ -23,18 +25,12 @@ class Assistant:
         """
         return self.openai
 
-    def get_assistant_id(self):
-        """
-        Returns the Assistant ID.
-        """
-        return self.assistant_id
-
     def add_function_to_assistant(self, name, description, instructions, properties=[], required=[]):
         """
         Adds a function to the assistant with the specified details.
         """
         self.openai.beta.assistants.update(
-            self.assistant_id,
+            self.ASSISTANT_ID,
             instructions=instructions,
             model="gpt-4-1106-preview",
             tools=[{
@@ -55,7 +51,7 @@ class Assistant:
         """
         Retrieves the current assistant's instructions.
         """
-        assistant_details = self.openai.beta.assistants.retrieve(self.assistant_id)
+        assistant_details = self.openai.beta.assistants.retrieve(self.ASSISTANT_ID)
         if hasattr(assistant_details, 'instructions'):
             return assistant_details.instructions
         else:

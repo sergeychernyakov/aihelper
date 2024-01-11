@@ -31,3 +31,22 @@ class PhotoHandler(BaseHandler):
             return False
 
         return await self.process_message(file_info.file_path, caption)
+
+    async def process_message(self, *args) -> bool:
+        """
+        Process the message and update the conversation thread based on its type.
+
+        :param args: Arguments needed for processing the message, e.g., file, caption, duration.
+        :return: Boolean indicating if the message was processed successfully.
+        """
+        # Dynamically get the correct processing method based on MESSAGE_TYPE
+        process_method = getattr(self.transcriptor, f'transcript_{self.MESSAGE_TYPE}')
+
+        # Call the method with unpacked arguments
+        transcripted_text, total_tokens = await process_method(*args)
+
+        # Update balance and create a thread message
+        self._update_balance(total_tokens)
+        self._create_openai_thread_message(transcripted_text)
+
+        return True

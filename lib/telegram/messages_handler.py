@@ -41,6 +41,7 @@ class MessagesHandler:
             message = _("Image processed successfully")
             return True, message, file
         except Exception as e:
+            print(f"Error in handle_photo_message: {e}")
             raise
 
     async def handle_voice_message(self):
@@ -64,7 +65,7 @@ class MessagesHandler:
                 return False, insufficient_balance_message, None, amount
 
             # Define local file path for the voice message
-            project_root = Path(__file__).parent.parent.parent
+            project_root = Path(__file__).parent.parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
             
             os.makedirs(tmp_dir_path, exist_ok=True)
@@ -110,7 +111,7 @@ class MessagesHandler:
                 return False, message, None
 
             # Define local file path for the video message
-            project_root = Path(__file__).parent.parent.parent
+            project_root = Path(__file__).parent.parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
             
             os.makedirs(tmp_dir_path, exist_ok=True)
@@ -144,7 +145,7 @@ class MessagesHandler:
                 return False, message, None
 
             # Define local file path for the document
-            project_root = Path(__file__).parent.parent.parent
+            project_root = Path(__file__).parent.parent.parent.parent
             tmp_dir_path = project_root / 'tmp' / self.thread_id
             
             os.makedirs(tmp_dir_path, exist_ok=True)

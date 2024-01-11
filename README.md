@@ -83,24 +83,30 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
 ### Plan
-  Upwork:
-    - изменить профайл, добавить работу в fit2you, добавить проект по ботам
-    - поискать работу, отправить заявки
   Global goals:
     - купить домен
-    - сделать страничку по разработке телеграм ботов
+    - сделать страничку по разработке телеграм ботов и добавить в openai
+
+----- Diet bot
 
 ----- Translator Bot
   - update bot to use the same functions
-  - робокасса внедрить реальный платеж
+  - fix tests
+  - cover with tests
 
------ Diet bot
-- fix diet bot
-- fix tests
+
+
+
+
+
+  - робокасса внедрить реальный платеж
+  - если язык текста украинский - переведи на русский и обратно
+
 
 ----- Python bot
 ----- Ruby bot
 ----- Instagram Bot
 ----- BotFatherDevelopment
 
+answer to video record
 add payment in $

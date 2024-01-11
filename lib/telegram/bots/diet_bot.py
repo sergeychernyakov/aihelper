@@ -1,4 +1,7 @@
 import os
+import importlib
+import glob
+from dotenv import load_dotenv
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
@@ -6,73 +9,102 @@ from lib.openai.thread_run_manager import ThreadRunManager
 from lib.openai.tokenizer import Tokenizer
 from lib.localization import _, change_language
 from lib.telegram.bots.new_base_bot import NewBaseBot
-from lib.telegram.message_handlers.text_handler import TextHandler
-from lib.telegram.message_handlers.photo_handler import PhotoHandler
-from lib.telegram.message_handlers.voice_handler import VoiceHandler
-from lib.telegram.message_handlers.video_handler import VideoHandler
-from lib.telegram.message_handlers.document_handler import DocumentHandler
+from lib.telegram.payment import Payment
+from lib.openai.assistant import Assistant
 
 class DietBot(NewBaseBot):
+    """
+    DietBot is a custom Telegram bot for handling various types of messages
+    and translating or processing them using OpenAI's API.
+    """
+
     def __init__(self):
-        self.TELEGRAM_BOT_TOKEN = os.getenv('DIET_BOT_TOKEN')
+        load_dotenv()
+        load_dotenv(dotenv_path='.env.diet', override=True)
+        # Initialize the bot with the token from the environment variable
+        self.TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+
+        Assistant.ASSISTANT_ID = os.getenv('ASSISTANT_ID')
+
+        Payment.YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
+        Payment.STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
+
         super().__init__()
 
     async def message_handler(self, update, context):
+        """
+        Primary message handler for the bot. It processes incoming messages
+        and manages the conversation flow.
+
+        :param update: Telegram update object containing message and chat details.
+        :param context: Telegram context object for managing bot state and data.
+        """
         self.update = update
         self.context = context
         with self.session_scope() as session:
             self.log_user_interaction()
             successful_interaction = await self.handle_interaction(session)
-            if successful_interaction:
-                await self.thread_run_manager.manage_run()
-                await self.update_balance_and_cleanup(session)
 
-    # refactor this method
+            # Check if the message is not a document before managing the run
+            # no need to create run for documents
+            if successful_interaction and not update.message.document:
+                await self.thread_run_manager.manage_run()
+
+            await self.update_balance_and_cleanup(session)
+
     async def process_message(self, session):
+        """
+        Processes the received message based on its type (text, photo, video, etc.)
+
+        :param session: Database session for handling transactions.
+        """
         self.thread_run_manager = ThreadRunManager(self.openai, self.update, self.context, self.conversation, session, self.update.message.chat_id)
         if datetime.utcnow() - self.conversation.updated_at >= self.thread_run_manager.thread_recreation_interval:
             self.thread_run_manager.recreate_thread(session, self.conversation)
 
-        if self.update.message.text:
-            text_handler = TextHandler(self.openai, self.update, self.context, self.conversation)
-            if text_handler.handle_message(self.update.message.text):
+        for message_type in self.get_message_handler_types():
+            if getattr(self.update.message, message_type):
+                success = await self.handle_message_type(message_type)
+                if not success:
+                    await self.context.bot.send_message(self.update.message.chat_id, _(f'Failed to process the {message_type}.'))
+                    return False
                 return True
-
-        elif self.update.message.photo:
-            photo_handler = PhotoHandler(self.openai, self.update, self.context, self.conversation)
-            success, message = await photo_handler.handle_message()
-            if not success:
-                await self.context.bot.send_message(self.update.message.chat_id, message)
-                return False
-            return True
-
-        elif self.update.message.video:
-            video_handler = VideoHandler(self.openai, self.update, self.context, self.conversation)
-            success, message = await video_handler.handle_message()
-            if not success:
-                await self.context.bot.send_message(self.update.message.chat_id, message)
-                return False
-            return True
-
-        elif self.update.message.voice:
-            voice_handler = VoiceHandler(self.openai, self.update, self.context, self.conversation)
-            success, message = await voice_handler.handle_message()
-            if not success:
-                await self.context.bot.send_message(self.update.message.chat_id, message)
-                return False
-            return True
-
-        elif self.update.message.document:
-            document_handler = DocumentHandler(self.openai, self.update, self.context, self.conversation)
-            success, message = await document_handler.handle_message()
-            if not success:
-                await self.context.bot.send_message(self.update.message.chat_id, message)
-                return False
-            return True
-
         return False
 
+    def get_message_handler_types(self):
+        """
+        Dynamically lists all message handler types based on the files in the handlers directory.
+
+        :return: List of message handler types like 'text', 'photo', etc.
+        """
+        handler_files = glob.glob('lib/telegram/message_handlers/*.py')
+        return [os.path.basename(f)[:-11] for f in handler_files if not f.endswith(('__init__.py', 'base_handler.py'))]
+
+    async def handle_message_type(self, message_type):
+        """
+        Handles a specific message type by dynamically importing and initializing the corresponding handler.
+
+        :param message_type: Type of the message (e.g., 'text', 'photo').
+        :return: Boolean indicating the success of the message processing.
+        """
+        module_name = f"lib.telegram.message_handlers.{message_type}_handler"
+        class_name = f"{message_type.capitalize()}Handler"
+
+        module = importlib.import_module(module_name)
+        handler_class = getattr(module, class_name)
+
+        handler = handler_class(self.openai, self.update, self.context, self.conversation)
+
+        # Use a ternary conditional expression to decide which method to call
+        return handler.handle_message(self.update.message.text) if message_type == 'text' else await handler.handle_message()
+
     async def start(self, update: Update, context: CallbackContext) -> None:
+        """
+        Start command handler. Initializes the conversation and sends the welcome message.
+
+        :param update: Telegram update object.
+        :param context: Telegram context object.
+        """
         self.update = update
         self.context = context
         with self.session_scope() as session:

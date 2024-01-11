@@ -7,6 +7,7 @@ from lib.constraints_checker import ConstraintsChecker
 from decimal import Decimal
 import os
 import requests
+from io import BytesIO
 from pathlib import Path
 
 class BaseHandler:
@@ -25,7 +26,7 @@ class BaseHandler:
         self.assistant = Assistant()
         self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
 
-    async def __send_chat_message(self, content):
+    async def _send_chat_message(self, content):
         """
         Send a message to the Telegram chat.
 
@@ -33,7 +34,7 @@ class BaseHandler:
         """
         await self.answer.answer_with_text(content)
         
-    def __create_openai_thread_message(self, content, file_ids=None):
+    def _create_openai_thread_message(self, content, file_ids=None):
         """
         Create a message in the OpenAI thread.
 
@@ -47,7 +48,7 @@ class BaseHandler:
             file_ids=file_ids if file_ids else []
         )
 
-    def __create_openai_non_thread_message(self, content):
+    def _create_openai_non_thread_message(self, content):
         """
         Generate a non-thread response using the OpenAI API.
 
@@ -105,7 +106,7 @@ class BaseHandler:
         if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
             message = _(f"Insufficient balance to process the {self.MESSAGE_TYPE}.")
             print(message)
-            await self.__send_chat_message(message)
+            await self._send_chat_message(message)
             await self.payment.send_invoice(self.update, self.context, False)
             return False
 
@@ -113,7 +114,7 @@ class BaseHandler:
 
     async def _download_file(self, file_path: str) -> str:
         """Download the file from the given URL."""
-        project_root = Path(__file__).parent.parent.parent
+        project_root = Path(__file__).parent.parent.parent.parent
         tmp_dir_path = project_root / 'tmp' / self.thread_id
         os.makedirs(tmp_dir_path, exist_ok=True)
         file_extension = Path(file_path).suffix
@@ -127,6 +128,22 @@ class BaseHandler:
         else:
             print(_(f'Failed to download the {self.MESSAGE_TYPE}'))
             return ""
+
+    def _download_file_to_stream(self, file_url: str) -> BytesIO:
+        """Download the file and return a BytesIO object."""
+        try:
+            response = requests.get(file_url)
+            if response.status_code == 200:
+                # Read content into BytesIO
+                file_stream = BytesIO(response.content)
+                file_stream.seek(0)  # Move to the beginning of the file-like object
+                return file_stream
+            else:
+                print(f"Failed to download {self.MESSAGE_TYPE}: HTTP Status {response.status_code}")
+                return BytesIO()  # Return an empty BytesIO object
+        except Exception as e:
+            print(f"Exception occurred during file download: {e}")
+            return BytesIO()  # Return an empty BytesIO object
 
     def _log_user_interaction(self, file):
         user_info = f'{self.update.message.from_user.first_name}({self.update.message.from_user.username})'
@@ -150,40 +167,18 @@ class BaseHandler:
         log_message = f'{user_info} sent {self.MESSAGE_TYPE}: {file_info}{additional_info}{caption}'
         print(log_message)
 
-    def _update_balance(self, total_tokens: int):
+    def _update_balance(self, total_tokens: int, amount: Decimal = 0):
         """Update the user's balance based on the number of tokens processed.
         
         :param total_tokens: The number of tokens used in the transcription process.
         """
-        amount = self.tokenizer.tokens_to_money(total_tokens)
-        print(f'---->>> Conversation balance decreased by: ${amount} for voice processing.')
+        amount += self.tokenizer.tokens_to_money(total_tokens)
+        print(f'---->>> Conversation balance decreased by: ${amount} for {self.MESSAGE_TYPE} processing.')
         self.conversation.balance -= amount
 
-    def handle_message(self, message: str) -> bool:
-        if not message:
-            return False, "No message provided."
-
+    def handle_message(self, *args) -> bool:
         try:
-            return self.process_message(message)
+            return self.process_message(*args)
         except Exception as e:
-            print(f"Error in handle_text_message: {e}")
+            print(f"Error in handle_message: {e}")
             raise
-
-    async def process_message(self, *args) -> bool:
-        """
-        Process the message and update the conversation thread based on its type.
-
-        :param args: Arguments needed for processing the message, e.g., file, caption, duration.
-        :return: Boolean indicating if the message was processed successfully.
-        """
-        # Dynamically get the correct processing method based on MESSAGE_TYPE
-        process_method = getattr(self.transcriptor, f'transcript_{self.MESSAGE_TYPE}')
-
-        # Call the method with unpacked arguments
-        transcripted_text, total_tokens = await process_method(*args)
-
-        # Update balance and create a thread message
-        self._update_balance(total_tokens)
-        self.__create_openai_thread_message(transcripted_text)
-
-        return True

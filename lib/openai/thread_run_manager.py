@@ -2,6 +2,7 @@ import time
 import json
 import asyncio
 import inflection
+import random
 from lib.telegram.answer import Answer
 from db.models.conversation import Conversation
 from lib.openai.image import Image
@@ -103,7 +104,7 @@ class ThreadRunManager:
 
         # Define a threshold for a short message
         short_message_threshold = 100
-        if len(response_text) <= short_message_threshold:
+        if len(response_text) <= short_message_threshold and random.randint(1, 10) == 1:
             await self.answer.answer_with_voice(response_text)
 
             # Update the balance for output voice
@@ -155,16 +156,23 @@ class ThreadRunManager:
         function_name = tool_call.function.name
         args = json.loads(tool_call.function.arguments)
 
+        # Convert function name from camel case to snake case for the module
+        module_name = inflection.underscore(function_name) + '_handler'  # Append '_handler'
+
         # Convert function name to handler class name (e.g., "generate_image" -> "GenerateImageHandler")
         handler_class_name = inflection.camelize(function_name) + 'Handler'
 
-        # Dynamically import the handler class
-        module = __import__(f'function_handlers.{function_name}', fromlist=[handler_class_name])
-        handler_class = getattr(module, handler_class_name, fh_base.BaseFunctionHandler)
+        try:
+            # Dynamically import the handler class
+            module = __import__(f'lib.openai.function_handlers.{module_name}', fromlist=[handler_class_name])
+            handler_class = getattr(module, handler_class_name, fh_base.BaseFunctionHandler)
 
-        # Instantiate the handler class
-        handler = handler_class(self.openai, self.update, self.context, self.conversation)
-        return await handler.handle(tool_call.id, args)
+            # Instantiate the handler class
+            handler = handler_class(self.openai, self.update, self.context, self.conversation)
+            return await handler.handle(tool_call.id, args)
+        except ModuleNotFoundError as e:
+            print(f"Module not found: {e}")
+            # Handle the error or return a default response
 
     async def submit_tool_outputs(self, run):
         tool_outputs = []

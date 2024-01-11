@@ -299,3 +299,23 @@ msgstr "файл"
 #: lib/telegram/bots/translator_bot.py:100
 msgid "video file"
 msgstr "відеофайл"
+
+#: lib/telegram/bots/diet_bot.py:36
+msgid "Failed to process the photo."
+msgstr "Не вдалося обробити зображення."
+
+#: lib/telegram/bots/diet_bot.py:36
+msgid "Failed to process the video."
+msgstr "Не вдалося обробити відео."
+
+#: lib/telegram/bots/diet_bot.py:36
+msgid "Failed to process the voice message."
+msgstr "Не вдалося обробити голосове повідомлення."
+
+#: lib/telegram/bots/diet_bot.py:36
+msgid "Failed to process the document."
+msgstr "Не вдалося обробити документ."
+
+#: lib/telegram/new_transcriptor.py:144
+msgid "These are frames from a video. Generate a compelling description for the video."
+msgstr "Це кадри з відео. Створіть переконливий опис відео."

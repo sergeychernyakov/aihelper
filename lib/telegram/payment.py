@@ -1,5 +1,3 @@
-import os
-from dotenv import load_dotenv
 from telegram import LabeledPrice, Update
 from telegram.ext import CallbackContext
 from db.engine import SessionLocal
@@ -8,9 +6,6 @@ from lib.openai.assistant import Assistant
 from decimal import Decimal
 from lib.localization import _, change_language
 from lib.currency_converter import CurrencyConverter
-
-# Load environment variables
-load_dotenv()
 
 class Payment:
     """
@@ -30,11 +25,9 @@ class Payment:
     This class assumes that the python-telegram-bot framework is used for the bot implementation.
     """
 
-    YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
+    YOOKASSA_API_TOKEN = None
+    STRIPE_API_TOKEN = None
     PAYLOAD = "Custom-Payload"
-    
-    assistant = Assistant()
-    ASSISTANT_ID = assistant.get_assistant_id()
 
     @staticmethod
     async def send_invoice(update: Update, context: CallbackContext, from_button: False) -> None:
@@ -71,7 +64,7 @@ class Payment:
         try:
             conversation = session.query(Conversation).filter_by(
                 user_id=update.message.from_user.id,
-                assistant_id=Payment.ASSISTANT_ID
+                assistant_id=Assistant.ASSISTANT_ID
             ).first()
 
             if conversation:

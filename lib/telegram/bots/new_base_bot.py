@@ -3,7 +3,6 @@ import logging
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, CallbackContext
 from telegram.error import BadRequest
-from dotenv import load_dotenv
 from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError
 from db.engine import SessionLocal
@@ -19,12 +18,10 @@ from lib.localization import _, change_language
 
 class NewBaseBot:
     def __init__(self):
-        load_dotenv()
         self.assistant = Assistant()
         self.payment = Payment()
         self.tokenizer = Tokenizer()
         self.openai = self.assistant.get_openai_client()
-        self.ASSISTANT_ID = self.assistant.get_assistant_id()
         self.application = Application.builder().token(self.TELEGRAM_BOT_TOKEN).build()
         self.conversation = None
         self.update = None
@@ -52,7 +49,7 @@ class NewBaseBot:
             language_code=update.message.from_user.language_code,
             username=update.message.from_user.username,
             thread_id=thread.id,
-            assistant_id=self.ASSISTANT_ID
+            assistant_id=Assistant.ASSISTANT_ID
         )
 
         session.add(conversation)
@@ -65,7 +62,7 @@ class NewBaseBot:
     def _get_or_create_conversation(self, session):
         return (session.query(Conversation).filter_by(
                     user_id=self.update.message.from_user.id,
-                    assistant_id=self.ASSISTANT_ID).first() or 
+                    assistant_id=Assistant.ASSISTANT_ID).first() or 
                 self._create_conversation(session, self.update))
 
     def log_user_interaction(self):
@@ -98,7 +95,6 @@ class NewBaseBot:
         raise NotImplementedError("This method should be overridden in a subclass")
 
     async def handle_interaction(self, session):
-        print('!!!!!!!!! handle_interaction')
         try:
             self.conversation = self._get_or_create_conversation(session)
             change_language(self.conversation.language_code)
@@ -180,7 +176,7 @@ class NewBaseBot:
             try:
                 conversation = session.query(Conversation).filter_by(
                     user_id=user_id,
-                    assistant_id=self.ASSISTANT_ID
+                    assistant_id=Assistant.ASSISTANT_ID
                 ).first()
 
                 if conversation:
@@ -208,8 +204,11 @@ class NewBaseBot:
         with self.session_scope() as session:
             conversation = session.query(Conversation).filter_by(
                 user_id=user_id,
-                assistant_id=self.ASSISTANT_ID
+                assistant_id=Assistant.ASSISTANT_ID
             ).first()
+
+            print(conversation.username)
+            print(f'conversation amount: {conversation.balance} user_id: {user_id}')
 
             if conversation:
                 change_language(conversation.language_code)

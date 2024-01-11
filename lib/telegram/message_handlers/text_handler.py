@@ -8,3 +8,14 @@ class TextHandler(BaseHandler):
         """
         self.openai.beta.threads.messages.create(thread_id=self.thread_id, role="user", content=message)
         return True
+
+    def handle_message(self, message: str) -> bool:
+        if not message:
+            print("No message provided.")
+            return False
+
+        try:
+            return self.process_message(message)
+        except Exception as e:
+            print(f"Error in handle_text_message: {e}")
+            raise

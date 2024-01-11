@@ -141,7 +141,7 @@ class NewTranscriptor:
             {
                 "role": "user",
                 "content": [
-                    caption or "These are frames from a video. Generate a compelling description for the video.",
+                    caption or _("These are frames from a video. Generate a compelling description for the video."),
                     *map(lambda x: {"image": x, "resize": 768}, base64_frames),
                 ],
             },
