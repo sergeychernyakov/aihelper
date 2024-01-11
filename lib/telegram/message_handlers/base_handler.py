@@ -1,6 +1,6 @@
 from lib.openai.tokenizer import Tokenizer
 from lib.telegram.payment import Payment
-from lib.telegram.new_transcriptor import NewTranscriptor
+from lib.telegram.transcriptor import Transcriptor
 from lib.openai.assistant import Assistant
 from lib.telegram.answer import Answer
 from lib.constraints_checker import ConstraintsChecker
@@ -22,7 +22,7 @@ class BaseHandler:
         self.thread_id = conversation.thread_id
         self.tokenizer = Tokenizer()
         self.payment = Payment()
-        self.transcriptor = NewTranscriptor(self.openai)
+        self.transcriptor = Transcriptor(self.openai)
         self.assistant = Assistant()
         self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
 

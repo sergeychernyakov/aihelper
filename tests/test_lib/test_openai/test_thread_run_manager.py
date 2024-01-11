@@ -4,10 +4,10 @@ import json
 import shutil
 import os
 from unittest.mock import Mock, patch, mock_open  # Import mock_open here
-from lib.openai.runs_treads_handler import RunsTreadsHandler
+from lib.openai.thread_run_manager import ThreadRunManager
 from decimal import Decimal
 
-class TestRunsTreadsHandler(unittest.TestCase):
+class TestThreadRunManager(unittest.TestCase):
 
     def setUp(self):
         # Mock dependencies
@@ -25,8 +25,8 @@ class TestRunsTreadsHandler(unittest.TestCase):
         # Add a mock chat_id
         self.mock_chat_id = 12345  # or any valid chat ID
 
-        # Update the RunsTreadsHandler instantiation
-        self.handler = RunsTreadsHandler(
+        # Update the ThreadRunManager instantiation
+        self.handler = ThreadRunManager(
             self.mock_openai_client, 
             self.mock_update, 
             self.mock_context, 
@@ -98,7 +98,7 @@ class TestRunsTreadsHandler(unittest.TestCase):
             self.handler.cancel_run('valid_thread_id', 'valid_run_id')
             self.assertIn("Error occurred while cancelling the run: Test Exception", fake_output.getvalue())
 
-    @patch('lib.telegram.runs_treads_handler.Image')
+    @patch('lib.telegram.thread_run_manager.Image')
     async def test_submit_tool_outputs_with_generateImage(self, mock_image_class):
         # Create a mock instance of the Image class
         mock_image_instance = mock_image_class.return_value

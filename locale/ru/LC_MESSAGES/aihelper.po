@@ -68,15 +68,15 @@ msgstr "Видео успешно обработано."
 msgid "Failed to transcribe video"
 msgstr "Не удалось транскрибировать видео."
 
-#: lib/telegram/runs_treads_handler.py:180
+#: lib/telegram/thread_run_manager.py:180
 msgid "Letter successfully sent."
 msgstr "Письмо успешно отправлено."
 
-#: lib/telegram/runs_treads_handler.py:183
+#: lib/telegram/thread_run_manager.py:183
 msgid "Letter successfully sent. There is no need to reply to the message."
 msgstr "Письмо успешно отправлено. Нет необходимости отвечать на сообщение."
 
-#: lib/telegram/runs_treads_handler.py:191
+#: lib/telegram/thread_run_manager.py:191
 msgid "Insufficient balance to process the generating image."
 msgstr "Недостаточно средств для создания изображения."
 
@@ -316,6 +316,6 @@ msgstr "Не удалось обработать голосовое сообще
 msgid "Failed to process the document."
 msgstr "Не удалось обработать документ."
 
-#: lib/telegram/new_transcriptor.py:144
+#: lib/telegram/transcriptor.py:144
 msgid "These are frames from a video. Generate a compelling description for the video."
 msgstr "Это кадры из видео. Сформируйте убедительное описание для видео."

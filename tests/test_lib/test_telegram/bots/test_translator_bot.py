@@ -1,16 +1,14 @@
 import unittest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
 from lib.telegram.bots.translator_bot import TranslatorBot
-from telegram import Update, User, Message, CallbackQuery
-from datetime import datetime, timedelta
-from decimal import Decimal
+from telegram import Update, User, Message
+from datetime import datetime
 
 class TestTranslatorBot(unittest.TestCase):
 
-    @patch('lib.telegram.bots.translator_bot.RunsTreadsHandler')
-    @patch('lib.telegram.bots.translator_bot.MessagesHandler')
+    @patch('lib.telegram.bots.translator_bot.ThreadRunManager')
     @patch('lib.telegram.bots.translator_bot.Transcriptor')
-    async def test_message_handler(self, mock_transcriptor, mock_messages_handler, mock_runs_treads_handler):
+    async def test_message_handler(self, mock_transcriptor, mock_messages_handler, mock_thread_run_manager):
         # Setup mocks
         bot = TranslatorBot()
         mock_update = Mock(spec=Update)
@@ -25,7 +23,7 @@ class TestTranslatorBot(unittest.TestCase):
         await bot.message_handler(mock_update, mock_context)
 
         # Assert that the necessary handlers are called
-        mock_runs_treads_handler.assert_called_once()
+        mock_thread_run_manager.assert_called_once()
         mock_messages_handler.assert_called_once()
         mock_transcriptor.assert_called_once()
 

@@ -2,198 +2,58 @@ import cv2
 import base64
 import os
 from pathlib import Path
-from lib.openai.tokenizer import Tokenizer
-from lib.text_extractor import TextExtractor
-from lib.telegram.answer import Answer
-from decimal import Decimal
-from lib.telegram.payment import Payment
 from lib.localization import _
 
 class Transcriptor:
-
     MAX_MESSAGE_LENGTH = 3000
 
     """
-    The Transcriptor class handles the transcription of different types of media (documents, images, and voice recordings)
+    The Transcriptor class handles the transcription of different types of media (documents, images, voice recordings, and videos)
     sent through a Telegram bot. It utilizes the OpenAI API to process these media files and generates responses
-    that are sent back to the user via the Telegram bot. It also manages the creation of messages in an OpenAI thread
-    corresponding to the user's requests.
+    that are sent back to the user via the Telegram bot.
     """
 
-    # Class constant for frame interval
+    # Class constant for frame interval in video processing
     FRAME_INTERVAL = 60
 
-    def __init__(self, openai_client, update, context, conversation):
+    def __init__(self, openai_client):
         """
         Initialize the Transcriptor class.
 
         :param openai_client: OpenAI client instance for API calls.
-        :param update: Telegram update object containing message details.
-        :param context: Telegram context object for the bot.
-        :param thread_id: Thread ID for the OpenAI conversation.
-        :param assistant_id: Assistant ID for the OpenAI conversation.
         """
         self.openai = openai_client
-        self.update = update
-        self.context = context
-        self.conversation = conversation
-        self.thread_id = conversation.thread_id
-        self.assistant_id = conversation.assistant_id
-        self.tokenizer = Tokenizer()
-        self.assistant = None
-        self.answer = Answer(openai_client, context, update.message.chat_id, self.thread_id)
-        self.payment = Payment()
 
-    async def __send_message(self, content):
+    async def transcript_photo(self, file_path: str, caption: str):
         """
-        Send a message to the Telegram chat.
+        Transcribe an image file and create a corresponding response.
 
-        :param content: The content of the message to be sent.
-        """
-        await self.context.bot.send_message(self.update.message.chat_id, content)
-
-    def __create_thread_message(self, content, file_ids=None):
-        """
-        Create a message in the OpenAI thread.
-
-        :param content: The content of the message to be created in the thread.
-        :param file_ids: List of file IDs to be attached to the message (optional).
-        """
-        return self.openai.beta.threads.messages.create(
-            thread_id=self.thread_id,
-            role="user",
-            content=content,
-            file_ids=file_ids if file_ids else []
-        )
-
-    def __create_non_thread_message(self, content):
-        """
-        Generate a non-thread response using the OpenAI API.
-
-        :param content: The content of the message to be processed.
-        :return: The response from the AI.
+        :param file_path: File path or URL of the image.
+        :param caption: Caption or additional text information to accompany the image.
+        :return: Transcription text and the number of tokens used.
         """
         try:
-            # Get the prompt from the Assistant class
-            assistant_prompt = self.assistant.prompt()
-
-            # Prepare the messages for the AI
-            messages = [
-                {"role": "system", "content": assistant_prompt},
-                {"role": "user", "content": content},
-            ]
-
-            # Send the request to OpenAI
-            response = self.openai.chat.completions.create(
-                model=self.tokenizer.model,
-                messages=messages,
-                temperature=1.0,
-            )
-
-            # Extract and return the AI's response
-            return response.choices[0].message.content, response.usage.total_tokens
-
-        except Exception as e:
-            print(f"Failed to generate non-thread message: {e}")
-            return _("Error: Unable to process the request."), 0
-
-    async def transcript_document(self, file_path: str):
-        """
-        Transcribe a document file, split the extracted text into pieces, translate each piece,
-        combine them, and send the full translated text as a document.
-
-        :param file_path: Path to the document file.
-        :return: Tuple (Boolean, Message) indicating success and response message.
-        """
-        try:
-            extracted_text = TextExtractor.extract_text(str(file_path))
-            caption = self.update.message.caption or "Translate the text to Ukrainian: "
-
-            # Check if the balance is sufficient
-            amount = self.tokenizer.tokens_to_money_from_string(caption)
-            amount += self.tokenizer.tokens_to_money_from_string(extracted_text)
-            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = _("Insufficient balance to process the document.")
-                print(message)
-                await self.__send_message(message)
-                await self.payment.send_invoice(self.update, self.context, False)
-                return False
-
-            # Split the extracted text into smaller pieces and translate each piece
-            full_translated_text = ""
-            num_pieces = (len(extracted_text) + self.MAX_MESSAGE_LENGTH - 1) // self.MAX_MESSAGE_LENGTH
-            for i in range(num_pieces):
-                start_index = i * self.MAX_MESSAGE_LENGTH
-                end_index = start_index + self.MAX_MESSAGE_LENGTH
-                text_piece = extracted_text[start_index:end_index]
-
-                translated_text, total_tokens = self.__create_non_thread_message(f'{caption}: {text_piece}')
-                full_translated_text += translated_text + "\n\n"
-
-                # Update the balance
-                amount = self.tokenizer.tokens_to_money(total_tokens)
-                print(f'---->>> Conversation balance decreased by: ${amount} for translation processing.')
-                self.conversation.balance -= amount
-
-            # Truncate the text for Telegram message and send a notification about the full text
-            truncated_text = (full_translated_text[:200] + _("... (truncated)\n\n")) if len(full_translated_text) > 200 else full_translated_text
-            await self.__send_message(truncated_text + _("Full translated text has been sent as a document."))
-            # Send the full translated text as a document
-            await self.answer.answer_with_document(full_translated_text)
-
-            return True
-
-        except Exception as e:
-            print(f"Failed to transcribe document: {e}")
-            await self.__send_message(_('Failed to transcribe document.'))
-            return False
-
-    async def transcript_photo(self, file):
-        """
-        Transcribe an image file and create a corresponding thread message.
-
-        :param file: Telegram file object for the image.
-        :return: Tuple (Boolean, Message) indicating success and response message.
-        """
-        try:
-            caption = self.update.message.caption or _("What's in this image? If there's text, extract it and translate.")
-            #calculate caption
-            amount = self.tokenizer.tokens_to_money_from_string(caption)
-            amount += self.tokenizer.tokens_to_money_from_image()
-            # Check if the balance is sufficient
-            if not self.tokenizer.has_sufficient_balance_for_amount(amount, self.conversation.balance):
-                message = _("Insufficient balance to process the image.")
-                print(message)
-                await self.__send_message(message)
-                await self.payment.send_invoice(self.update, self.context, False)
-                return False
-
             response = self.openai.chat.completions.create(
                 model="gpt-4-vision-preview",
                 messages=[
-                    {"role": "user", "content": [{"type": "text", "text": caption}, {"type": "image_url", "image_url": {"url": file.file_path, "detail": "low"}}]}
+                    {"role": "user", "content": [{"type": "text", "text": caption}, {"type": "image_url", "image_url": {"url": file_path, "detail": "low"}}]}
                 ],
                 max_tokens=100,
                 temperature=1.0,
             )
 
-            # Update the balance
-            amount = self.tokenizer.tokens_to_money(response.usage.total_tokens)
-            print(f'---->>> Conversation balance decreased by: ${amount} for image processing.')
-            self.conversation.balance -= amount
+            return response.choices[0].message.content, response.usage.total_tokens
 
-            self.__create_thread_message((self.update.message.caption or _('Translate: ')) + response.choices[0].message.content)
-            return True, _('Image processed successfully')
         except Exception as e:
+            print(f"Failed to transcribe the image message: {e}")
             raise
 
-    async def transcript_voice(self, file_path: str, amount: Decimal = Tokenizer.MINIMUM_COST):
+    async def transcript_voice(self, file_path: str) -> str:
         """
-        Transcribe a voice file and create a corresponding thread message.
+        Transcribe a voice file and create a corresponding response.
 
         :param file_path: Path to the voice file.
-        :param amount: The cost for transcribing the voice file.
-        :return: Tuple (Boolean, Message) indicating success and response message.
+        :return: Transcription text and the number of tokens used.
         """
         try:
             with open(file_path, "rb") as audio_file:
@@ -204,40 +64,32 @@ class Transcriptor:
                     temperature='1.0'
                 )
 
-                # Update the balance
-                print(f'---->>> Conversation balance decreased by: ${amount} for voice transcription.')
-                self.conversation.balance -= amount
-
-                self.__create_thread_message(transcription)
-
-            return True, _('Voice processed successfully')
+            return transcription
         except Exception as e:
             print(f"Failed to transcribe the voice message: {e}")
-            return False, _("Failed to transcribe the voice message.")
+            raise
 
-    async def transcript_video(self, file_path: str):
+    async def transcript_video(self, file_path: str, caption: str):
         """
-        Transcribe a video file and create a corresponding thread message.
+        Transcribe a video file and create a corresponding response.
 
         :param file_path: Path to the video file.
-        :return: Tuple (Boolean, Message) indicating success and response message.
+        :param caption: Caption or additional text information to accompany the video.
+        :return: Transcription text and the number of tokens used.
         """
         try:       
-            # Extract frames and possibly audio from the video
+            # Extract frames from the video for transcription
             frames = self._extract_video_content(file_path)
 
-            # Generate a video description using frames and audio transcription
-            description = await self._generate_video_description(frames)
+            # Generate a video description using the extracted frames
+            description, total_tokens = await self._generate_video_description(frames, caption)
 
             print(f'AI transcripted video: {description}')
 
-            # Create a thread message with the description
-            self.__create_thread_message( _('Translate: ') + description)
-
-            return True, _('Video processed successfully')
+            return description, total_tokens
         except Exception as e:
             print(f"Failed to transcribe video: {e}")
-            return False, _("Failed to transcribe video")
+            raise
 
     # Private helper methods (these need to be implemented according to your specific requirements)
 
@@ -248,26 +100,21 @@ class Transcriptor:
         :param video_file_path: The file path of the video from which frames are to be extracted.
         :return: A list of base64 encoded strings representing the extracted frames.
         """
-
-        # Convert video_file_path to string if it's a Path object
         if isinstance(video_file_path, Path):
             video_file_path = str(video_file_path)
 
-        # Check if the video file path is valid
         if not os.path.exists(video_file_path):
             raise ValueError(f"Invalid video file path: {video_file_path}")
         
-        # Open the video file
         video = cv2.VideoCapture(video_file_path)
         if not video.isOpened():
             raise IOError(f"Failed to open video file: {video_file_path}")
         
-        # Extract frames from the video
         base64_frames = []
         fps = video.get(cv2.CAP_PROP_FPS)
-        frame_interval = int(fps * Transcriptor.FRAME_INTERVAL)
-
+        frame_interval = int(fps * self.FRAME_INTERVAL)
         frame_count = 0
+
         while True:
             ret, frame = video.read()
             if not ret:
@@ -282,25 +129,24 @@ class Transcriptor:
         video.release()
         return base64_frames
 
-    async def _generate_video_description(self, base64_frames):
+    async def _generate_video_description(self, base64_frames, caption: str = None):
         """
         Generate a description for a video based on its frames.
 
         :param base64_frames: List of base64 encoded frames from the video.
-        :return: A string containing the generated description of the video.
+        :param caption: Optional caption to provide context for the video description.
+        :return: A string containing the generated description of the video and the number of tokens used.
         """
-        # Craft the prompt
         prompt_messages = [
             {
                 "role": "user",
                 "content": [
-                    self.update.message.caption or "These are frames from a video. Generate a compelling description for the video.",
+                    caption or _("These are frames from a video. Generate a compelling description for the video."),
                     *map(lambda x: {"image": x, "resize": 768}, base64_frames),
                 ],
             },
         ]
 
-        # Parameters for the OpenAI API request
         params = {
             "model": "gpt-4-vision-preview",
             "messages": prompt_messages,
@@ -308,45 +154,39 @@ class Transcriptor:
             "temperature": 1.0,
         }
 
-        # Send the request to OpenAI
         response = self.openai.chat.completions.create(**params)
-
-        # Update the balance
-        amount = self.tokenizer.tokens_to_money(response.usage.total_tokens)
-        print(f'---->>> Conversation balance decreased by: ${amount} for video processing.')
-        self.conversation.balance -= amount
-
-        # Extract and return the generated description
-        return response.choices[0].message.content
+        return response.choices[0].message.content, response.usage.total_tokens
 
 
 # Example of usage
 
-# # Initialize necessary components
-# openai_client = get_openai_client()
-# update = get_telegram_update()
-# context = get_telegram_context()
-# thread_id = "your_thread_id"  # Replace with actual thread ID
-# assistant_id = "your_assistant_id"  # Replace with actual assistant ID
+# from lib.telegram.transcriptor import Transcriptor
 
-# # Create an instance of Transcriptor
-# transcriptor = Transcriptor(openai_client, update, context, conversation)
+# # Assuming necessary components are initialized
+# openai_client = get_openai_client()  # Function to get an initialized OpenAI client
 
-# # Example usage scenarios
-# # Scenario 1: Transcribing a document
-# file_path = "/path/to/document.pdf"  # Replace with actual file path
-# success, message = transcriptor.transcript_document(file_path)
-# print(f"Transcription success: {success}, Message: {message}")
+# # Create an instance of the Transcriptor
+# transcriptor = Transcriptor(openai_client)
 
-# # Scenario 2: Transcribing an image
-# image_file = update.message.photo[-1]  # Assuming the last photo in the array is the one you want to transcribe
-# transcriptor.transcript_photo(image_file)
+# # Example usage scenarios:
 
-# # Scenario 3: Transcribing a voice message
-# voice_file_path = "/path/to/voice_message.ogg"  # Replace with actual voice file path
-# transcriptor.transcript_voice(voice_file_path)
+# # Scenario 1: Transcribing an image
+# image_file_path = "/path/to/image.jpg"  # Replace with the actual image file path
+# image_caption = "Describe this image"   # Caption for the image
+# transcripted_text, tokens_used = await transcriptor.transcript_photo(image_file_path, image_caption)
+# print(f"Transcribed text: {transcripted_text}, Tokens used: {tokens_used}")
 
-# Example of extracting frames from a video
-# video_file_path = "/path/to/video.mp4"  # Replace with actual video file path
-# base64_frames = transcriptor._extract_video_content(video_file_path)
-# print(f'{len(base64_frames)} frames extracted from the video.')
+# # Scenario 2: Transcribing a voice message
+# voice_file_path = "/path/to/voice_message.ogg"  # Replace with the actual voice file path
+# transcripted_text = await transcriptor.transcript_voice(voice_file_path)
+# print(f"Transcribed text: {transcripted_text}")
+
+# # Scenario 3: Transcribing a video
+# video_file_path = "/path/to/video.mp4"  # Replace with the actual video file path
+# video_caption = "Describe the content of this video"  # Caption for the video
+# description, tokens_used = await transcriptor.transcript_video(video_file_path, video_caption)
+# print(f"Video description: {description}, Tokens used: {tokens_used}")
+
+# # Note: These functions (get_openai_client, etc.) are placeholders and need to be
+# # defined according to your application's context. Also, the transcriptor methods are asynchronous and
+# # should be awaited in an async environment.

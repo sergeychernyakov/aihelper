@@ -1,6 +1,6 @@
 from lib.telegram.message_handlers.base_handler import BaseHandler
 from lib.localization import _
-from lib.telegram.new_transcriptor import NewTranscriptor
+from lib.telegram.transcriptor import Transcriptor
 from lib.text_extractor import TextExtractor
 
 class DocumentHandler(BaseHandler):
@@ -10,10 +10,10 @@ class DocumentHandler(BaseHandler):
         # Split the extracted text into smaller pieces and translate each piece
         translated_text = ""
         total_tokens = 0
-        num_pieces = (len(text) + NewTranscriptor.MAX_MESSAGE_LENGTH - 1) // NewTranscriptor.MAX_MESSAGE_LENGTH
+        num_pieces = (len(text) + Transcriptor.MAX_MESSAGE_LENGTH - 1) // Transcriptor.MAX_MESSAGE_LENGTH
         for i in range(num_pieces):
-            start_index = i * NewTranscriptor.MAX_MESSAGE_LENGTH
-            end_index = start_index + NewTranscriptor.MAX_MESSAGE_LENGTH
+            start_index = i * Transcriptor.MAX_MESSAGE_LENGTH
+            end_index = start_index + Transcriptor.MAX_MESSAGE_LENGTH
             text_piece = text[start_index:end_index]
             translated_text, total_tokens = self._create_openai_non_thread_message(f'{caption}: {text_piece}')
             translated_text += translated_text + "\n\n"

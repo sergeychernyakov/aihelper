@@ -36,7 +36,7 @@ pip3 install secure-smtplib
 python3 -m unittest discover -s tests
 # run one test
 python3 -m unittest tests.test_translator_bot
-python3 -m unittest tests/test_lib/test_telegram/test_runs_treads_handler.py
+python3 -m unittest tests/test_lib/test_telegram/test_thread_run_manager.py
 
 # Text Extraction
 pip install python-docx PyPDF2 python-pptx beautifulsoup4 lxml textract striprtf
@@ -90,14 +90,10 @@ Remember, I'm here to assist with translations and to make your language learnin
 ----- Diet bot
 
 ----- Translator Bot
-  - update bot to use the same functions
   - fix tests
   - cover with tests
-
-
   - робокасса внедрить реальный платеж
   - если язык текста украинский - переведи на русский и обратно
-
 
 ----- Python bot
 ----- Ruby bot

@@ -1,36 +1,21 @@
 import os
-import importlib
-import glob
 from dotenv import load_dotenv
-from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from lib.openai.thread_run_manager import ThreadRunManager
 from lib.openai.tokenizer import Tokenizer
 from lib.localization import _, change_language
-from lib.telegram.bots.new_base_bot import NewBaseBot
+from lib.telegram.bots.base_bot import BaseBot
 from lib.telegram.payment import Payment
 from lib.openai.assistant import Assistant
 
-class DietBot(NewBaseBot):
+class DietBot(BaseBot):
     """
     DietBot is a custom Telegram bot for handling various types of messages
     and translating or processing them using OpenAI's API.
     """
-
-    TELEGRAM_BOT_TOKEN = None
-
     def __init__(self):
         load_dotenv()
-        load_dotenv(dotenv_path='.env.diet', override=True)
-        # Initialize the bot with the token from the environment variable
-        self.TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-
-        Assistant.ASSISTANT_ID = os.getenv('ASSISTANT_ID')
-
-        Payment.YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
-        Payment.STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
-
+        load_dotenv(dotenv_path='.env.translator', override=True)
         super().__init__()
 
     async def start(self, update: Update, context: CallbackContext) -> None:
