@@ -48,11 +48,14 @@ class ThreadRunManager:
             await self.handle_run_response(run)
 
     def cancel_run(self, thread_id, run_id):
-        if thread_id and run_id:
-            try:
-                self.openai.beta.threads.runs.cancel(thread_id=thread_id, run_id=run_id)
-            except Exception as e:
-                print(f"Error occurred while cancelling the run: {e}")
+        if not thread_id or not run_id:
+            print("Failed to cancel run with invalid IDs.")
+            return
+
+        try:
+            self.openai.beta.threads.runs.cancel(thread_id=thread_id, run_id=run_id)
+        except Exception as e:
+            print(f"Error occurred while cancelling the run: {e}")
 
     # Thread handling
 

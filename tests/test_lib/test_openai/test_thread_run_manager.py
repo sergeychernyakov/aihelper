@@ -1,11 +1,12 @@
-import unittest
 import io
 import json
 import shutil
 import os
-from unittest.mock import Mock, patch, mock_open  # Import mock_open here
+import unittest
+from unittest.mock import Mock, patch, mock_open
 from lib.openai.thread_run_manager import ThreadRunManager
 from decimal import Decimal
+from db.models.conversation import Conversation
 
 class TestThreadRunManager(unittest.TestCase):
 
@@ -87,16 +88,21 @@ class TestThreadRunManager(unittest.TestCase):
             run_id='valid_run_id'
         )
 
-    def test_cancel_run_with_invalid_ids(self):
-        with patch('sys.stdout', new=io.StringIO()) as fake_output:
-            self.handler.cancel_run(None, None)
-            self.assertIn("Cannot cancel run: Missing thread_id or run_id.", fake_output.getvalue())
-
     def test_cancel_run_exception_handling(self):
         with patch('sys.stdout', new=io.StringIO()) as fake_output:
             self.mock_openai_client.beta.threads.runs.cancel.side_effect = Exception("Test Exception")
             self.handler.cancel_run('valid_thread_id', 'valid_run_id')
             self.assertIn("Error occurred while cancelling the run: Test Exception", fake_output.getvalue())
+
+    async def test_cancel_run_with_none_or_invalid_ids(self):
+        # This method is now an async method
+        with patch('sys.stdout', new=io.StringIO()) as fake_output:
+            await self.handler.cancel_run(None, None)  # Use await here
+            self.assertIn("Failed to cancel run with invalid IDs.", fake_output.getvalue())
+
+        with patch('sys.stdout', new=io.StringIO()) as fake_output:
+            await self.handler.cancel_run('invalid_thread_id', 'invalid_run_id')  # Use await here
+            self.assertIn("Failed to cancel run with invalid IDs.", fake_output.getvalue())
 
     @patch('lib.telegram.thread_run_manager.Image')
     async def test_submit_tool_outputs_with_generateImage(self, mock_image_class):

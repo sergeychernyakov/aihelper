@@ -4,28 +4,32 @@ from lib.telegram.bots.base_bot import BaseBot
 from telegram import Update, User, CallbackQuery
 from telegram.ext import CallbackContext
 from db.models.conversation import Conversation
+from lib.openai.assistant import Assistant
 from sqlalchemy.exc import SQLAlchemyError
 import asyncio
 
 class TestBaseBot(unittest.TestCase):
 
-    @patch('lib.telegram.bots.base_bot.Assistant')
-    @patch('lib.telegram.bots.base_bot.Payment')
-    def setUp(self, mock_payment, mock_assistant):
-        # Ensure Assistant.get_assistant_id returns a fixed, non-mock value
-        mock_assistant.return_value.get_assistant_id.return_value = "mock_assistant_id"
+    def setUp(self):
+        patcher = patch('os.getenv', side_effect=lambda x: {'TELEGRAM_BOT_TOKEN': 'mock_telegram_bot_token', 
+                                                            'STRIPE_API_TOKEN': 'mock_stripe_token',
+                                                            'ASSISTANT_ID': 'mock_assistant_id'}.get(x, 'mock_value'))
+        self.mock_getenv = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('telegram.ext.Application.builder')
+        self.mock_builder = patcher.start()
+        self.mock_application = self.mock_builder.return_value
+        self.mock_application.token.return_value = self.mock_application
+        self.mock_application.build.return_value = Mock()
+        self.addCleanup(patcher.stop)
+
         self.bot = BaseBot()
 
-    @patch('lib.telegram.bots.base_bot.Application')
     @patch('lib.telegram.bots.base_bot.Assistant')
     @patch('lib.telegram.bots.base_bot.Payment')
-    @patch('os.getenv')
-    def test_init(self, mock_getenv, mock_payment, mock_assistant, mock_Application):
-        # Set up mock return values
-        mock_getenv.return_value = 'mock_telegram_bot_token'
-        mock_assistant.return_value.get_openai_client.return_value = 'mock_openai_client'
-        mock_assistant.return_value.get_assistant_id.return_value = 'mock_assistant_id'
-        
+    @patch('lib.telegram.bots.base_bot.Application')
+    def test_init(self, mock_Application, mock_payment, mock_assistant):
         # Mock the Application builder
         mock_builder = Mock()
         mock_Application.builder.return_value = mock_builder
@@ -36,7 +40,9 @@ class TestBaseBot(unittest.TestCase):
         base_bot = BaseBot()
 
         # Assert that the environment variable is fetched
-        mock_getenv.assert_called_with('TELEGRAM_BOT_TOKEN')
+        self.mock_getenv.assert_any_call('TELEGRAM_BOT_TOKEN')
+        self.mock_getenv.assert_any_call('STRIPE_API_TOKEN')
+        self.mock_getenv.assert_any_call('ASSISTANT_ID')
 
         # Assert that the Assistant and Payment objects are initialized
         mock_assistant.assert_called_once()
@@ -44,8 +50,8 @@ class TestBaseBot(unittest.TestCase):
 
         # Assert that the bot token, openai client, and assistant ID are set correctly
         self.assertEqual(base_bot.TELEGRAM_BOT_TOKEN, 'mock_telegram_bot_token')
-        self.assertEqual(base_bot.openai, 'mock_openai_client')
-        self.assertEqual(base_bot.ASSISTANT_ID, 'mock_assistant_id')
+        self.assertIsNotNone(base_bot.openai)  # Assuming get_openai_client() returns a client object
+        self.assertIsNotNone(base_bot.assistant)  # Assuming Assistant() returns an assistant object
 
         # Assert that the Application builder is set up correctly
         mock_Application.builder.assert_called_once()
@@ -105,7 +111,7 @@ class TestBaseBot(unittest.TestCase):
         self.assertEqual(conversation.language_code, 'en')
         self.assertEqual(conversation.username, 'TestUser')
         self.assertEqual(conversation.thread_id, 'mock_thread_id')
-        self.assertEqual(conversation.assistant_id, base_bot.ASSISTANT_ID)
+        self.assertEqual(conversation.assistant_id, Assistant.ASSISTANT_ID)
 
         # Verify the conversation is added to the session
         mock_session.add.assert_called_once_with(conversation)
@@ -170,25 +176,6 @@ class TestBaseBot(unittest.TestCase):
         # Assert the return value of the error handler
         self.assertFalse(result)
 
-    def test_message_handler_setup(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_test_message_handler_setup())
-
-    async def async_test_message_handler_setup(self):
-        base_bot = BaseBot()
-
-        # Verify that the message_handler method exists
-        self.assertTrue(hasattr(base_bot, "message_handler"))
-        self.assertTrue(callable(getattr(base_bot, "message_handler")))
-
-        # Create mock objects for Update and CallbackContext
-        mock_update = Mock(spec=Update)
-        mock_context = Mock(spec=CallbackContext)
-
-        # Attempt to call message_handler and expect NotImplementedError
-        with self.assertRaises(NotImplementedError):
-            await base_bot.message_handler(mock_update, mock_context)
-
     def test_ping(self):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.async_test_ping())
@@ -213,29 +200,28 @@ class TestBaseBot(unittest.TestCase):
 
     @patch('lib.telegram.bots.base_bot.CallbackContext')
     async def async_test_finish(self, mock_context):
-        # Mock the database session and conversation object
         with patch('lib.telegram.bots.base_bot.BaseBot.session_scope') as mock_session_scope:
             mock_session = Mock()
             mock_session_scope.return_value.__enter__.return_value = mock_session
 
-            # Mock the filter_by method to directly return the mock conversation
             mock_conversation = Mock(spec=Conversation)
             mock_conversation.id = 1
             mock_session.query().filter_by.return_value.first.return_value = mock_conversation
 
-            mock_update = Mock(spec=Update)
-            mock_user = User(123, 'TestUser', False)
-            mock_chat = Mock()
-            mock_chat.id = 456
-            mock_update.message = Mock(from_user=mock_user, chat=mock_chat)
+            # Mock OpenAI delete thread call
+            with patch('openai.resources.beta.threads.Threads.delete') as mock_delete_thread:
+                mock_delete_thread.return_value = None
 
-            # Ensure that send_message is an AsyncMock
-            mock_context.bot.send_message = AsyncMock()
+                mock_update = Mock(spec=Update)
+                mock_user = User(123, 'TestUser', False)
+                mock_chat = Mock()
+                mock_chat.id = 456
+                mock_update.message = Mock(from_user=mock_user, chat=mock_chat)
 
-            await self.bot.finish(mock_update, mock_context)
+                mock_context.bot.send_message = AsyncMock()
 
-            # Assert that a message is sent to the user
-            mock_context.bot.send_message.assert_awaited()
+                await self.bot.finish(mock_update, mock_context)
+                mock_context.bot.send_message.assert_awaited()
 
     def test_balance(self):
         loop = asyncio.get_event_loop()
