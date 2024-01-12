@@ -87,16 +87,18 @@ Remember, I'm here to assist with translations and to make your language learnin
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
------ Translator Bot
-  - cover with tests
-  - если язык текста украинский - переведи на русский и обратно
-
-  - робокасса внедрить реальный платеж
-
------ Diet bot
+----- запустить Diet bot
   - робокасса внедрить реальный платеж
   /start
   - create a video
+  - fix the tests
+
+----- Translator Bot
+  - cover with tests
+  - если язык текста украинский - переведи на русский и обратно
+  - робокасса внедрить реальный платеж
+  - make it universal
+  - remake the video
 
 
 ----- Python bot

@@ -157,6 +157,14 @@ class ThreadRunManager:
 
     async def _handle_tool_call(self, tool_call):
         function_name = tool_call.function.name
+        
+        # Debugging: Print type and value of function_name
+        print(f"Type of function_name: {type(function_name)}, Value: {function_name}")
+
+        # Ensure function_name is a string
+        if not isinstance(function_name, str):
+            raise TypeError(f"Expected function_name to be a string, got {type(function_name)}")
+
         args = json.loads(tool_call.function.arguments)
 
         # Convert function name from camel case to snake case for the module

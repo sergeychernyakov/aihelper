@@ -15,7 +15,7 @@ class DietBot(BaseBot):
     """
     def __init__(self):
         load_dotenv()
-        load_dotenv(dotenv_path='.env.translator', override=True)
+        load_dotenv(dotenv_path='.env.diet', override=True)
         super().__init__()
 
     async def start(self, update: Update, context: CallbackContext) -> None:
