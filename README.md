@@ -87,18 +87,22 @@ Remember, I'm here to assist with translations and to make your language learnin
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
------ Diet bot
-
 ----- Translator Bot
-  - fix tests
   - cover with tests
-  - робокасса внедрить реальный платеж
   - если язык текста украинский - переведи на русский и обратно
+
+  - робокасса внедрить реальный платеж
+
+----- Diet bot
+  - робокасса внедрить реальный платеж
+  /start
+  - create a video
+
 
 ----- Python bot
 ----- Ruby bot
 ----- Instagram Bot
 ----- BotFatherDevelopment
 
-answer to video record
+answer to video record using d-id
 add payment in $

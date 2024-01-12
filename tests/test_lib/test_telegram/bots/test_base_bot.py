@@ -177,8 +177,15 @@ class TestBaseBot(unittest.TestCase):
         self.assertFalse(result)
 
     def test_ping(self):
-        loop = asyncio.get_event_loop()
+        # Create a new event loop for this test
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Run the asynchronous test using the new event loop
         loop.run_until_complete(self.async_test_ping())
+
+        # Close the loop at the end of the test
+        loop.close()
 
     @patch('lib.telegram.bots.base_bot.CallbackContext')
     async def async_test_ping(self, mock_context):
@@ -195,8 +202,15 @@ class TestBaseBot(unittest.TestCase):
         mock_context.bot.send_message.assert_awaited_with(123, 'pong')
 
     def test_finish(self):
-        loop = asyncio.get_event_loop()
+        # Create a new event loop for this test
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Run the asynchronous test using the new event loop
         loop.run_until_complete(self.async_test_finish())
+
+        # Close the loop at the end of the test
+        loop.close()
 
     @patch('lib.telegram.bots.base_bot.CallbackContext')
     async def async_test_finish(self, mock_context):
@@ -224,8 +238,15 @@ class TestBaseBot(unittest.TestCase):
                 mock_context.bot.send_message.assert_awaited()
 
     def test_balance(self):
-        loop = asyncio.get_event_loop()
+        # Create a new event loop for this test
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Run the asynchronous test using the new event loop
         loop.run_until_complete(self.async_test_balance())
+
+        # Close the loop at the end of the test
+        loop.close()
 
     @patch('lib.telegram.bots.base_bot.CallbackContext')
     async def async_test_balance(self, mock_context):
@@ -250,8 +271,15 @@ class TestBaseBot(unittest.TestCase):
             mock_context.bot.send_message.assert_called()
 
     def test_button(self):
-        loop = asyncio.get_event_loop()
+        # Create a new event loop for this test
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Run the asynchronous test using the new event loop
         loop.run_until_complete(self.async_test_button())
+
+        # Close the loop at the end of the test
+        loop.close()
 
     async def async_test_button(self):
         base_bot = BaseBot()
@@ -293,8 +321,15 @@ class TestBaseBot(unittest.TestCase):
         base_bot.finish.assert_awaited_once_with(mock_update, mock_context, from_button=True)
 
     def test_send_invoice(self):
-        loop = asyncio.get_event_loop()
+        # Create a new event loop for this test
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Run the asynchronous test using the new event loop
         loop.run_until_complete(self.async_test_send_invoice())
+
+        # Close the loop at the end of the test
+        loop.close()
 
     async def async_test_send_invoice(self):
         base_bot = BaseBot()
