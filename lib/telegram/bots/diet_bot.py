@@ -14,6 +14,9 @@ class DietBot(BaseBot):
     and translating or processing them using OpenAI's API.
     """
     def __init__(self):
+        print('!!!!!!!!!!!!!!! __init__')
+
+
         load_dotenv()
         load_dotenv(dotenv_path='.env.diet', override=True)
         super().__init__()

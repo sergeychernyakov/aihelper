@@ -31,15 +31,17 @@ class Conversation(Base):
 # session = Session()
 
 # # Assuming you know the ID of the Conversation
-# conversation_id = 4  # Replace with the actual conversation ID
+# conversation_id = 10  # Replace with the actual conversation ID
 
 # # Query the Conversation
 # conversation = session.query(Conversation).filter(Conversation.id == conversation_id).first()
 
-# session.delete(conversation)
+# # session.delete(conversation)
 
 # # Update the balance
 # # conversation.balance = 0.0
+
+# conversation.language_code = 'ua'
 
 # # Commit the changes to the database
 # session.commit()

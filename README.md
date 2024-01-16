@@ -2,7 +2,7 @@
 
 ### Docker:
 docker build -t aihelper .
-docker run -p 4567:4567 aihelper
+docker run -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper
 
 ### Python
 pip3 install openai
@@ -47,7 +47,7 @@ pip install opencv-python
 ### Localization
 # xgettext -o locale/aihelper.pot main.py
 
-find . -name '*.py' -not -path './myenv/*' -not -path '*/myenv/*' | xgettext -o locale/aihelper.pot -f -
+find . -name '*.py' -not -path './myenv/*' -not -path '*/myenv/*' | xgettext -o locale/new_aihelper.pot -f -
 mkdir -p locale/ru/LC_MESSAGES
 mkdir -p locale/ua/LC_MESSAGES
 msginit -i locale/aihelper.pot -o locale/ru/LC_MESSAGES/aihelper.po --locale=ru
@@ -87,13 +87,18 @@ Remember, I'm here to assist with translations and to make your language learnin
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
+проверить запуск на хостинге
+исправить украинский старт 
+проверить русский старт
+
+
 ----- запустить Diet bot
-  - робокасса внедрить реальный платеж
   /start
   - create a video
   - fix the tests
 
 ----- Translator Bot
+  /start ua выводит на английском
   - cover with tests
   - если язык текста украинский - переведи на русский и обратно
   - робокасса внедрить реальный платеж
@@ -108,3 +113,6 @@ Remember, I'm here to assist with translations and to make your language learnin
 
 answer to video record using d-id
 add payment in $
+
+
+python3 /home/impotepus/telebots/aihelper/translator_bot.py

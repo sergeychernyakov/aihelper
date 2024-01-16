@@ -315,23 +315,60 @@ class BaseBot:
                 return True
         return False
 
+    # async def handle_message_type(self, message_type: str) -> bool:
+    #     """
+    #     Handles a specific message type by dynamically importing and initializing the corresponding handler.
+
+    #     :param message_type: Type of the message (e.g., 'text', 'photo').
+    #     :return: Boolean indicating the success of the message processing.
+    #     """
+    #     module_name = f"lib.telegram.message_handlers.{message_type}_handler"
+    #     class_name = f"{message_type.capitalize()}Handler"
+
+    #     module = importlib.import_module(module_name)
+    #     handler_class = getattr(module, class_name)
+
+    #     handler = handler_class(self.openai, self.update, self.context, self.conversation)
+
+    #     # Use a ternary conditional expression to decide which method to call
+    #     return handler.handle_message(self.update.message.text) if message_type == 'text' else await handler.handle_message()
+
     async def handle_message_type(self, message_type: str) -> bool:
         """
-        Handles a specific message type by dynamically importing and initializing the corresponding handler.
-
-        :param message_type: Type of the message (e.g., 'text', 'photo').
-        :return: Boolean indicating the success of the message processing.
+        Handles a specific message type by dynamically importing the corresponding handler.
         """
         module_name = f"lib.telegram.message_handlers.{message_type}_handler"
         class_name = f"{message_type.capitalize()}Handler"
 
-        module = importlib.import_module(module_name)
-        handler_class = getattr(module, class_name)
+        # Check if the module and class exist
+        if self.module_and_class_exist(module_name, class_name):
+            module = importlib.import_module(module_name)
+            handler_class = getattr(module, class_name)
+            handler = handler_class(self.openai, self.update, self.context, self.conversation)
 
-        handler = handler_class(self.openai, self.update, self.context, self.conversation)
+            # Differentiate between text and other message types
+            if message_type == 'text':
+                # For text messages, pass the text content to handle_message
+                return handler.handle_message(self.update.message.text)
+            elif hasattr(handler, 'handle_message'):
+                # For other message types, call handle_message without arguments
+                return await handler.handle_message()
+            else:
+                print(f"No handle_message method found for {message_type} handler.")
+                return False
+        else:
+            print(f"Handler for {message_type} not found.")
+            return False
 
-        # Use a ternary conditional expression to decide which method to call
-        return handler.handle_message(self.update.message.text) if message_type == 'text' else await handler.handle_message()
+    def module_and_class_exist(self, module_name: str, class_name: str) -> bool:
+        """
+        Checks if a module and class exist in the project.
+        """
+        try:
+            module = importlib.import_module(module_name)
+            return hasattr(module, class_name)
+        except ModuleNotFoundError:
+            return False
 
     # Utility Methods
     
