@@ -12,6 +12,8 @@
 .DS_Store
 **/__pycache__/
 
+/myenv/
+
 /db/aihelper.db
 
 # Used by dotenv library to load environment variables.
