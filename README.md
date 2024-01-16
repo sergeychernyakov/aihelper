@@ -2,7 +2,7 @@
 
 ### Docker:
 docker build -t aihelper .
-docker run -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper
+docker run --name aihelper -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper 
 
 ### Python
 pip3 install openai
@@ -88,9 +88,9 @@ Remember, I'm here to assist with translations and to make your language learnin
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
 проверить запуск на хостинге
+
 исправить украинский старт 
 проверить русский старт
-
 
 ----- запустить Diet bot
   /start

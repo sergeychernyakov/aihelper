@@ -14,11 +14,13 @@ class DietBot(BaseBot):
     and translating or processing them using OpenAI's API.
     """
     def __init__(self):
-        print('!!!!!!!!!!!!!!! __init__')
-
-
         load_dotenv()
-        load_dotenv(dotenv_path='.env.diet', override=True)
+        # Initialize the bot with the token from the environment variable
+        self.TELEGRAM_BOT_TOKEN = os.getenv('DIET_TELEGRAM_BOT_TOKEN')
+        Assistant.ASSISTANT_ID = os.getenv('DIET_ASSISTANT_ID')
+        Payment.YOOKASSA_API_TOKEN = os.getenv('DIET_YOOKASSA_API_TOKEN')
+        Payment.STRIPE_API_TOKEN = os.getenv('DIET_STRIPE_API_TOKEN')
+
         super().__init__()
 
     async def start(self, update: Update, context: CallbackContext) -> None:

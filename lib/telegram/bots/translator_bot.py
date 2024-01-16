@@ -15,7 +15,10 @@ class TranslatorBot(BaseBot):
     """
     def __init__(self):
         load_dotenv()
-        load_dotenv(dotenv_path='.env.translator', override=True)
+        self.TELEGRAM_BOT_TOKEN = os.getenv('TRANSLATOR_TELEGRAM_BOT_TOKEN')
+        Assistant.ASSISTANT_ID = os.getenv('TRANSLATOR_ASSISTANT_ID')
+        Payment.YOOKASSA_API_TOKEN = os.getenv('TRANSLATOR_YOOKASSA_API_TOKEN')
+        Payment.STRIPE_API_TOKEN = os.getenv('TRANSLATOR_STRIPE_API_TOKEN')
         super().__init__()
 
     async def start(self, update: Update, context: CallbackContext) -> None:

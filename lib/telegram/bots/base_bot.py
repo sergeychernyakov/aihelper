@@ -37,12 +37,6 @@ class BaseBot:
         """
         Initializes the bot and sets up command handlers.
         """
-        # Initialize the bot with the token from the environment variable
-        self.TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-        Assistant.ASSISTANT_ID = os.getenv('ASSISTANT_ID')
-        Payment.YOOKASSA_API_TOKEN = os.getenv('YOOKASSA_API_TOKEN')
-        Payment.STRIPE_API_TOKEN = os.getenv('STRIPE_API_TOKEN')
-        
         self.assistant = Assistant()
         self.payment = Payment()
         self.tokenizer = Tokenizer()
@@ -314,24 +308,6 @@ class BaseBot:
                     return False
                 return True
         return False
-
-    # async def handle_message_type(self, message_type: str) -> bool:
-    #     """
-    #     Handles a specific message type by dynamically importing and initializing the corresponding handler.
-
-    #     :param message_type: Type of the message (e.g., 'text', 'photo').
-    #     :return: Boolean indicating the success of the message processing.
-    #     """
-    #     module_name = f"lib.telegram.message_handlers.{message_type}_handler"
-    #     class_name = f"{message_type.capitalize()}Handler"
-
-    #     module = importlib.import_module(module_name)
-    #     handler_class = getattr(module, class_name)
-
-    #     handler = handler_class(self.openai, self.update, self.context, self.conversation)
-
-    #     # Use a ternary conditional expression to decide which method to call
-    #     return handler.handle_message(self.update.message.text) if message_type == 'text' else await handler.handle_message()
 
     async def handle_message_type(self, message_type: str) -> bool:
         """
