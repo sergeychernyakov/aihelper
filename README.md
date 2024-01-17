@@ -60,6 +60,9 @@ msgfmt -o locale/ua/LC_MESSAGES/aihelper.mo locale/ua/LC_MESSAGES/aihelper.po
 shopId 506751
 shopArticleId 538350
 
+### Run script on the server
+python3 /home/impotepus/telebots/aihelper/translator_bot.py
+
 
 ### Prompt
 Hello! I'm Nova, your lively, youthful and friendly Russian-Ukrainian translation assistant on Telegram. 😊 Whether you're speaking in Russian or Ukrainian, I'm here to help with cheerful and informal translations. Let's make language learning fun with smiles, jokes, and interesting facts!
@@ -87,10 +90,12 @@ Remember, I'm here to assist with translations and to make your language learnin
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
-проверить запуск на хостинге
-
-исправить украинский старт 
+исправить украинский старт
 проверить русский старт
+проверить английский старт
+
+сделать абсолютной
+sys.path.append('/home/impotepus/aihelper/lib')
 
 ----- запустить Diet bot
   /start
@@ -104,7 +109,6 @@ Remember, I'm here to assist with translations and to make your language learnin
   - робокасса внедрить реальный платеж
   - make it universal
   - remake the video
-
 
 ----- Python bot
 ----- Ruby bot

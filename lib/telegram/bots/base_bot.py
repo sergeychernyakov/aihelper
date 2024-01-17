@@ -347,14 +347,23 @@ class BaseBot:
             return False
 
     # Utility Methods
-    
+
     def get_message_handler_types(self) -> List[str]:
         """
         Dynamically lists all message handler types based on the files in the handlers directory.
 
         :return: List of message handler types like 'text', 'photo', etc.
         """
-        handler_files = glob.glob('lib/telegram/message_handlers/*.py')
+        # Get the directory of the current file (base_bot.py)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Adjust the path to point to the correct message_handlers directory
+        handlers_dir = os.path.join(current_dir, '..', 'message_handlers')
+
+        # Glob for .py files in the message handlers directory
+        handler_files = glob.glob(os.path.join(handlers_dir, '*.py'))
+
+        # Extract the handler types from the file names
         return [os.path.basename(f)[:-11] for f in handler_files if not f.endswith(('__init__.py', 'base_handler.py'))]
 
     def log_user_interaction(self) -> None:
