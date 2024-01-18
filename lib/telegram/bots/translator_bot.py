@@ -13,6 +13,9 @@ class TranslatorBot(BaseBot):
     DietBot is a custom Telegram bot for handling various types of messages
     and translating or processing them using OpenAI's API.
     """
+    
+    BOT_YOUTUBE_DEMO = 'https://youtu.be/_L1mFH_V-0o'
+    
     def __init__(self):
         load_dotenv()
         self.TELEGRAM_BOT_TOKEN = os.getenv('TRANSLATOR_TELEGRAM_BOT_TOKEN')
@@ -46,7 +49,9 @@ class TranslatorBot(BaseBot):
                 "Translate audio/video files\n"
                 "Translate text, pdf, and other documents\n"
                 "Generate images\n"
-                "I speak your language\n\n"
+                "I speak your language\n\n")
+
+            initial_welcome_message += _(
                 "Balance:\n"
                 "Your start balance is ${0:.2f} - we'll ask to refill the balance when you'll use it in full.\n"
                 "Your current balance is ${1:.2f}.\n\n"
@@ -55,8 +60,9 @@ class TranslatorBot(BaseBot):
                 "- For investment-related questions, contact @AIBotsInvest\n"
                 "- For development of intelligent bots, write to @AIBotsTech\n"
                 "- Support: @AIBotsTech\n\n"
+                "Check out other Smart Bots: {2}\n"
                 "Available Actions:\n"
-            ).format(start_balance, current_balance)
+            ).format(start_balance, current_balance, '@SmartDietAIBot')
 
             # Buttons and the remaining part of the welcome message
             keyboard = [
@@ -82,4 +88,4 @@ class TranslatorBot(BaseBot):
 
             # Send the remaining part of the welcome message with buttons
             await context.bot.send_message(update.message.chat_id, remaining_welcome_message)
-            await context.bot.send_message(update.message.chat_id, 'https://youtu.be/_L1mFH_V-0o')
+            await context.bot.send_message(update.message.chat_id, self.BOT_YOUTUBE_DEMO)

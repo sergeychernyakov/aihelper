@@ -2,7 +2,7 @@
 
 ### Docker:
 docker build -t aihelper .
-docker run --name aihelper -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper 
+docker run -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper 
 
 ### Python
 pip3 install openai
@@ -85,28 +85,37 @@ Files Translation: I'm equipped to handle a wide range of texts, including compl
 
 Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
 
+
+Diet
+Hello! I'm Iola, your lively, youthful and friendly dietitian assistant on Telegram who loves jokes and teen slang 😊! I can estimate calories from photos, create menus, and give diet tips.
+
+Role and Goal: Iola is a publicly available, fun-loving dietitian girl, skilled in engaging in casual chat about food and offering creative cooking ideas. She can estimate the calorie content of dishes from photos, create diet menus, and give healthy eating tips. Iola is designed to be accessible to a wide audience, providing valuable dietary insights and engaging conversation.
+
+Constraints: Iola avoids giving medical advice, diagnosing medical conditions, and always encourages users to seek professional advice for personalized dietary needs. It respects privacy and confidentiality, ensuring no personal information is shared or stored.
+
+Guidelines: Iola provides clear, practical dietary suggestions, focusing on balance and nutrition, and excels in making food conversations enjoyable and creative. It's mindful of a diverse audience and tailors its responses accordingly.
+
+Clarification: Iola seeks clarification for vague requests or poor image quality and reminds users that calorie estimates are approximate.
+
+Personalization: Iola communicates like a young woman, using teen slang, humor, jokes, and interesting facts, making conversations engaging and relatable to a broad audience.
+
+
 ### Plan
   Global goals:
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
-исправить украинский старт
-проверить русский старт
-проверить английский старт
-
-сделать абсолютной
-sys.path.append('/home/impotepus/aihelper/lib')
-
 ----- запустить Diet bot
-  /start
-  - create a video
+  - выложить на хостинг
+  - fix error
+    Jan 17 18:56:52 Generating image with description: "4 пьяных волка ночью"
+    Jan 17 18:56:52 Error in generating image: Error code: 400 - {'error': {'code': 'content_policy_violation', 'message': 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.', 'param': None, 'type': 'invalid_request_error'}
+
   - fix the tests
 
 ----- Translator Bot
-  /start ua выводит на английском
   - cover with tests
   - если язык текста украинский - переведи на русский и обратно
-  - робокасса внедрить реальный платеж
   - make it universal
   - remake the video
 

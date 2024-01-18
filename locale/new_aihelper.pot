@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-12 18:52+0200\n"
+"POT-Creation-Date: 2024-01-17 19:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,7 +27,7 @@ msgstr ""
 msgid "Letter successfully sent. There is no need to reply to the message."
 msgstr ""
 
-#: lib/telegram/bots/diet_bot.py:38 lib/telegram/bots/translator_bot.py:38
+#: lib/telegram/bots/diet_bot.py:43 lib/telegram/bots/translator_bot.py:41
 #, python-brace-format
 msgid ""
 "Welcome to the Russian-Ukrainian AI Translator! My name is Nova and I can "
@@ -55,20 +55,20 @@ msgid ""
 "Available Actions:\n"
 msgstr ""
 
-#: lib/telegram/bots/diet_bot.py:61 lib/telegram/bots/translator_bot.py:61
+#: lib/telegram/bots/diet_bot.py:66 lib/telegram/bots/translator_bot.py:64
 msgid "Check Balance"
 msgstr ""
 
-#: lib/telegram/bots/diet_bot.py:62 lib/telegram/bots/translator_bot.py:62
+#: lib/telegram/bots/diet_bot.py:67 lib/telegram/bots/translator_bot.py:65
 #: lib/telegram/payment.py:39
 msgid "Top Up Balance"
 msgstr ""
 
-#: lib/telegram/bots/diet_bot.py:63 lib/telegram/bots/translator_bot.py:63
+#: lib/telegram/bots/diet_bot.py:68 lib/telegram/bots/translator_bot.py:66
 msgid "Finish Session"
 msgstr ""
 
-#: lib/telegram/bots/diet_bot.py:72 lib/telegram/bots/translator_bot.py:72
+#: lib/telegram/bots/diet_bot.py:77 lib/telegram/bots/translator_bot.py:75
 msgid ""
 "/balance - Check your current balance\n"
 "/invoice - Top up your balance\n"
@@ -79,37 +79,37 @@ msgid ""
 "Check our video tutorial."
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:187 lib/telegram/payment.py:77
+#: lib/telegram/bots/base_bot.py:181 lib/telegram/payment.py:77
 #, python-brace-format
 msgid "Your current balance is: ${0:.2f}"
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:216
+#: lib/telegram/bots/base_bot.py:210
 msgid "Goodbye! If you need assistance again, just send me a message."
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:225
+#: lib/telegram/bots/base_bot.py:219
 msgid "An error occurred while processing your request."
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:313
+#: lib/telegram/bots/base_bot.py:307
 #, python-brace-format
 msgid "Failed to process the {message_type}."
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:375
+#: lib/telegram/bots/base_bot.py:397
 msgid "Insufficient balance to use the service."
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:389
+#: lib/telegram/bots/base_bot.py:411
 msgid "file"
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:393
+#: lib/telegram/bots/base_bot.py:415
 msgid "video file"
 msgstr ""
 
-#: lib/telegram/bots/base_bot.py:396
+#: lib/telegram/bots/base_bot.py:418
 #, python-brace-format
 msgid ""
 "The {file_type} you are trying to send is too large. The maximum allowed "
