@@ -101,22 +101,21 @@ Personalization: Iola communicates like a young woman, using teen slang, humor, 
 
 
 ### Plan
+Current:
+  - сделать рассылку сообщений раз в сутки
+
   Global goals:
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
 
------ запустить Diet bot
-  - выложить на хостинг
-  - fix error
-    Jan 17 18:56:52 Generating image with description: "4 пьяных волка ночью"
-    Jan 17 18:56:52 Error in generating image: Error code: 400 - {'error': {'code': 'content_policy_violation', 'message': 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.', 'param': None, 'type': 'invalid_request_error'}
 
+----- Diet bot
+  - запустить пробную рекламу
   - fix the tests
 
 ----- Translator Bot
-  - cover with tests
-  - если язык текста украинский - переведи на русский и обратно
   - make it universal
+  - cover with tests
   - remake the video
 
 ----- Python bot

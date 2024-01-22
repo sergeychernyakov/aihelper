@@ -157,9 +157,6 @@ class ThreadRunManager:
 
     async def _handle_tool_call(self, tool_call):
         function_name = tool_call.function.name
-        
-        # Debugging: Print type and value of function_name
-        print(f"Type of function_name: {type(function_name)}, Value: {function_name}")
 
         # Ensure function_name is a string
         if not isinstance(function_name, str):

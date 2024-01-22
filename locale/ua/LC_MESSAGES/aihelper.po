@@ -376,3 +376,7 @@ msgstr "Не вдалося обробити документ."
 #: lib/telegram/transcriptor.py:144
 msgid "These are frames from a video. Generate a compelling description for the video."
 msgstr "Це кадри з відео. Створіть переконливий опис відео."
+
+#: lib/openai/function_handlers/generate_image_handler.py:43
+msgid "Your request was rejected due to a content policy violation."
+msgstr "Ваш запит був відхилений через порушення політики контенту."

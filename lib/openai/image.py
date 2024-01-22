@@ -21,7 +21,7 @@ class Image:
                 return _("No image generated"),''
         except Exception as e:
             print(f"Error in generating image: {e}")
-            return _("Error in generating image."),''
+            raise
 
 # Example of usage:
 

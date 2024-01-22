@@ -270,25 +270,57 @@ class BaseBot:
 
     # Interaction Handling Methods
 
+    # async def handle_interaction(self, session: SessionLocal) -> bool:
+    #     """
+    #     Handles user interaction with the bot.
+
+    #     :param session: Database session for transactions.
+    #     """
+    #     try:
+    #         self.conversation = self._get_or_create_conversation(session)
+    #         change_language(self.conversation.language_code)
+
+    #         if self.is_balance_insufficient():
+    #             await self.prompt_for_payment()
+    #             return False
+
+    #         return await self.process_message(session)
+    #     except BadRequest as e:
+    #         await self.handle_bad_request(e)
+    #     except Exception as e:
+    #         await self.handle_general_exception(session, e)
+
     async def handle_interaction(self, session: SessionLocal) -> bool:
         """
         Handles user interaction with the bot.
 
         :param session: Database session for transactions.
         """
-        try:
-            self.conversation = self._get_or_create_conversation(session)
-            change_language(self.conversation.language_code)
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                self.conversation = self._get_or_create_conversation(session)
+                change_language(self.conversation.language_code)
 
-            if self.is_balance_insufficient():
-                await self.prompt_for_payment()
-                return False
+                if self.is_balance_insufficient():
+                    await self.prompt_for_payment()
+                    return False
 
-            return await self.process_message(session)
-        except BadRequest as e:
-            await self.handle_bad_request(e)
-        except Exception as e:
-            await self.handle_general_exception(session, e)
+                return await self.process_message(session)
+
+            except BadRequest as e:
+                await self.handle_bad_request(e)
+                return False  # Do not retry for BadRequest exceptions
+
+            except Exception as e:
+                try:
+                    await self.handle_general_exception(session, e)
+                except Exception:
+                    return False  # Do not retry if the exception is re-raised
+                # If handle_general_exception doesn't raise an exception, continue for a retry
+                print(f"Retrying interaction after handling exception. Attempt {attempt + 1} of {max_retries}")
+
+        return False  # Return False if all retries failed
 
     async def process_message(self, session: SessionLocal) -> bool:
         """
