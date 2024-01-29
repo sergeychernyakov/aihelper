@@ -39,6 +39,6 @@ RUN pip install --no-deps pypdfium2==4.24.0 && \
 EXPOSE 443
 
 # Run app.py when the container launches
-# CMD ["/aihelper/start_bots.sh"]
-CMD ["python3", "/aihelper/diet_bot.py"]
+CMD ["/aihelper/start_bots.sh"]
+# CMD ["python3", "/aihelper/diet_bot.py"]
 # CMD ["python3", "/aihelper/translator_bot.py"]

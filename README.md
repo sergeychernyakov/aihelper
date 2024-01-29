@@ -107,7 +107,15 @@ Current:
   Global goals:
     - купить домен
     - сделать страничку по разработке телеграм ботов и добавить в openai
+    - Дать объявление на разработку телеграм ботов
 
+<<<<<<< Updated upstream
+=======
+----- запустить Diet bot
+  - fix error
+    Jan 17 18:56:52 Generating image with description: "4 пьяных волка ночью"
+    Jan 17 18:56:52 Error in generating image: Error code: 400 - {'error': {'code': 'content_policy_violation', 'message': 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.', 'param': None, 'type': 'invalid_request_error'}
+>>>>>>> Stashed changes
 
 ----- Diet bot
   - запустить пробную рекламу
