@@ -5,8 +5,6 @@ import inflection
 import random
 from lib.telegram.answer import Answer
 from db.models.conversation import Conversation
-from lib.openai.image import Image
-from lib.email_sender import EmailSender
 from lib.openai.tokenizer import Tokenizer
 from datetime import timedelta
 from decimal import Decimal

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Assistant:
-    
+
     ASSISTANT_ID = None
 
     def __init__(self, openai_client=None):
@@ -56,7 +56,6 @@ class Assistant:
             return assistant_details.instructions
         else:
             raise AttributeError("Assistant object does not have 'instructions' attribute")
-
 
 # Example of usage:
 # import os
