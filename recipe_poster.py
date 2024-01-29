@@ -2,7 +2,6 @@
 
 import sys
 
-# Assuming your lib directory is at /home/impotepus/telebots/aihelper/lib
 # Adjust the path as necessary
 sys.path.append('/home/impotepus/aihelper/lib')
 
@@ -21,7 +20,8 @@ def main():
     post_creator = PostCreator(assistant_id=assistant_id)
     post = asyncio.run(post_creator.create_post("Сделай здоровый рецепт из простых продуктовю, которые есть у каждого в холодиьнике."))
 
-    asyncio.run(poster.send_to_all(post))
+    # asyncio.run(poster.send_to_all(post))
+    asyncio.run(poster.send_to_all(post, user_ids = [6783964311,5545639645,6532446798]))
 
 if __name__ == "__main__":
     main()

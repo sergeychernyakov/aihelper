@@ -24,8 +24,6 @@ class PostCreator:
         self.openai = OpenAI()
         self.image = Image(self.openai)
 
-        # self.answer = Answer(openai_client, None, update.message.chat_id, self.thread_id)
-
     async def create_post(self, message: str, prompt: str = '', language: str = 'ru') -> Optional[Post]:
         """
         Creates a post based on the given prompt by interacting with OpenAI.
@@ -90,7 +88,6 @@ class PostCreator:
         except Exception as e:
             print(f"Failed to generate non-thread message: {e}")
             raise e
-
 
 # # Example usage
 # import asyncio

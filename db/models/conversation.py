@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String, DECIMAL
+from sqlalchemy import Column, DateTime, Integer, String, DECIMAL, Boolean
 from sqlalchemy.sql import func
 from lib.openai.tokenizer import Tokenizer
 from ..base import Base
@@ -15,6 +15,7 @@ class Conversation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     balance = Column(DECIMAL(precision=10, scale=5), default=Tokenizer.START_BALANCE)
+    disabled = Column(Boolean, default=False)
 
 # # Example of update balance
 
