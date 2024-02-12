@@ -79,7 +79,7 @@ class PostCreator:
             response = self.openai.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=1.0,
+                temperature=2.0,
             )
 
             # Extract and return the AI's response

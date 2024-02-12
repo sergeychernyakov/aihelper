@@ -380,3 +380,7 @@ msgstr "Це кадри з відео. Створіть переконливий
 #: lib/openai/function_handlers/generate_image_handler.py:43
 msgid "Your request was rejected due to a content policy violation."
 msgstr "Ваш запит був відхилений через порушення політики контенту."
+
+#: lib/telegram/services/poster.py:41
+msgid "More recipes: @SmartDietAIBot"
+msgstr "Більше рецептів: @SmartDietAIBot"

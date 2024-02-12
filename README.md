@@ -99,43 +99,45 @@ Clarification: Iola seeks clarification for vague requests or poor image quality
 
 Personalization: Iola communicates like a young woman, using teen slang, humor, jokes, and interesting facts, making conversations engaging and relatable to a broad audience.
 
+Self-promotion: every recipe or piece of advice given by Iola should include a link to the Telegram account: @SmartDietAIBot and a few words about itself.
+
+Presentation of the recipe: Generate an image for each created recipe. At the end of the recipe, add a link to the Telegram account: More recipes: @SmartDietAIBot
+
 
 ### Plan
 Current:
-  - сделать рассылку сообщений раз в сутки
-    - выложить на сервер, настроить отправку раз в сутки
-    - если Chat not found или Forbidden: bot was blocked by the user - delete conversation? or add blocked mark?
-    - добавить функцию последний рецепт при вызове бота в другом канале
-
-- make so two or more bot instance running without conflict
-
-username NULL - почему?
+ - исправить caption
+ - исправить More recipes:
+ - исправить каллории по фотографии
 
   Global goals:
+    - разместить объявление о поиске партнера
     - сделать страничку по разработке телеграм ботов и добавить в openai
-    - Дать объявление на разработку телеграм ботов
 
------ запустить Diet bot
-  - fix error
-    Jan 17 18:56:52 Generating image with description: "4 пьяных волка ночью"
-    Jan 17 18:56:52 Error in generating image: Error code: 400 - {'error': {'code': 'content_policy_violation', 'message': 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.', 'param': None, 'type': 'invalid_request_error'}
+
+  - рассылка голосового с предложением сделать что-нибудь вкусненькое
+  - post to insragram
+    https://subzeroid.github.io/instagrapi/usage-guide/media.html
+  - answer to video record using d-id 
+
+make so two or more bot instance running without conflict
+username NULL - почему?
+
 
 ----- Diet bot
-  - запустить пробную рекламу
   - fix the tests
+  - добавить функцию последний рецепт при вызове бота в другом канале
 
 ----- Translator Bot
   - make it universal
   - cover with tests
   - remake the video
 
+----- Instagram Bot
+
 ----- Python bot
 ----- Ruby bot
------ Instagram Bot
 ----- BotFatherDevelopment
 
-answer to video record using d-id
+
 add payment in $
-
-
-python3 /home/impotepus/telebots/aihelper/translator_bot.py
