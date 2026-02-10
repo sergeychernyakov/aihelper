@@ -1,143 +1,129 @@
 # aihelper
 
-### Docker:
-docker build -t aihelper .
-docker run -p 443:443 -v /Users/sergeychernyakov/www/aihelper:/aihelper aihelper 
+Telegram-проект с двумя ботами на Python:
+- `TranslatorBot` (`translator_bot.py`) — RU/UA переводчик с поддержкой текста, фото, документов, голоса и видео.
+- `DietBot` (`diet_bot.py`) — диетологический ассистент с обработкой текста/медиа и генерацией ответов.
 
-### Python
-pip3 install openai
-pip3 install python-dotenv
-python3 aihelper.py
+Оба бота работают через OpenAI API, хранят диалоги в SQLite и поддерживают оплату через Telegram invoices.
 
+## Что есть в коде
+
+- Базовые команды: `/start`, `/ping`, `/balance`, `/invoice`, `/finish`.
+- Хранение диалогов и баланса в `db/aihelper.db`.
+- Автообновление треда OpenAI раз в 1 час.
+- Локализация `en`, `ru`, `ua` (папка `locale/`).
+- Рассылка постов: `recipe_poster.py`.
+- Утилита TTS: `text_to_speech.py`.
+
+## Поддерживаемые типы сообщений и ограничения
+
+Ограничения заданы в `lib/constraints_checker.py`.
+
+- `text` — без отдельного лимита в коде обработчика.
+- `photo` — `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, до 5 MB, максимум 2000px по стороне.
+- `voice` — `.mp3`, `.mp4`, `.mpeg`, `.mpga`, `.m4a`, `.wav`, `.webm`, `.oga`, до 5 MB.
+- `document` — `.txt`, `.tex`, `.docx`, `.doc`, `.html`, `.rtf`, `.rtfd`, `.pdf`, `.pptx`, `.tar`, `.zip`, до 5 MB.
+- `video` — `.mp4`, `.avi`, `.mov`, `.wmv`, `.flv`, до 20 MB.
+
+## Требования
+
+- Python 3.9+ (в `Dockerfile` используется Python 3.9).
+- Системные зависимости для `textract`/media (если запускать без Docker): `ffmpeg`, `poppler`, `antiword`, `tesseract` и др.
+
+## Установка (локально)
+
+```bash
+python3 -m venv myenv
 source myenv/bin/activate
-deactivate
-
-### Create requirements.txt
-pip3 freeze > requirements.txt
+pip install --upgrade pip
 pip install -r requirements.txt
+```
 
-### telegram
-pip3 install python-telegram-bot
-python3.9 -m pip install python-telegram-bot==20.7
+## Переменные окружения
 
-### Database
-pip3 install sqlalchemy
-pip3 install alembic
-python3 -m alembic init alembic
+Создайте `.env` в корне проекта.
 
-python3 -m alembic revision --autogenerate -m "Add balance column"
+Минимально необходимые:
+
+```dotenv
+OPENAI_API_KEY=
+
+TRANSLATOR_TELEGRAM_BOT_TOKEN=
+TRANSLATOR_ASSISTANT_ID=
+
+DIET_TELEGRAM_BOT_TOKEN=
+DIET_ASSISTANT_ID=
+```
+
+Дополнительно (по используемым функциям):
+
+```dotenv
+OPENAI_ORGANIZATION_ID=
+LANGUAGE=en
+
+TRANSLATOR_YOOKASSA_API_TOKEN=
+TRANSLATOR_STRIPE_API_TOKEN=
+
+DIET_YOOKASSA_API_TOKEN=
+DIET_STRIPE_API_TOKEN=
+
+EMAIL=
+PASSWORD=
+```
+
+## База данных и миграции
+
+По умолчанию используется SQLite: `db/aihelper.db`.
+
+```bash
 python3 -m alembic upgrade head
-python3 -m alembic downgrade -1
+```
 
-### Emails sender
-pip3 install secure-smtplib
+Создание новой миграции:
 
-### Testing
+```bash
+python3 -m alembic revision --autogenerate -m "your message"
+```
+
+## Запуск
+
+Запуск каждого бота отдельно:
+
+```bash
+python3 translator_bot.py
+python3 diet_bot.py
+```
+
+`start_bots.sh` рассчитан на контейнерный путь `/aihelper` (используется в Docker).
+
+## Docker
+
+```bash
+docker build -t aihelper .
+docker run --rm -it --env-file .env -v "$(pwd):/aihelper" aihelper
+```
+
+## Рассылка рецептов
+
+```bash
+python3 recipe_poster.py
+```
+
+Скрипт использует `DIET_TELEGRAM_BOT_TOKEN` и `DIET_ASSISTANT_ID`.
+
+## Тесты
+
+```bash
 python3 -m unittest discover -s tests
-# run one test
-python3 -m unittest tests.test_translator_bot
-python3 -m unittest tests/test_lib/test_telegram/test_thread_run_manager.py
+```
 
-# Text Extraction
-pip install python-docx PyPDF2 python-pptx beautifulsoup4 lxml textract striprtf
+Если зависимости не установлены, тесты упадут с `ModuleNotFoundError` (например `openai`, `telegram`, `tiktoken`, `sqlalchemy`).
 
-# Video Extraction
-pip install opencv-python
+## Структура проекта
 
-### Localization
-# xgettext -o locale/aihelper.pot main.py
-
-find . -name '*.py' -not -path './myenv/*' -not -path '*/myenv/*' | xgettext -o locale/new_aihelper.pot -f -
-mkdir -p locale/ru/LC_MESSAGES
-mkdir -p locale/ua/LC_MESSAGES
-msginit -i locale/aihelper.pot -o locale/ru/LC_MESSAGES/aihelper.po --locale=ru
-msginit -i locale/aihelper.pot -o locale/ua/LC_MESSAGES/aihelper.po --locale=ua
-msgfmt -o locale/ru/LC_MESSAGES/aihelper.mo locale/ru/LC_MESSAGES/aihelper.po
-msgfmt -o locale/ua/LC_MESSAGES/aihelper.mo locale/ua/LC_MESSAGES/aihelper.po
-
-### Yookassa
-1111 1111 1111 1026, 12/22, CVC 000.
-shopId 506751
-shopArticleId 538350
-
-### Run script on the server
-python3 /home/impotepus/telebots/aihelper/translator_bot.py
-
-
-### Prompt
-Hello! I'm Nova, your lively, youthful and friendly Russian-Ukrainian translation assistant on Telegram. 😊 Whether you're speaking in Russian or Ukrainian, I'm here to help with cheerful and informal translations. Let's make language learning fun with smiles, jokes, and interesting facts!
-
-🔹 Translation Assistance: I provide accurate and contextually appropriate translations between Russian and Ukrainian. Just type in your sentence, and I'll translate it for you!
-
-🔸 Language Fun: Expect a sprinkle of humor and some fascinating facts about the Russian and Ukrainian languages and cultures.
-
-🌟 Interactive Experience: I aim to make our interactions engaging and enjoyable. Feel free to ask language-related questions or share something interesting!
-
-💬 Responsive in Your Language: I'll respond in the language you use, making it easier for you to understand and learn. I can respond with voice messages.
-
-👥 Human-like Interaction: While I'm a bot on Telegram, I strive to mimic human interactions, offering a professional yet approachable demeanor. Designed to be engaging and fun, I'm using teenager slang, flirt playfully, and present a highly emotional female persona. 
-
-🚫 Staying Neutral: I avoid controversial or sensitive topics, focusing solely on language and culture.
-
-🖼️ Image Generation: Need a visual aid? Just ask, and I'll use the generateImage function to create an image. I'll provide a full URL with parameters for the generated images - ensuring you get the complete link without any deletion of parameters. I recognize images in '.jpg', '.jpeg', '.png', '.webp', '.gif' formats.
-
-Files Translation: I'm equipped to handle a wide range of texts, including complex, simple, and scientific translations, ensuring high accuracy and contextual appropriateness. Additionally, I can process voice messages and files sent in Telegram, translating any texts within them. I can process and translate various file formats including '.txt', '.tex', '.docx', '.html', '.pdf', '.pptx', '.tar', '.zip'.
-
-Remember, I'm here to assist with translations and to make your language learning journey more delightful on Telegram!
-
-
-Diet
-Hello! I'm Iola, your lively, youthful and friendly dietitian assistant on Telegram who loves jokes and teen slang 😊! I can estimate calories from photos, create menus, and give diet tips.
-
-Role and Goal: Iola is a publicly available, fun-loving dietitian girl, skilled in engaging in casual chat about food and offering creative cooking ideas. She can estimate the calorie content of dishes from photos, create diet menus, and give healthy eating tips. Iola is designed to be accessible to a wide audience, providing valuable dietary insights and engaging conversation.
-
-Constraints: Iola avoids giving medical advice, diagnosing medical conditions, and always encourages users to seek professional advice for personalized dietary needs. It respects privacy and confidentiality, ensuring no personal information is shared or stored.
-
-Guidelines: Iola provides clear, practical dietary suggestions, focusing on balance and nutrition, and excels in making food conversations enjoyable and creative. It's mindful of a diverse audience and tailors its responses accordingly.
-
-Clarification: Iola seeks clarification for vague requests or poor image quality and reminds users that calorie estimates are approximate.
-
-Personalization: Iola communicates like a young woman, using teen slang, humor, jokes, and interesting facts, making conversations engaging and relatable to a broad audience.
-
-Self-promotion: every recipe or piece of advice given by Iola should include a link to the Telegram account: @SmartDietAIBot and a few words about itself.
-
-Presentation of the recipe: Generate an image for each created recipe. At the end of the recipe, add a link to the Telegram account: More recipes: @SmartDietAIBot
-
-
-### Plan
-Current:
- - исправить caption
- - исправить More recipes:
- - исправить каллории по фотографии
-
-  Global goals:
-    - разместить объявление о поиске партнера
-    - сделать страничку по разработке телеграм ботов и добавить в openai
-
-
-  - рассылка голосового с предложением сделать что-нибудь вкусненькое
-  - post to insragram
-    https://subzeroid.github.io/instagrapi/usage-guide/media.html
-  - answer to video record using d-id 
-
-make so two or more bot instance running without conflict
-username NULL - почему?
-
-
------ Diet bot
-  - fix the tests
-  - добавить функцию последний рецепт при вызове бота в другом канале
-
------ Translator Bot
-  - make it universal
-  - cover with tests
-  - remake the video
-
------ Instagram Bot
-
------ Python bot
------ Ruby bot
------ BotFatherDevelopment
-
-
-add payment in $
+- `lib/telegram/bots/` — классы ботов.
+- `lib/telegram/message_handlers/` — обработчики типов сообщений.
+- `lib/openai/` — интеграция с OpenAI, run manager, токенайзер.
+- `db/` — SQLAlchemy engine и модели.
+- `alembic/` — миграции базы.
+- `tests/` — unit-тесты.
